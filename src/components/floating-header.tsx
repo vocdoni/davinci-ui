@@ -1,12 +1,9 @@
-"use client";
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Diamond, ExternalLink, Menu, Wallet } from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 interface NavigationItem {
   value: string;
@@ -17,8 +14,9 @@ interface NavigationItem {
 }
 
 export function FloatingHeader() {
-  const pathname = usePathname() || "/";
-  const router = useRouter();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const pathname = location.pathname || "/";
   const [activeLink, setActiveLink] = useState("create-vote");
   const [walletConnected, setWalletConnected] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
@@ -83,7 +81,7 @@ export function FloatingHeader() {
     if (external) {
       window.open(href, "_blank", "noopener,noreferrer");
     } else {
-      router.push(href);
+      navigate(href);
     }
   };
 
@@ -100,7 +98,7 @@ export function FloatingHeader() {
       <Card className="bg-davinci-paper-base/95 backdrop-blur-md border border-davinci-callout-border/50 shadow-lg">
         <div className="flex items-center justify-between p-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-3">
             <img
               src="/images/davinci-logo.png"
               alt="DAVINCI"

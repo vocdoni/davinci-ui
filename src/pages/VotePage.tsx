@@ -1,12 +1,10 @@
-"use client";
-
 import { NewsletterCard } from "@/components/newsletter-card";
 import { ShareableLink } from "@/components/shareable-link";
 import { VoteDisplay } from "@/components/vote-display";
 import { TotalVotesCard, VoteParameters } from "@/components/vote-parameters";
 import { VoteData } from "@/types/vote";
-import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 
 // Sample vote data as fallback
 const sampleVoteData = {

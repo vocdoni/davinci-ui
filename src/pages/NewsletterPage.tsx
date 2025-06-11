@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Mail } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Mail } from "lucide-react";
 
 export default function NewsletterPage() {
   return (
@@ -9,9 +9,12 @@ export default function NewsletterPage() {
       <div className="max-w-4xl mx-auto">
         {/* Page Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-davinci-black-alt mb-4 font-averia">Newsletter</h1>
+          <h1 className="text-4xl font-bold text-davinci-black-alt mb-4 font-averia">
+            Newsletter
+          </h1>
           <p className="text-lg text-davinci-black-alt/80 max-w-2xl mx-auto">
-            Stay updated with the latest news and developments from the DAVINCI project.
+            Stay updated with the latest news and developments from the DAVINCI
+            project.
           </p>
         </div>
 
@@ -25,12 +28,18 @@ export default function NewsletterPage() {
             </CardHeader>
             <CardContent className="space-y-6 pt-6 bg-davinci-text-base">
               <p className="text-davinci-black-alt/80">
-                Get the latest updates, announcements, and technical insights delivered directly to your inbox.
+                Get the latest updates, announcements, and technical insights
+                delivered directly to your inbox.
               </p>
 
               <form className="space-y-4">
                 <div>
-                  <Input type="email" placeholder="Email Address" className="border-davinci-callout-border" required />
+                  <Input
+                    type="email"
+                    placeholder="Email Address"
+                    className="border-davinci-callout-border"
+                    required
+                  />
                 </div>
                 <div className="flex justify-center">
                   <Button
@@ -46,5 +55,5 @@ export default function NewsletterPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

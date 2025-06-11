@@ -1,5 +1,3 @@
-"use client";
-
 import { NewsletterCard } from "@/components/newsletter-card";
 import { ShareableLink } from "@/components/shareable-link";
 import { VoteDisplay } from "@/components/vote-display";
