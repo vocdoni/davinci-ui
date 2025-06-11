@@ -1,0 +1,28 @@
+{
+  "ui": {
+    "badge": "./ui/badge.json",
+    "button": "./ui/button.json",
+    "card": "./ui/card.json",
+    "checkbox": "./ui/checkbox.json",
+    "dialog": "./ui/dialog.json",
+    "input": "./ui/input.json",
+    "label": "./ui/label.json",
+    "progress": "./ui/progress.json",
+    "radio-group": "./ui/radio-group.json",
+    "select": "./ui/select.json",
+    "separator": "./ui/separator.json",
+    "table": "./ui/table.json",
+    "tabs": "./ui/tabs.json",
+    "textarea": "./ui/textarea.json",
+    "tooltip": "./ui/tooltip.json"
+  },
+  "blocks": {
+    "create-vote-form": "./blocks/create-vote-form.json",
+    "vote-display": "./blocks/vote-display.json",
+    "voting-modal": "./blocks/voting-modal.json",
+    "vote-progress-tracker": "./blocks/vote-progress-tracker.json",
+    "vote-parameters": "./blocks/vote-parameters.json",
+    "floating-header": "./blocks/floating-header.json",
+    "davinci-info-card": "./blocks/davinci-info-card.json"
+  }
+}

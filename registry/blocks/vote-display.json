@@ -1,0 +1,32 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "vote-display",
+  "type": "registry:block",
+  "title": "Vote Display",
+  "description": "Interactive voting interface with real-time results, progress tracking, and wallet connection support.",
+  "dependencies": ["lucide-react"],
+  "registryDependencies": ["card", "button", "badge", "radio-group", "label", "checkbox", "input"],
+  "files": [
+    {
+      "path": "components/vote-display.tsx",
+      "type": "registry:component"
+    },
+    {
+      "path": "components/voting-modal.tsx",
+      "type": "registry:component"
+    },
+    {
+      "path": "components/vote-progress-tracker.tsx",
+      "type": "registry:component"
+    }
+  ],
+  "cssVars": {
+    "theme": {
+      "davinci-paper-base": "37 40% 87%",
+      "davinci-soft-neutral": "30 25% 75%",
+      "davinci-black-alt": "25 31% 18%",
+      "davinci-digital-highlight": "144 100% 93%",
+      "davinci-secondary-accent": "240 67% 87%"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "floating-header",
+  "type": "registry:block",
+  "title": "Floating Header",
+  "description": "Responsive navigation header with DAVINCI branding and mobile-friendly design.",
+  "dependencies": ["lucide-react"],
+  "registryDependencies": ["button", "sheet"],
+  "files": [
+    {
+      "path": "components/floating-header.tsx",
+      "type": "registry:component"
+    }
+  ],
+  "cssVars": {
+    "theme": {
+      "davinci-paper-base": "37 40% 87%",
+      "davinci-black-alt": "25 31% 18%"
+    }
+  }
+}

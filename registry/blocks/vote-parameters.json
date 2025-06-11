@@ -1,0 +1,15 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "vote-parameters",
+  "type": "registry:block",
+  "title": "Vote Parameters",
+  "description": "Display component for vote configuration and metadata with real-time status updates.",
+  "dependencies": ["lucide-react"],
+  "registryDependencies": ["card", "badge"],
+  "files": [
+    {
+      "path": "components/vote-parameters.tsx",
+      "type": "registry:component"
+    }
+  ]
+}

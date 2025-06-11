@@ -1,0 +1,24 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "progress",
+  "type": "registry:ui",
+  "title": "Progress",
+  "description": "Displays an indicator showing the completion progress of a task, typically displayed as a progress bar.",
+  "dependencies": ["@radix-ui/react-progress"],
+  "files": [
+    {
+      "path": "components/ui/progress.tsx",
+      "type": "registry:component"
+    }
+  ],
+  "cssVars": {
+    "light": {
+      "secondary": "210 40% 96%",
+      "primary": "222.2 47.4% 11.2%"
+    },
+    "dark": {
+      "secondary": "217.2 32.6% 17.5%",
+      "primary": "210 40% 98%"
+    }
+  }
+}

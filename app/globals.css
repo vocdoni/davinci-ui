@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 37 40% 97%;
+    --foreground: 0 0% 0%;
+
+    --card: 37 40% 97%;
+    --card-foreground: 0 0% 0%;
+
+    --popover: 37 40% 97%;
+    --popover-foreground: 0 0% 0%;
+
+    --primary: 27 33% 81%;
+    --primary-foreground: 25 31% 18%;
+
+    --secondary: 144 100% 93%;
+    --secondary-foreground: 25 31% 18%;
+
+    --muted: 30 25% 75%;
+    --muted-foreground: 25 5% 45%;
+
+    --accent: 240 67% 87%;
+    --accent-foreground: 25 31% 18%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 147 26% 81%;
+    --input: 30 25% 75%;
+    --ring: 27 33% 81%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 25 31% 18%;
+    --foreground: 0 0% 100%;
+
+    --card: 25 31% 18%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 25 31% 18%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 27 33% 81%;
+    --primary-foreground: 25 31% 18%;
+
+    --secondary: 144 100% 93%;
+    --secondary-foreground: 25 31% 18%;
+
+    --muted: 30 25% 45%;
+    --muted-foreground: 30 25% 85%;
+
+    --accent: 240 67% 87%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 147 26% 41%;
+    --input: 30 25% 45%;
+    --ring: 27 33% 81%;
+  }
+
+  /* Apply Averia Libre font to all h1 elements globally */
+  h1 {
+    font-family: var(--font-averia-libre), serif !important;
+    font-weight: 700;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "vote-progress-tracker",
+  "type": "registry:block",
+  "title": "Vote Progress Tracker",
+  "description": "Visual progress tracker for vote processing states with real-time updates and error handling.",
+  "dependencies": ["lucide-react"],
+  "registryDependencies": ["card", "button", "progress"],
+  "files": [
+    {
+      "path": "components/vote-progress-tracker.tsx",
+      "type": "registry:component"
+    }
+  ]
+}

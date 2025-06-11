@@ -1,0 +1,30 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "card",
+  "type": "registry:ui",
+  "title": "Card",
+  "description": "Displays a card with header, content, and footer.",
+  "dependencies": [],
+  "files": [
+    {
+      "path": "components/ui/card.tsx",
+      "type": "registry:component"
+    }
+  ],
+  "cssVars": {
+    "light": {
+      "border": "214.3 31.8% 91.4%",
+      "card": "0 0% 100%",
+      "card-foreground": "222.2 84% 4.9%",
+      "muted": "210 40% 96%",
+      "muted-foreground": "215.4 16.3% 46.9%"
+    },
+    "dark": {
+      "border": "217.2 32.6% 17.5%",
+      "card": "222.2 84% 4.9%",
+      "card-foreground": "210 40% 98%",
+      "muted": "217.2 32.6% 17.5%",
+      "muted-foreground": "215 20.2% 65.1%"
+    }
+  }
+}

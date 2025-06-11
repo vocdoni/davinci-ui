@@ -1,0 +1,22 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "davinci-info-card",
+  "type": "registry:block",
+  "title": "DAVINCI Info Card",
+  "description": "Information card explaining DAVINCI protocol features with external links and responsive layout.",
+  "dependencies": ["lucide-react"],
+  "registryDependencies": ["card", "button"],
+  "files": [
+    {
+      "path": "components/davinci-info-card.tsx",
+      "type": "registry:component"
+    }
+  ],
+  "cssVars": {
+    "theme": {
+      "davinci-paper-base": "37 40% 87%",
+      "davinci-digital-highlight": "144 100% 93%",
+      "davinci-callout-border": "147 26% 81%"
+    }
+  }
+}
