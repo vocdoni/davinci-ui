@@ -38,7 +38,7 @@ jobs:
         uses: nwtgck/actions-netlify@v2.0
         with:
           publish-dir: './dist'
-          production-branch: develop
+          production-branch: main
           github-token: ${{ secrets.GITHUB_TOKEN }}
           deploy-message: 'Vocdoni dev Deploy from GitHub Actions'
           enable-pull-request-comment: true
