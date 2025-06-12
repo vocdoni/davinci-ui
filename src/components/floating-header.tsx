@@ -1,11 +1,11 @@
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { useWeb3 } from '@/contexts/Web3Context'
-import { truncateAddress } from '@/lib/web3-utils'
 import { ExternalLink, Loader2, Menu, Wallet } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Button } from '~components/ui/button'
+import { Card } from '~components/ui/card'
+import { Sheet, SheetContent, SheetTrigger } from '~components/ui/sheet'
+import { useWeb3 } from '~contexts/Web3Context'
+import { truncateAddress } from '~lib/web3-utils'
 
 interface NavigationItem {
   value: string

@@ -1,6 +1,6 @@
-import { FloatingHeader } from '@/components/floating-header'
-import { Footer } from '@/components/footer'
 import { Outlet } from 'react-router-dom'
+import { FloatingHeader } from '~components/floating-header'
+import { Footer } from '~components/footer'
 
 export function Layout() {
   return (

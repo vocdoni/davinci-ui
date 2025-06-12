@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Settings, Calendar, Users, User, Clock, Shield } from 'lucide-react'
+import { Calendar, Clock, Settings, Shield, User, Users } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Badge } from '~components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
 
 interface VoteData {
   id: string

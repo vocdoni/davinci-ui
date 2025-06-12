@@ -536,11 +536,11 @@
     "examples": [
       {
         "name": "Basic Vote Creation",
-        "code": "import { CreateVoteForm } from '@/components/create-vote-form'\n\nexport default function CreateVote() {\n  return <CreateVoteForm />\n}"
+        "code": "import { CreateVoteForm } from '~components/create-vote-form'\n\nexport default function CreateVote() {\n  return <CreateVoteForm />\n}"
       },
       {
         "name": "Vote Display",
-        "code": "import { VoteDisplay } from '@/components/vote-display'\n\nexport default function Vote({ voteData }) {\n  return <VoteDisplay voteData={voteData} />\n}"
+        "code": "import { VoteDisplay } from '~components/vote-display'\n\nexport default function Vote({ voteData }) {\n  return <VoteDisplay voteData={voteData} />\n}"
       }
     ]
   }

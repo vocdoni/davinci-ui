@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "paths": {
+      "~components/*": ["components/*"],
+      "~contexts/*": ["contexts/*"],
+      "~hooks/*": ["hooks/*"],
+      "~lib/*": ["lib/*"],
+      "~pages/*": ["pages/*"],
+      "~router": ["router.tsx"],
+      "~ui/*": ["components/ui/*"],
+      "~src/*": ["./*"]
+    }
+  }
+}

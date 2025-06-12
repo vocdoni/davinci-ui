@@ -1,9 +1,9 @@
-import { NewsletterCard } from '@/components/newsletter-card'
-import { ShareableLink } from '@/components/shareable-link'
-import { VoteDisplay } from '@/components/vote-display'
-import { TotalVotesCard, VoteParameters } from '@/components/vote-parameters'
-import { VoteData } from '@/types/vote'
 import { useEffect, useState } from 'react'
+import { NewsletterCard } from '~components/newsletter-card'
+import { ShareableLink } from '~components/shareable-link'
+import { VoteDisplay } from '~components/vote-display'
+import { TotalVotesCard, VoteParameters } from '~components/vote-parameters'
+import type { VoteData } from '~src/types/vote'
 
 // Pre-configured sample vote data showing a completed vote
 const sampleCompletedVoteData = {

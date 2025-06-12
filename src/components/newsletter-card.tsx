@@ -2,11 +2,11 @@
 
 import type React from 'react'
 
+import { CheckCircle, Mail } from 'lucide-react'
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Mail, CheckCircle } from 'lucide-react'
+import { Button } from '~components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
+import { Input } from '~components/ui/input'
 
 export function NewsletterCard() {
   const [email, setEmail] = useState('')

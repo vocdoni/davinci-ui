@@ -1,10 +1,10 @@
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { BarChart2, Search, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Badge } from '~components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
+import { Input } from '~components/ui/input'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~components/ui/table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '~components/ui/tabs'
 
 // Types for our voting process
 interface VotingProcess {

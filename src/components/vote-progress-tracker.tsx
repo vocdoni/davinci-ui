@@ -2,12 +2,12 @@
 
 import type React from 'react'
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
-import { Clock, CheckCircle, Package, Cpu, Shield, AlertTriangle, RefreshCw, Info } from 'lucide-react'
+import { AlertTriangle, CheckCircle, Clock, Cpu, Info, Package, RefreshCw, Shield } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Badge } from '~components/ui/badge'
+import { Button } from '~components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
+import { Progress } from '~components/ui/progress'
 
 export type VoteStatus = 'pending' | 'verified' | 'aggregated' | 'processed' | 'settled' | 'error'
 

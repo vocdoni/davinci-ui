@@ -1,5 +1,7 @@
 'use client'
 
+import { AlertTriangle, BarChart3, CheckSquare, Shield } from 'lucide-react'
+import { Button } from '~components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -7,9 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { AlertTriangle, Shield, CheckSquare, BarChart3 } from 'lucide-react'
+} from '~components/ui/dialog'
 
 interface VotingModalProps {
   isOpen: boolean

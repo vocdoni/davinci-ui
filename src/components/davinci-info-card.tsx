@@ -1,8 +1,8 @@
 'use client'
 
-import { Card, CardContent } from '@/components/ui/card'
-import { Info, Server, Award, Shield, ExternalLink } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Award, ExternalLink, Info, Server, Shield } from 'lucide-react'
+import { Button } from '~components/ui/button'
+import { Card, CardContent } from '~components/ui/card'
 
 export function DavinciInfoCard() {
   return (

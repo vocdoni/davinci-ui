@@ -1,6 +1,6 @@
-import { CreateVoteForm } from '@/components/create-vote-form'
-import { DavinciInfoCard } from '@/components/davinci-info-card'
-import { NewsletterCard } from '@/components/newsletter-card'
+import { CreateVoteForm } from '~components/create-vote-form'
+import { DavinciInfoCard } from '~components/davinci-info-card'
+import { NewsletterCard } from '~components/newsletter-card'
 
 export default function HomePage() {
   return (

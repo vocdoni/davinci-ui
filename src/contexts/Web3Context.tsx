@@ -1,7 +1,7 @@
-import { web3Onboard } from '@/lib/web3-onboard'
 import type { WalletState } from '@web3-onboard/core'
 import { ethers } from 'ethers'
 import { createContext, useContext, useEffect, useState } from 'react'
+import { web3Onboard } from '~lib/web3-onboard'
 
 interface Web3ContextType {
   connect: () => Promise<void>
