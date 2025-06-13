@@ -11,16 +11,16 @@ export const web3Onboard = init({
   wallets: [injected, walletConnect],
   chains: [
     {
-      id: '0x1',
+      id: 1,
       token: 'ETH',
       label: 'Ethereum Mainnet',
-      rpcUrl: 'https://mainnet.infura.io/v3/',
+      rpcUrl: 'https://eth.llamarpc.com',
     },
     {
-      id: '0x5',
+      id: '0xaa36a7',
       token: 'ETH',
-      label: 'Goerli',
-      rpcUrl: 'https://goerli.infura.io/v3/',
+      label: 'Sepolia',
+      rpcUrl: 'wss://ethereum-sepolia-rpc.publicnode.com',
     },
   ],
   appMetadata: {
@@ -33,10 +33,14 @@ export const web3Onboard = init({
   },
   accountCenter: {
     mobile: {
-      enabled: false,
+      enabled: true,
+      minimal: true,
+      position: 'topRight',
     },
     desktop: {
-      enabled: false,
+      enabled: true,
+      minimal: true,
+      position: 'topRight',
     },
   },
 })
