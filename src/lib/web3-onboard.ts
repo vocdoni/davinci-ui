@@ -1,5 +1,5 @@
-import init from '@web3-onboard/core'
 import injectedModule from '@web3-onboard/injected-wallets'
+import { init } from '@web3-onboard/react'
 import walletConnectModule from '@web3-onboard/walletconnect'
 
 const injected = injectedModule()

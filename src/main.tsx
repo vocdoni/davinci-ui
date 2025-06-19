@@ -1,7 +1,8 @@
+import { Web3OnboardProvider } from '@web3-onboard/react'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
-import { Web3Provider } from '~contexts/Web3Context'
+import { web3Onboard } from '~lib/web3-onboard'
 import { router } from '~router'
 
 import '@fontsource/averia-libre/400.css'
@@ -16,8 +17,8 @@ document.documentElement.style.setProperty('--font-averia-libre', 'Averia Libre,
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <Web3Provider>
+    <Web3OnboardProvider web3Onboard={web3Onboard}>
       <RouterProvider router={router} />
-    </Web3Provider>
+    </Web3OnboardProvider>
   </React.StrictMode>
 )

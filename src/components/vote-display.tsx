@@ -1,5 +1,6 @@
 'use client'
 
+import { useConnectWallet } from '@web3-onboard/react'
 import { BarChart3, CheckCircle, Clock, Diamond, Lock, Minus, Plus, Users, Wallet } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Badge } from '~components/ui/badge'
@@ -11,7 +12,6 @@ import { Label } from '~components/ui/label'
 import { RadioGroup, RadioGroupItem } from '~components/ui/radio-group'
 import { VoteProgressTracker } from '~components/vote-progress-tracker'
 import { VotingModal } from '~components/voting-modal'
-import { useWeb3 } from '~contexts/Web3Context'
 import { truncateAddress } from '~lib/web3-utils'
 
 interface Choice {
@@ -55,7 +55,7 @@ interface QuadraticVote {
 }
 
 export function VoteDisplay({ voteData }: VoteDisplayProps) {
-  const { isConnected, address, connect } = useWeb3()
+  const [{ wallet }, connect] = useConnectWallet()
   const [isEligible, setIsEligible] = useState(true)
   const [selectedChoice, setSelectedChoice] = useState('')
   const [selectedChoices, setSelectedChoices] = useState<string[]>([])
@@ -69,6 +69,7 @@ export function VoteDisplay({ voteData }: VoteDisplayProps) {
   const [currentTotalVotes, setCurrentTotalVotes] = useState(voteData.totalVotes)
   const [justVoted, setJustVoted] = useState(false)
   const [showProgressTracker, setShowProgressTracker] = useState(false)
+  const isConnected = !!wallet
 
   // Initialize quadratic votes
   useEffect(() => {
@@ -518,7 +519,8 @@ export function VoteDisplay({ voteData }: VoteDisplayProps) {
                   <div>
                     <p className='font-medium text-davinci-black-alt'>Wallet Connected</p>
                     <p className='text-sm text-davinci-black-alt/80'>
-                      {address ? truncateAddress(address) : 'Unknown'} • Eligible to vote
+                      {wallet.accounts[0].address ? truncateAddress(wallet.accounts[0].address) : 'Unknown'} • Eligible
+                      to vote
                     </p>
                   </div>
                 </div>

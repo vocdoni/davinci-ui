@@ -104,6 +104,9 @@ importers:
       '@web3-onboard/injected-wallets':
         specifier: ^2.11.3
         version: 2.11.3(typescript@5.8.3)(zod@3.25.61)
+      '@web3-onboard/react':
+        specifier: ^2.11.0
+        version: 2.11.0(react@18.3.1)(typescript@5.8.3)(zod@3.25.61)
       '@web3-onboard/walletconnect':
         specifier: ^2.6.2
         version: 2.6.2(@types/react@18.3.23)(react@18.3.1)(typescript@5.8.3)(zod@3.25.61)
@@ -1927,12 +1930,22 @@ packages:
   '@web3-onboard/common@2.4.2':
     resolution: {integrity: sha512-3+zkBru5W2jBYFBPPQsnqZ7tuN1GUyM5PzD9/MmhvjCLNhmjFtMQ0MkLzG4Yshodb4UW/DmZpjUVrpjdhEhj/Q==}
 
+  '@web3-onboard/core@2.24.0':
+    resolution: {integrity: sha512-aFfao9ln5DMW9QSTzXHP4ymuFoJslBs3TrYR+z+5B6/lPMK1CUSe5wmPeFVaqTXs4gIGkyWByuznb9LUq/Vong==}
+    engines: {node: '>=16.15.1'}
+
   '@web3-onboard/core@2.24.1':
     resolution: {integrity: sha512-IhiWF0M4BfnayLdmPoNpckjStlZ4G2N8JylJ92pf6+uWbnvhje8Svka9Oq6nfmfuU7Nbbqx3BVyivEN0kL6dyA==}
     engines: {node: '>=16.15.1'}
 
   '@web3-onboard/injected-wallets@2.11.3':
     resolution: {integrity: sha512-DSfcJRwe7KgXHSosXSz8QUMpoSTd6ltrb3qb8xhDjwLdpYlSlcmhaH5blP/gvNeB38imiJ9xCQpnI5tpaLKneQ==}
+
+  '@web3-onboard/react@2.11.0':
+    resolution: {integrity: sha512-aKwkVX3Xt0FshAerq1j15FYZnanEfrcNRl7SjziH8Zh/v82chixBqdPOKG7uh4lYKutIY7OAuyubPPRr/J7mzw==}
+    engines: {node: '>=16.15.1'}
+    peerDependencies:
+      react: '>=16.8'
 
   '@web3-onboard/walletconnect@2.6.2':
     resolution: {integrity: sha512-eecRCcwgOHbWw2thf03EbbyFnnUsf4G2mcIhLfiWG51Vf0oGSK/QcaINlBEZpY6SK2xH5nnXJtQomLDvfbAM2A==}
@@ -3227,6 +3240,11 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  use-sync-external-store@1.0.0:
+    resolution: {integrity: sha512-AFVsxg5GkFg8GDcxnl+Z0lMAz9rE8DGJCc28qnBuQF7lac57B5smLcT37aXpXIIPz75rW4g3eXHPjhHwdGskOw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0-rc
 
   use-sync-external-store@1.2.0:
     resolution: {integrity: sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==}
@@ -5723,6 +5741,26 @@ snapshots:
       - utf-8-validate
       - zod
 
+  '@web3-onboard/core@2.24.0(typescript@5.8.3)(zod@3.25.61)':
+    dependencies:
+      '@web3-onboard/common': 2.4.2(typescript@5.8.3)(zod@3.25.61)
+      bnc-sdk: 4.6.9
+      bowser: 2.11.0
+      eventemitter3: 4.0.7
+      joi: 17.9.1
+      lodash.merge: 4.6.2
+      lodash.partition: 4.6.0
+      nanoid: 4.0.2
+      rxjs: 7.8.2
+      svelte: 3.59.2
+      svelte-i18n: 4.0.1(svelte@3.59.2)
+      viem: 2.12.0(typescript@5.8.3)(zod@3.25.61)
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+      - zod
+
   '@web3-onboard/core@2.24.1(typescript@5.8.3)(zod@3.25.61)':
     dependencies:
       '@web3-onboard/common': 2.4.2(typescript@5.8.3)(zod@3.25.61)
@@ -5748,6 +5786,18 @@ snapshots:
       '@web3-onboard/common': 2.4.2(typescript@5.8.3)(zod@3.25.61)
       joi: 17.9.1
       lodash.uniqby: 4.7.0
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+      - zod
+
+  '@web3-onboard/react@2.11.0(react@18.3.1)(typescript@5.8.3)(zod@3.25.61)':
+    dependencies:
+      '@web3-onboard/common': 2.4.2(typescript@5.8.3)(zod@3.25.61)
+      '@web3-onboard/core': 2.24.0(typescript@5.8.3)(zod@3.25.61)
+      react: 18.3.1
+      use-sync-external-store: 1.0.0(react@18.3.1)
     transitivePeerDependencies:
       - bufferutil
       - typescript
@@ -7063,6 +7113,10 @@ snapshots:
       tslib: 2.8.1
     optionalDependencies:
       '@types/react': 18.3.23
+
+  use-sync-external-store@1.0.0(react@18.3.1):
+    dependencies:
+      react: 18.3.1
 
   use-sync-external-store@1.2.0(react@18.3.1):
     dependencies:
