@@ -1,4 +1,17 @@
-import { OrganizationRegistryService, TxStatus, deployedAddresses } from '@vocdoni/davinci-sdk/contracts'
+import {
+  OrganizationRegistryService,
+  ProcessRegistryService,
+  ProcessStatus,
+  TxStatus,
+  deployedAddresses,
+} from '@vocdoni/davinci-sdk/contracts'
+import {
+  ElectionResultsTypeNames,
+  type ElectionMetadata,
+  type ElectionResultsType,
+  type ProtocolVersion,
+} from '@vocdoni/davinci-sdk/core'
+import { VocdoniApiService } from '@vocdoni/davinci-sdk/sequencer'
 import { useConnectWallet } from '@web3-onboard/react'
 import { BrowserProvider } from 'ethers'
 import { Calendar, CheckCircle, Clock, HelpCircle, Plus, Rocket, Users, Wallet, X } from 'lucide-react'
@@ -69,47 +82,120 @@ export function CreateVoteForm() {
   }
 
   const handleLaunch = async () => {
-    if (!isFormValid()) return
+    if (!isFormValid() || !wallet) return
 
     setIsLaunching(true)
 
     try {
-      // Simulate blockchain transaction and vote creation
-      await new Promise((resolve) => setTimeout(resolve, 3000))
+      // Initialize API service
+      const api = new VocdoniApiService('https://sequencer1.davinci.vote')
 
-      // Generate a unique vote ID (in a real app, this would come from the blockchain)
-      const voteId = `vote-${Date.now()}`
+      // Step 2: Fetch circuit info
+      const info = await api.getInfo()
 
-      // Store vote data in localStorage for demo purposes
-      // In a real app, this would be stored on the blockchain
-      const voteData = {
-        id: voteId,
-        question: formData.question,
-        description: `This vote was created to gather community input on: ${formData.question}`,
-        choices: formData.choices.filter((choice) => choice.text.trim() !== ''),
-        votingMethod: formData.votingMethod,
-        censusType: formData.censusType,
-        duration: formData.duration,
-        durationUnit: formData.durationUnit,
-        creator: 'johndoe.eth', // This would come from the connected wallet
-        startTime: new Date().toISOString(),
-        endTime: new Date(
-          Date.now() +
-            Number.parseInt(formData.duration) * (formData.durationUnit === 'hours' ? 60 * 60 * 1000 : 60 * 1000)
-        ).toISOString(),
-        totalVotes: 0,
-        isActive: true,
-        createdAt: new Date().toISOString(),
+      // Step 3: Create census
+      const censusId = await api.createCensus()
+
+      // Step 4: Add hardcoded participant
+      const participants = [
+        {
+          key: '0x8349DE968A70B79D09886DA1690CC259b67CbCbC',
+          weight: '1',
+        },
+      ]
+      await api.addParticipants(censusId, participants)
+
+      // Step 5: Verify participants were added
+      await api.getParticipants(censusId)
+
+      // Step 6: Get census root and size
+      const censusRoot = await api.getCensusRoot(censusId)
+      const censusSize = await api.getCensusSize(censusId)
+
+      // Step 7: Create and push metadata
+      const metadata: ElectionMetadata = {
+        title: { default: formData.question },
+        description: { default: `This vote was created to gather community input on: ${formData.question}` },
+        media: { header: '', logo: '' },
+        questions: [
+          {
+            title: { default: formData.question },
+            description: { default: '' },
+            meta: {},
+            choices: formData.choices
+              .filter((choice) => choice.text.trim() !== '')
+              .map((choice, index) => ({
+                title: { default: choice.text },
+                value: index,
+                meta: {},
+              })),
+          },
+        ],
+        version: '1.2' as ProtocolVersion,
+        meta: {},
+        type: {
+          name: ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION,
+          properties: {} as Record<string, never>,
+        } as ElectionResultsType,
+      }
+      const metadataHash = await api.pushMetadata(metadata)
+      const metadataUrl = api.getMetadataUrl(metadataHash)
+
+      // Step 8: Create process via API
+      const provider = new BrowserProvider(wallet.provider)
+      const signer = await provider.getSigner()
+      const nonce = await provider.getTransactionCount(wallet.accounts[0].address)
+      const signature = await signer.signMessage(`${11155111}${nonce}`) // 11155111 is Sepolia chain ID
+
+      const ballotMode = {
+        maxCount: 1,
+        maxValue: (formData.choices.length - 1).toString(),
+        minValue: '0',
+        forceUniqueness: false,
+        costFromWeight: false,
+        costExponent: 0,
+        maxTotalCost: (formData.choices.length - 1).toString(),
+        minTotalCost: '0',
       }
 
-      // Store in localStorage for demo
-      localStorage.setItem(`vote-${voteId}`, JSON.stringify(voteData))
+      const { processId, encryptionPubKey, stateRoot } = await api.createProcess({
+        censusRoot,
+        ballotMode,
+        nonce,
+        chainId: 11155111,
+        signature,
+      })
+
+      // Step 9: Check admin rights
+      const orgService = new OrganizationRegistryService(deployedAddresses.organizationRegistry.sepolia, signer)
+      const isAdmin = await orgService.isAdministrator(wallet.accounts[0].address, wallet.accounts[0].address)
+      if (!isAdmin) throw new Error('Caller is not an organization admin')
+
+      // Step 10: Submit newProcess on-chain
+      const registry = new ProcessRegistryService(deployedAddresses.processRegistry.sepolia, signer)
+      await registry.newProcess(
+        ProcessStatus.READY,
+        Math.floor(Date.now() / 1000) + 60,
+        Number.parseInt(formData.duration) * (formData.durationUnit === 'hours' ? 3600 : 60),
+        ballotMode,
+        {
+          censusOrigin: 1,
+          maxVotes: censusSize.toString(),
+          censusRoot,
+          censusURI: censusId,
+        },
+        metadataUrl,
+        wallet.accounts[0].address,
+        processId,
+        { x: encryptionPubKey[0], y: encryptionPubKey[1] },
+        BigInt(stateRoot)
+      )
 
       setLaunchSuccess(true)
 
       // Wait a moment to show success state, then navigate
       setTimeout(() => {
-        navigate(`/vote/${voteId}`)
+        navigate(`/vote/${processId}`)
       }, 2000)
     } catch (error) {
       console.error('Failed to launch vote:', error)
