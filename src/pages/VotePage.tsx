@@ -1,40 +1,16 @@
+import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
+import { VocdoniApiService } from '@vocdoni/davinci-sdk/sequencer'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { NewsletterCard } from '~components/newsletter-card'
 import { ShareableLink } from '~components/shareable-link'
 import { VoteDisplay } from '~components/vote-display'
 import { TotalVotesCard, VoteParameters } from '~components/vote-parameters'
-import type { VoteData } from '~src/types/vote'
-
-// Sample vote data as fallback
-const sampleVoteData = {
-  id: 'vote-123',
-  question: 'Should the DAVINCI protocol implement quadratic funding for community projects?',
-  description:
-    'This proposal aims to introduce quadratic funding mechanisms to better allocate community treasury funds to projects that have broad community support while preventing whale dominance in funding decisions.',
-  choices: [
-    { id: '1', text: 'Yes, implement quadratic funding immediately' },
-    { id: '2', text: 'Yes, but with a 6-month trial period first' },
-    { id: '3', text: 'No, keep the current funding mechanism' },
-    { id: '4', text: 'No, but explore alternative funding methods' },
-  ],
-  votingMethod: 'single-choice' as const,
-  censusType: 'ethereum-wallets' as const,
-  duration: '72',
-  durationUnit: 'hours' as const,
-  creator: 'dao-treasury.eth',
-  startTime: new Date(Date.now() - 24 * 60 * 60 * 1000),
-  endTime: new Date(Date.now() + 48 * 60 * 60 * 1000),
-  totalVotes: 1247,
-  isActive: true,
-  multipleChoiceMin: '1',
-  multipleChoiceMax: '3',
-  quadraticCredits: '100',
-}
 
 export default function VotePage() {
   const params = useParams()
-  const [voteData, setVoteData] = useState<VoteData | null>(null)
+  const [voteData, setVoteData] = useState<ElectionMetadata | null>(null)
+  const [processData, setProcessData] = useState<any | null>(null)
   const [isClient, setIsClient] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [currentTotalVotes, setCurrentTotalVotes] = useState(0)
@@ -42,52 +18,17 @@ export default function VotePage() {
 
   useEffect(() => {
     setIsClient(true)
+    ;(async () => {
+      const api = new VocdoniApiService(import.meta.env.SEQUENCER_URL)
 
-    const loadVoteData = () => {
-      try {
-        const storedVote = localStorage.getItem(`vote-${params.id}`)
-        if (storedVote) {
-          const parsedVote = JSON.parse(storedVote)
-          const voteWithDates = {
-            ...parsedVote,
-            startTime: new Date(parsedVote.startTime),
-            endTime: new Date(parsedVote.endTime),
-          }
-          setVoteData(voteWithDates)
-          setCurrentTotalVotes(voteWithDates.totalVotes)
+      const process = await api.getProcess(params.id as string)
+      const meta = await api.getMetadata(process.metadataURI.substring(process.metadataURI.lastIndexOf('/') + 1))
 
-          // Check if vote has ended
-          const now = new Date()
-          setVoteEnded(now > voteWithDates.endTime)
-        } else {
-          setVoteData(sampleVoteData)
-          setCurrentTotalVotes(sampleVoteData.totalVotes)
-
-          // Check if sample vote has ended
-          const now = new Date()
-          setVoteEnded(now > sampleVoteData.endTime)
-        }
-      } catch (error) {
-        console.error('Error loading vote data:', error)
-        setVoteData(sampleVoteData)
-        setCurrentTotalVotes(sampleVoteData.totalVotes)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadVoteData()
+      setVoteData(meta)
+      setProcessData(process)
+      setIsLoading(false)
+    })()
   }, [params.id])
-
-  // Simulate vote count increases while voting is active
-  useEffect(() => {
-    if (!voteEnded && voteData?.isActive) {
-      const interval = setInterval(() => {
-        setCurrentTotalVotes((prev) => prev + Math.floor(Math.random() * 3))
-      }, 5000)
-      return () => clearInterval(interval)
-    }
-  }, [voteEnded, voteData?.isActive])
 
   if (!isClient || isLoading) {
     return (
@@ -128,14 +69,19 @@ export default function VotePage() {
         <div className='grid grid-cols-1 lg:grid-cols-12 gap-8'>
           {/* Left Column - Vote Display (wider) */}
           <div className='lg:col-span-8'>
-            <VoteDisplay voteData={voteData} />
+            <VoteDisplay voteData={voteData} processData={processData} />
           </div>
 
           {/* Right Column - Info Cards */}
           <div className='lg:col-span-4 space-y-6'>
-            <TotalVotesCard voteData={voteData} currentTotalVotes={currentTotalVotes} voteEnded={voteEnded} />
+            <TotalVotesCard
+              voteData={voteData}
+              processData={processData}
+              currentTotalVotes={currentTotalVotes}
+              voteEnded={voteEnded}
+            />
             <ShareableLink voteId={params.id as string} />
-            <VoteParameters voteData={voteData} />
+            <VoteParameters voteData={voteData} processData={processData} />
             <NewsletterCard />
           </div>
         </div>

@@ -1,5 +1,6 @@
 'use client'
 
+import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
 import { AlertTriangle, BarChart3, CheckSquare, Shield } from 'lucide-react'
 import { Button } from '~components/ui/button'
 import {
@@ -17,8 +18,8 @@ interface VotingModalProps {
   onConfirm: () => void
   selectedChoice: string
   voteQuestion: string
-  isRevote?: boolean
-  votingMethod: 'single-choice' | 'multiple-choice' | 'quadratic-voting'
+  isRevote: boolean
+  votingMethod: ElectionResultsTypeNames
 }
 
 export function VotingModal({
@@ -34,9 +35,9 @@ export function VotingModal({
     if (isRevote) return <Shield className='w-5 h-5 text-blue-500' />
 
     switch (votingMethod) {
-      case 'multiple-choice':
+      case ElectionResultsTypeNames.MULTIPLE_CHOICE:
         return <CheckSquare className='w-5 h-5 text-green-500' />
-      case 'quadratic-voting':
+      case ElectionResultsTypeNames.QUADRATIC:
         return <BarChart3 className='w-5 h-5 text-purple-500' />
       default:
         return <AlertTriangle className='w-5 h-5 text-orange-500' />
@@ -47,9 +48,9 @@ export function VotingModal({
     if (isRevote) return 'Update Your Vote'
 
     switch (votingMethod) {
-      case 'multiple-choice':
+      case ElectionResultsTypeNames.MULTIPLE_CHOICE:
         return 'Confirm Multiple Choice Vote'
-      case 'quadratic-voting':
+      case ElectionResultsTypeNames.QUADRATIC:
         return 'Confirm Quadratic Vote'
       default:
         return 'Confirm Your Vote'
@@ -62,9 +63,9 @@ export function VotingModal({
     }
 
     switch (votingMethod) {
-      case 'multiple-choice':
+      case ElectionResultsTypeNames.MULTIPLE_CHOICE:
         return 'Please review your multiple selections before submitting. You can change your vote later if needed.'
-      case 'quadratic-voting':
+      case ElectionResultsTypeNames.QUADRATIC:
         return 'Please review your credit allocation before submitting. You can change your vote later if needed.'
       default:
         return 'Please review your selection before submitting. You can change your vote later if needed.'

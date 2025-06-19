@@ -88,15 +88,15 @@ export function CreateVoteForm() {
 
     try {
       // Initialize API service
-      const api = new VocdoniApiService('https://sequencer1.davinci.vote')
+      const api = new VocdoniApiService(import.meta.env.SEQUENCER_URL)
 
-      // Step 2: Fetch circuit info
-      const info = await api.getInfo()
+      // Step 2: Fetch circuit info (unnecessary)
+      // const info = await api.getInfo()
 
       // Step 3: Create census
       const censusId = await api.createCensus()
 
-      // Step 4: Add hardcoded participant
+      // Step 4: Add participants
       const participants = [
         {
           key: '0x8349DE968A70B79D09886DA1690CC259b67CbCbC',
@@ -106,7 +106,7 @@ export function CreateVoteForm() {
       await api.addParticipants(censusId, participants)
 
       // Step 5: Verify participants were added
-      await api.getParticipants(censusId)
+      console.log('participants:', await api.getParticipants(censusId))
 
       // Step 6: Get census root and size
       const censusRoot = await api.getCensusRoot(censusId)
@@ -115,7 +115,7 @@ export function CreateVoteForm() {
       // Step 7: Create and push metadata
       const metadata: ElectionMetadata = {
         title: { default: formData.question },
-        description: { default: `This vote was created to gather community input on: ${formData.question}` },
+        description: { default: '' },
         media: { header: '', logo: '' },
         questions: [
           {
@@ -140,6 +140,7 @@ export function CreateVoteForm() {
       }
       const metadataHash = await api.pushMetadata(metadata)
       const metadataUrl = api.getMetadataUrl(metadataHash)
+      console.log('Metadata URL:', metadataUrl)
 
       // Step 8: Create process via API
       const provider = new BrowserProvider(wallet.provider)
@@ -154,7 +155,7 @@ export function CreateVoteForm() {
         forceUniqueness: false,
         costFromWeight: false,
         costExponent: 0,
-        maxTotalCost: (formData.choices.length - 1).toString(),
+        maxTotalCost: '6', //(formData.choices.length - 1).toString(),
         minTotalCost: '0',
       }
 
@@ -192,11 +193,12 @@ export function CreateVoteForm() {
       )
 
       setLaunchSuccess(true)
+      console.log('Vote launched successfully with process ID:', processId)
 
       // Wait a moment to show success state, then navigate
-      setTimeout(() => {
-        navigate(`/vote/${processId}`)
-      }, 2000)
+      // setTimeout(() => {
+      //   navigate(`/vote/${processId}`)
+      // }, 2000)
     } catch (error) {
       console.error('Failed to launch vote:', error)
       setIsLaunching(false)
