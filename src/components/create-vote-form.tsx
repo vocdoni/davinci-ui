@@ -1,3 +1,6 @@
+import { OrganizationRegistryService, TxStatus, deployedAddresses } from '@vocdoni/davinci-sdk/contracts'
+import { useConnectWallet } from '@web3-onboard/react'
+import { BrowserProvider } from 'ethers'
 import { Calendar, CheckCircle, Clock, HelpCircle, Plus, Rocket, Users, Wallet, X } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -20,6 +23,7 @@ export function CreateVoteForm() {
   const navigate = useNavigate()
   const [isLaunching, setIsLaunching] = useState(false)
   const [launchSuccess, setLaunchSuccess] = useState(false)
+  const [{ wallet }] = useConnectWallet()
   const [formData, setFormData] = useState({
     question: '',
     choices: [
@@ -586,6 +590,47 @@ export function CreateVoteForm() {
                     Launch Vote
                   </>
                 )}
+              </Button>
+              <Button
+                className='bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base block mx-auto'
+                onClick={async () => {
+                  if (!wallet) {
+                    throw new Error('No wallet connected. Please connect a wallet to create an organization.')
+                  }
+
+                  try {
+                    const provider = new BrowserProvider(wallet.provider)
+                    const signer = await provider.getSigner()
+                    const orgService = new OrganizationRegistryService(
+                      deployedAddresses.organizationRegistry.sepolia,
+                      signer
+                    )
+
+                    const orgName = `automatically created org ${new Date().toDateString()}`
+                    const orgMeta = ``
+
+                    const txn = orgService.createOrganization(wallet.accounts[0].address, orgName, orgMeta, [
+                      wallet.accounts[0].address,
+                    ])
+
+                    for await (const { status } of txn) {
+                      if (status === TxStatus.Pending) {
+                        console.log('Transaction is pending...')
+                      } else if (status === TxStatus.Completed) {
+                        console.log('Transaction was completed!')
+                      } else if (status === TxStatus.Failed) {
+                        console.error('Transaction failed', txn)
+                      } else if (status === TxStatus.Reverted) {
+                        console.error('Transaction was reverted', txn)
+                      }
+                    }
+                  } catch (error) {
+                    console.error('Failed to create organization service:', error)
+                    return
+                  }
+                }}
+              >
+                Create org (required rn to create a vote)
               </Button>
 
               {isLaunching && (
