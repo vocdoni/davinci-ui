@@ -1,11 +1,11 @@
 import { useConnectWallet } from '@web3-onboard/react'
-import { ExternalLink, Loader2, Menu, Wallet } from 'lucide-react'
+import { ExternalLink, Menu } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '~components/ui/button'
 import { Card } from '~components/ui/card'
 import { Sheet, SheetContent, SheetTrigger } from '~components/ui/sheet'
-import { truncateAddress } from '~lib/web3-utils'
+import ConnectWalletButton from './ui/connect-wallet-button'
 
 interface NavigationItem {
   value: string
@@ -161,30 +161,7 @@ export function FloatingHeader() {
 
           {/* Connect Wallet Button */}
           <div className='w-40 flex justify-end'>
-            <Button
-              className='bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base whitespace-nowrap'
-              onClick={handleConnectWallet}
-            >
-              {connecting ? (
-                <>
-                  <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-                  <span className='hidden sm:inline'>Connecting...</span>
-                  <span className='sm:hidden'>...</span>
-                </>
-              ) : !!wallet ? (
-                <>
-                  <Wallet className='w-4 h-4 mr-2' />
-                  <span className='hidden sm:inline'>{truncateAddress(wallet.accounts[0].address)}</span>
-                  <span className='sm:hidden'>{truncateAddress(wallet.accounts[0].address, 4, 4)}</span>
-                </>
-              ) : (
-                <>
-                  <Wallet className='w-4 h-4 mr-2' />
-                  <span className='hidden sm:inline'>Connect Wallet</span>
-                  <span className='sm:hidden'>Connect</span>
-                </>
-              )}
-            </Button>
+            <ConnectWalletButton />
           </div>
         </div>
       </Card>

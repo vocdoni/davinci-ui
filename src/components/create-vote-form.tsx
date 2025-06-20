@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~
 import { Separator } from '~components/ui/separator'
 import { Textarea } from '~components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~components/ui/tooltip'
+import ConnectWalletButton from './ui/connect-wallet-button'
 
 interface Choice {
   id: string
@@ -662,64 +663,7 @@ export function CreateVoteForm() {
                   Your vote will be deployed to the DAVINCI network and become immediately active.
                 </p>
               </div>
-              <Button
-                onClick={handleLaunch}
-                disabled={!isFormValid() || isLaunching}
-                className='bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base'
-              >
-                {isLaunching ? (
-                  <>
-                    <div className='w-4 h-4 border-2 border-davinci-text-base/30 border-t-davinci-text-base rounded-full animate-spin mr-2' />
-                    Launching Vote...
-                  </>
-                ) : (
-                  <>
-                    <img src='/images/davinci-icon.png' alt='' className='w-4 h-4 mr-2' />
-                    Launch Vote
-                  </>
-                )}
-              </Button>
-              <Button
-                className='bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base block mx-auto'
-                onClick={async () => {
-                  if (!wallet) {
-                    throw new Error('No wallet connected. Please connect a wallet to create an organization.')
-                  }
-
-                  try {
-                    const provider = new BrowserProvider(wallet.provider)
-                    const signer = await provider.getSigner()
-                    const orgService = new OrganizationRegistryService(
-                      deployedAddresses.organizationRegistry.sepolia,
-                      signer
-                    )
-
-                    const orgName = `automatically created org ${new Date().toDateString()}`
-                    const orgMeta = ``
-
-                    const txn = orgService.createOrganization(wallet.accounts[0].address, orgName, orgMeta, [
-                      wallet.accounts[0].address,
-                    ])
-
-                    for await (const { status } of txn) {
-                      if (status === TxStatus.Pending) {
-                        console.log('Transaction is pending...')
-                      } else if (status === TxStatus.Completed) {
-                        console.log('Transaction was completed!')
-                      } else if (status === TxStatus.Failed) {
-                        console.error('Transaction failed', txn)
-                      } else if (status === TxStatus.Reverted) {
-                        console.error('Transaction was reverted', txn)
-                      }
-                    }
-                  } catch (error) {
-                    console.error('Failed to create organization service:', error)
-                    return
-                  }
-                }}
-              >
-                Create org (required rn to create a vote)
-              </Button>
+              <LaunchVoteButton handleLaunch={handleLaunch} isLaunching={isLaunching} isFormValid={isFormValid} />
 
               {isLaunching && (
                 <div className='bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border max-w-md mx-auto'>
@@ -733,5 +677,78 @@ export function CreateVoteForm() {
         </Card>
       </div>
     </TooltipProvider>
+  )
+}
+
+type LaunchVoteButtonProps = {
+  handleLaunch: () => void
+  isLaunching: boolean
+  isFormValid: () => boolean
+}
+
+const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVoteButtonProps) => {
+  const [{ wallet }] = useConnectWallet()
+  if (!wallet) {
+    return <ConnectWalletButton />
+  }
+
+  return (
+    <>
+      <Button
+        onClick={handleLaunch}
+        disabled={!isFormValid() || isLaunching}
+        className='bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base'
+      >
+        {isLaunching ? (
+          <>
+            <div className='w-4 h-4 border-2 border-davinci-text-base/30 border-t-davinci-text-base rounded-full animate-spin mr-2' />
+            Launching Vote...
+          </>
+        ) : (
+          <>
+            <img src='/images/davinci-icon.png' alt='' className='w-4 h-4 mr-2' />
+            Launch Vote
+          </>
+        )}
+      </Button>
+      <Button
+        className='bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base block mx-auto'
+        onClick={async () => {
+          if (!wallet) {
+            throw new Error('No wallet connected. Please connect a wallet to create an organization.')
+          }
+
+          try {
+            const provider = new BrowserProvider(wallet.provider)
+            const signer = await provider.getSigner()
+            const orgService = new OrganizationRegistryService(deployedAddresses.organizationRegistry.sepolia, signer)
+
+            const orgName = `automatically created org ${new Date().toDateString()}`
+            const orgMeta = ``
+
+            const txn = orgService.createOrganization(wallet.accounts[0].address, orgName, orgMeta, [
+              wallet.accounts[0].address,
+            ])
+
+            for await (const { status } of txn) {
+              if (status === TxStatus.Pending) {
+                console.log('Transaction is pending...')
+              } else if (status === TxStatus.Completed) {
+                console.log('Transaction was completed!')
+              } else if (status === TxStatus.Failed) {
+                console.error('Transaction failed', txn)
+              } else if (status === TxStatus.Reverted) {
+                console.error('Transaction was reverted', txn)
+              }
+            }
+          } catch (error) {
+            console.error('Failed to create organization service:', error)
+            return
+          }
+        }}
+      >
+        Create org (required rn to create a vote)
+      </Button>
+    </>
   )
 }
