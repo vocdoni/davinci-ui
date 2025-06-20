@@ -369,6 +369,7 @@ export function CreateVoteForm() {
                     value='multiple-choice'
                     id='multiple-choice'
                     className='border-davinci-callout-border'
+                    disabled
                   />
                   <Label htmlFor='multiple-choice' className='text-davinci-black-alt'>
                     Multiple Choice
@@ -387,6 +388,7 @@ export function CreateVoteForm() {
                     value='quadratic-voting'
                     id='quadratic-voting'
                     className='border-davinci-callout-border'
+                    disabled
                   />
                   <Label htmlFor='quadratic-voting' className='text-davinci-black-alt'>
                     Quadratic Voting
@@ -522,9 +524,20 @@ export function CreateVoteForm() {
                 <div className='space-y-2'>
                   <div className='flex items-center space-x-2'>
                     <RadioGroupItem
+                      value='hardcoded-wallets'
+                      id='hardcoded-wallets'
+                      className='border-davinci-callout-border'
+                    />
+                    <Label htmlFor='hardcoded-wallets' className='text-davinci-black-alt'>
+                      Hardcoded wallets 🫠
+                    </Label>
+                  </div>
+                  <div className='flex items-center space-x-2'>
+                    <RadioGroupItem
                       value='ethereum-wallets'
                       id='ethereum-wallets'
                       className='border-davinci-callout-border'
+                      disabled
                     />
                     <Label htmlFor='ethereum-wallets' className='text-davinci-black-alt'>
                       Ethereum Wallets
@@ -556,6 +569,7 @@ export function CreateVoteForm() {
                       value='holonym-passport'
                       id='holonym-passport'
                       className='border-davinci-callout-border'
+                      disabled
                     />
                     <Label htmlFor='holonym-passport' className='text-davinci-black-alt'>
                       Holonym Passport
