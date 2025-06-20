@@ -53,7 +53,7 @@ export function CreateVoteForm() {
   })
 
   const addChoice = () => {
-    if (formData.choices.length < 6) {
+    if (formData.choices.length < 8) {
       const newChoice = {
         id: Date.now().toString(),
         text: '',
@@ -150,12 +150,12 @@ export function CreateVoteForm() {
 
       const ballotMode = {
         maxCount: 1,
-        maxValue: (formData.choices.length - 1).toString(),
+        maxValue: '8', // (formData.choices.length - 1).toString(),
         minValue: '0',
         forceUniqueness: false,
         costFromWeight: false,
         costExponent: 0,
-        maxTotalCost: '6', //(formData.choices.length - 1).toString(),
+        maxTotalCost: '36', //  metadata.questions[0].choices.reduce((p, n) => p + n.value, 0).toString(),
         minTotalCost: '0',
       }
 
@@ -193,12 +193,12 @@ export function CreateVoteForm() {
       )
 
       setLaunchSuccess(true)
-      console.log('Vote launched successfully with process ID:', processId)
+      console.log('Vote launched successfully (?) with process ID:', processId)
 
       // Wait a moment to show success state, then navigate
-      // setTimeout(() => {
-      //   navigate(`/vote/${processId}`)
-      // }, 2000)
+      setTimeout(() => {
+        navigate(`/vote/${processId}`)
+      }, 2000)
     } catch (error) {
       console.error('Failed to launch vote:', error)
       setIsLaunching(false)
@@ -292,7 +292,7 @@ export function CreateVoteForm() {
                   variant='outline'
                   size='sm'
                   onClick={addChoice}
-                  disabled={formData.choices.length >= 6}
+                  disabled={formData.choices.length >= 8}
                   className='border-davinci-callout-border text-davinci-black-alt hover:bg-davinci-soft-neutral/20'
                 >
                   <Plus className='w-4 h-4 mr-1' />

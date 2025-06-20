@@ -5,8 +5,10 @@ import { useEffect, useState } from 'react'
 import { Badge } from '~components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
 
+import { ProcessStatus } from '@vocdoni/davinci-sdk/contracts'
 import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
 import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
+import type { GetProcessResponse } from '@vocdoni/davinci-sdk/sequencer'
 
 interface ProcessData {
   voteCount: number
@@ -18,7 +20,7 @@ interface ProcessData {
 
 interface VoteParametersProps {
   voteData: ElectionMetadata
-  processData: ProcessData
+  processData: GetProcessResponse
 }
 
 export function VoteParameters({ voteData, processData }: VoteParametersProps) {
@@ -28,8 +30,7 @@ export function VoteParameters({ voteData, processData }: VoteParametersProps) {
   // Update vote count and status
   useEffect(() => {
     const checkVoteStatus = () => {
-      const now = new Date()
-      const hasEnded = now.getTime() >= processData.endDate * 1000
+      const hasEnded = processData.status === ProcessStatus.ENDED
       setVoteEnded(hasEnded)
     }
 
@@ -40,7 +41,7 @@ export function VoteParameters({ voteData, processData }: VoteParametersProps) {
     const interval = setInterval(checkVoteStatus, 1000)
 
     return () => clearInterval(interval)
-  }, [processData.endDate])
+  }, [processData.status])
 
   // Simulate vote count increases while voting is active
   useEffect(() => {
@@ -95,7 +96,7 @@ export function VoteParameters({ voteData, processData }: VoteParametersProps) {
           <User className='w-4 h-4 text-davinci-black-alt mt-0.5 flex-shrink-0' />
           <div className='min-w-0 flex-1'>
             <h4 className='font-medium text-davinci-black-alt text-sm'>Creator</h4>
-            <p className='text-xs text-davinci-black-alt/80 font-mono break-all'>{processData.creator}</p>
+            <p className='text-xs text-davinci-black-alt/80 font-mono break-all'>{processData.organizationId}</p>
           </div>
         </div>
 
@@ -135,9 +136,7 @@ export function VoteParameters({ voteData, processData }: VoteParametersProps) {
           <Clock className='w-4 h-4 text-davinci-black-alt mt-0.5 flex-shrink-0' />
           <div className='min-w-0 flex-1'>
             <h4 className='font-medium text-davinci-black-alt text-sm'>Duration</h4>
-            <p className='text-xs text-davinci-black-alt/80'>
-              {Math.floor((processData.endDate - Math.floor(Date.now() / 1000)) / 60)} minutes
-            </p>
+            <p className='text-xs text-davinci-black-alt/80'>{Math.floor(processData.duration / 1000)} minutes</p>
           </div>
         </div>
 
@@ -148,11 +147,11 @@ export function VoteParameters({ voteData, processData }: VoteParametersProps) {
             <h4 className='font-medium text-davinci-black-alt text-sm'>Timeline</h4>
             <div className='space-y-1'>
               <p className='text-xs text-davinci-black-alt/80'>
-                <span className='font-medium'>Started:</span>{' '}
-                {formatDate(new Date((processData.endDate - 3600) * 1000))}
+                <span className='font-medium'>Started:</span> {formatDate(new Date(processData.startTime))}
               </p>
               <p className='text-xs text-davinci-black-alt/80'>
-                <span className='font-medium'>Ends:</span> {formatDate(new Date(processData.endDate * 1000))}
+                <span className='font-medium'>Ends:</span>{' '}
+                {formatDate(new Date(new Date(processData.startTime).getTime() + processData.duration / 1000000))}
               </p>
             </div>
           </div>
@@ -171,7 +170,7 @@ export function VoteParameters({ voteData, processData }: VoteParametersProps) {
 
 interface TotalVotesCardProps {
   voteData: ElectionMetadata
-  processData: ProcessData
+  processData: GetProcessResponse
   currentTotalVotes: number
   voteEnded: boolean
 }

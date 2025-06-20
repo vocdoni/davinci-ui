@@ -16,17 +16,21 @@ import { truncateAddress } from '~lib/web3-utils'
 
 import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
 import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
-
-interface ProcessData {
-  voteCount: number
-  endDate: number
-  maxVoteCount: number
-  isAcceptingVotes: boolean
-}
+import {
+  BallotProof,
+  CircomProof,
+  VocdoniApiService,
+  type BallotProofInputs,
+  type GetProcessResponse,
+  type VoteBallot,
+  type VoteRequest,
+} from '@vocdoni/davinci-sdk/sequencer'
+import { BrowserProvider } from 'ethers'
 
 interface VoteDisplayProps {
   voteData: ElectionMetadata
-  processData: ProcessData
+  processData: GetProcessResponse
+  id: string
 }
 
 interface VotingMethod {
@@ -66,7 +70,7 @@ interface QuadraticVote {
   [choiceId: string]: number
 }
 
-export function VoteDisplay({ voteData, processData }: VoteDisplayProps) {
+export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
   const [{ wallet }, connect] = useConnectWallet()
   const [isEligible, setIsEligible] = useState(true)
   const [selectedChoice, setSelectedChoice] = useState('')
@@ -78,7 +82,6 @@ export function VoteDisplay({ voteData, processData }: VoteDisplayProps) {
   const [timeRemaining, setTimeRemaining] = useState('')
   const [voteEnded, setVoteEnded] = useState(false)
   const [results, setResults] = useState<VoteResults>({})
-  const [currentTotalVotes, setCurrentTotalVotes] = useState(processData?.voteCount || 0)
   const [justVoted, setJustVoted] = useState(false)
   const [showProgressTracker, setShowProgressTracker] = useState(false)
   const isConnected = !!wallet
@@ -113,7 +116,7 @@ export function VoteDisplay({ voteData, processData }: VoteDisplayProps) {
 
   // Generate realistic vote results
   const generateResults = (): VoteResults => {
-    const totalVotes = currentTotalVotes
+    const totalVotes = Number(processData.voteCount)
     const results: VoteResults = {}
     let remainingVotes = totalVotes
 
@@ -143,11 +146,13 @@ export function VoteDisplay({ voteData, processData }: VoteDisplayProps) {
   useEffect(() => {
     const updateTimer = () => {
       const now = new Date()
-      const endTime = new Date(processData?.endDate * 1000)
-      const timeLeft = endTime.getTime() - now.getTime()
+      const startTime = new Date(processData.startTime)
+      const endTime = new Date(startTime.getTime() + processData.duration / 1000000)
 
+      const timeLeft = endTime.getTime() - now.getTime()
       if (timeLeft <= 0) {
         setTimeRemaining('00:00:00')
+        // This clearly won't work this way...
         if (!voteEnded) {
           setVoteEnded(true)
           setResults(generateResults())
@@ -169,17 +174,7 @@ export function VoteDisplay({ voteData, processData }: VoteDisplayProps) {
     updateTimer()
     const interval = setInterval(updateTimer, 1000)
     return () => clearInterval(interval)
-  }, [processData?.endDate, voteEnded, currentTotalVotes])
-
-  // Simulate vote count increases while voting is active
-  useEffect(() => {
-    if (!voteEnded && processData?.isAcceptingVotes) {
-      const interval = setInterval(() => {
-        setCurrentTotalVotes((prev) => prev + Math.floor(Math.random() * 3))
-      }, 5000)
-      return () => clearInterval(interval)
-    }
-  }, [voteEnded, processData?.isAcceptingVotes])
+  }, [processData?.startTime, voteEnded])
 
   // Clear "just voted" state after a few seconds
   useEffect(() => {
@@ -207,27 +202,110 @@ export function VoteDisplay({ voteData, processData }: VoteDisplayProps) {
     setShowVotingModal(true)
   }
 
-  const confirmVote = () => {
+  const confirmVote = async () => {
+    if (!wallet) {
+      throw new Error('Wallet not connected')
+    }
     setVoteCount((prev) => prev + 1)
     setShowVotingModal(false)
-    setCurrentTotalVotes((prev) => prev + 1)
 
-    // Show progress tracker
-    setShowProgressTracker(true)
+    try {
+      // Initialize API service
+      const api = new VocdoniApiService(import.meta.env.SEQUENCER_URL)
+
+      // Step 2: Fetch circuit info (unnecessary)
+      const info = await api.getInfo()
+
+      const sdk = new BallotProof({
+        wasmExecUrl: info.ballotProofWasmHelperExecJsUrl,
+        wasmUrl: info.ballotProofWasmHelperUrl,
+      })
+      await sdk.init()
+      console.log('✅ BallotProof SDK initialized')
+
+      const kHex = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('')
+      const kStr = BigInt('0x' + kHex).toString()
+
+      const inputs: BallotProofInputs = {
+        address: wallet.accounts[0].address,
+        processID: id,
+        ballotMode: processData.ballotMode,
+        encryptionKey: [processData.encryptionKey.x, processData.encryptionKey.y],
+        k: kStr,
+        fieldValues: [selectedChoice],
+        secret: '1234567890',
+        weight: '1',
+      }
+      console.log('✅ Ballot proof inputs:', inputs)
+
+      const out = await sdk.proofInputs(inputs)
+
+      console.log('✅ Ballot proof inputs generated:', out, info)
+
+      const pg = new CircomProof({
+        wasmUrl: info.circuitUrl,
+        zkeyUrl: info.provingKeyUrl,
+        vkeyUrl: info.verificationKeyUrl,
+      })
+      console.log('✅ CircomProof SDK initialized', pg)
+
+      const { proof, publicSignals } = await pg.generate(out.circomInputs)
+      console.log('✅ Proof generated:', proof)
+      const ok = await pg.verify(proof, publicSignals)
+
+      if (!ok) throw new Error(`Proof verification failed`)
+
+      const censusProof = await api.getCensusProof(processData.census.censusRoot, wallet.accounts[0].address)
+      const voteBallot: VoteBallot = {
+        curveType: out.ballot.curveType,
+        ciphertexts: out.ballot.ciphertexts,
+      }
+
+      const provider = new BrowserProvider(wallet.provider)
+      const signer = await provider.getSigner()
+      console.log('voteid:', out.voteID)
+      console.log('vid hexed:', hexStringToUint8Array(out.voteID).toString())
+      const signature = await signer.signMessage(hexStringToUint8Array(out.voteID))
+
+      const voteRequest: VoteRequest = {
+        address: wallet.accounts[0].address,
+        ballot: voteBallot,
+        processId: id,
+        ballotProof: proof,
+        ballotInputsHash: out.ballotInputHash,
+        commitment: out.commitment,
+        nullifier: out.nullifier,
+        censusProof,
+        signature,
+      }
+
+      const voteId = await api.submitVote(voteRequest)
+
+      // Show progress tracker
+      setShowProgressTracker(true)
+
+      setJustVoted(true)
+
+      console.log('✅ Vote submitted successfully:', voteId)
+    } catch (error) {
+      console.error('Error during voting process:', error)
+
+      return
+    }
 
     // Clear selections after voting
     setSelectedChoice('')
     setSelectedChoices([])
-    const votingMethod = getVotingMethod(voteData)
-    if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
-      const resetVotes: QuadraticVote = {}
-      voteData.questions[0].choices.forEach((choice) => {
-        resetVotes[choice.value.toString()] = 0
-      })
-      setQuadraticVotes(resetVotes)
-    }
-
-    setJustVoted(true)
+    // const votingMethod = getVotingMethod(voteData)
+    // if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
+    //   const resetVotes: QuadraticVote = {}
+    //   voteData.questions[0].choices.forEach((choice) => {
+    //     resetVotes[choice.value.toString()] = 0
+    //   })
+    //   setQuadraticVotes(resetVotes)
+    // }
   }
 
   const handleResetProgress = () => {
@@ -396,12 +474,15 @@ export function VoteDisplay({ voteData, processData }: VoteDisplayProps) {
               <h5 className='font-semibold text-davinci-black-alt mb-4'>Vote Summary</h5>
               <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                 <div className='text-center'>
-                  <p className='text-2xl font-bold text-davinci-black-alt'>{currentTotalVotes.toLocaleString()}</p>
+                  <p className='text-2xl font-bold text-davinci-black-alt'>{processData.voteCount}</p>
                   <p className='text-xs text-davinci-black-alt/60'>Total Votes</p>
                 </div>
                 <div className='text-center'>
                   <p className='text-2xl font-bold text-davinci-black-alt'>
-                    {((currentTotalVotes / (processData?.maxVoteCount || 5000)) * 100).toFixed(1)}%
+                    {((Number(processData.voteCount) / (Number(processData?.census.maxVotes) || 5000)) * 100).toFixed(
+                      1
+                    )}
+                    %
                   </p>
                   <p className='text-xs text-davinci-black-alt/60'>Turnout</p>
                 </div>
@@ -418,9 +499,7 @@ export function VoteDisplay({ voteData, processData }: VoteDisplayProps) {
             <div className='space-y-6'>
               <div className='flex items-center justify-between'>
                 <h4 className='text-xl font-bold text-davinci-black-alt'>Detailed Results</h4>
-                <div className='text-sm text-davinci-black-alt/60'>
-                  Total: {currentTotalVotes.toLocaleString()} votes
-                </div>
+                <div className='text-sm text-davinci-black-alt/60'>Total: {processData.voteCount} votes</div>
               </div>
 
               {/* Single Card with All Results */}
@@ -797,7 +876,7 @@ export function VoteDisplay({ voteData, processData }: VoteDisplayProps) {
                               min='0'
                               value={votes}
                               onChange={(e) => {
-                                const newVotes = Math.max(0, Number.parseInt(e.target.value) || 0)
+                                const newVotes = Math.max(0, Number(e.target.value) || 0)
                                 setQuadraticVotes((prev) => ({
                                   ...prev,
                                   [choice.value.toString()]: newVotes,
@@ -932,3 +1011,11 @@ export function VoteDisplay({ voteData, processData }: VoteDisplayProps) {
     </div>
   )
 }
+
+const hexStringToUint8Array = (hex: string) =>
+  new Uint8Array(
+    hex
+      .replace(/^0x/, '')
+      .match(/.{1,2}/g)!
+      .map((byte) => parseInt(byte, 16))
+  )

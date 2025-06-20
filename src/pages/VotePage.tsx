@@ -1,5 +1,5 @@
 import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
-import { VocdoniApiService } from '@vocdoni/davinci-sdk/sequencer'
+import { VocdoniApiService, type GetProcessResponse } from '@vocdoni/davinci-sdk/sequencer'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { NewsletterCard } from '~components/newsletter-card'
@@ -10,7 +10,7 @@ import { TotalVotesCard, VoteParameters } from '~components/vote-parameters'
 export default function VotePage() {
   const params = useParams()
   const [voteData, setVoteData] = useState<ElectionMetadata | null>(null)
-  const [processData, setProcessData] = useState<any | null>(null)
+  const [processData, setProcessData] = useState<GetProcessResponse | null>(null)
   const [isClient, setIsClient] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [currentTotalVotes, setCurrentTotalVotes] = useState(0)
@@ -69,19 +69,19 @@ export default function VotePage() {
         <div className='grid grid-cols-1 lg:grid-cols-12 gap-8'>
           {/* Left Column - Vote Display (wider) */}
           <div className='lg:col-span-8'>
-            <VoteDisplay voteData={voteData} processData={processData} />
+            <VoteDisplay voteData={voteData} processData={processData as GetProcessResponse} id={params.id as string} />
           </div>
 
           {/* Right Column - Info Cards */}
           <div className='lg:col-span-4 space-y-6'>
             <TotalVotesCard
               voteData={voteData}
-              processData={processData}
+              processData={processData as GetProcessResponse}
               currentTotalVotes={currentTotalVotes}
               voteEnded={voteEnded}
             />
             <ShareableLink voteId={params.id as string} />
-            <VoteParameters voteData={voteData} processData={processData} />
+            <VoteParameters voteData={voteData} processData={processData as GetProcessResponse} />
             <NewsletterCard />
           </div>
         </div>
