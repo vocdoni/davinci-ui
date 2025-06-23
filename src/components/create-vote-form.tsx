@@ -2,6 +2,7 @@ import {
   OrganizationRegistryService,
   ProcessRegistryService,
   ProcessStatus,
+  SmartContractService,
   TxStatus,
   deployedAddresses,
 } from '@vocdoni/davinci-sdk/contracts'
@@ -17,6 +18,7 @@ import { BrowserProvider } from 'ethers'
 import { Calendar, CheckCircle, Clock, HelpCircle, Plus, Rocket, Users, Wallet, X } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { up } from 'up-fetch'
 import { Button } from '~components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~components/ui/card'
 import { Input } from '~components/ui/input'
@@ -31,6 +33,26 @@ import ConnectWalletButton from './ui/connect-wallet-button'
 interface Choice {
   id: string
   text: string
+}
+
+const upfetch = up(fetch)
+
+type Snapshot = {
+  snapshotDate: string // ISO date string
+  censusRoot: string
+  participantCount: number
+  minBalance: number
+  queryName: string
+  createdAt: string // ISO date string
+}
+
+type SnapshotsResponse = {
+  snapshots: Snapshot[]
+  total: number
+  page: number
+  pageSize: number
+  hasNext: boolean
+  hasPrev: boolean
 }
 
 export function CreateVoteForm() {
@@ -94,24 +116,40 @@ export function CreateVoteForm() {
       // Step 2: Fetch circuit info (unnecessary)
       // const info = await api.getInfo()
 
-      // Step 3: Create census
-      const censusId = await api.createCensus()
+      const census = {
+        censusURI: '',
+        censusRoot: '',
+        censusSize: 0,
+      }
+      switch (formData.censusType) {
+        case 'ethereum-wallets': {
+          const snapshots = await upfetch<SnapshotsResponse>(`${import.meta.env.BIGQUERY_URL}/snapshots`)
 
-      // Step 4: Add participants
-      const participants = [
-        {
-          key: '0x8349DE968A70B79D09886DA1690CC259b67CbCbC',
-          weight: '1',
-        },
-      ]
-      await api.addParticipants(censusId, participants)
+          census.censusSize = snapshots.snapshots[0].participantCount
+          census.censusRoot = snapshots.snapshots[0].censusRoot
+          census.censusURI = `${import.meta.env.BIGQUERY_URL}/censuses/${census.censusRoot}`
+          break
+        }
+        default: {
+          // Step 3: Create census
+          const censusId = await api.createCensus()
 
-      // Step 5: Verify participants were added
-      console.log('participants:', await api.getParticipants(censusId))
+          // Step 4: Add participants
+          const participants = [
+            {
+              key: '0x8349DE968A70B79D09886DA1690CC259b67CbCbC',
+              weight: '1',
+            },
+          ]
+          await api.addParticipants(censusId, participants)
+          const censusRoot = await api.getCensusRoot(censusId)
+          const censusSize = await api.getCensusSize(censusId)
 
-      // Step 6: Get census root and size
-      const censusRoot = await api.getCensusRoot(censusId)
-      const censusSize = await api.getCensusSize(censusId)
+          census.censusURI = censusId
+          census.censusRoot = censusRoot
+          census.censusSize = censusSize
+        }
+      }
 
       // Step 7: Create and push metadata
       const metadata: ElectionMetadata = {
@@ -161,7 +199,7 @@ export function CreateVoteForm() {
       }
 
       const { processId, encryptionPubKey, stateRoot } = await api.createProcess({
-        censusRoot,
+        censusRoot: census.censusRoot,
         ballotMode,
         nonce,
         chainId: 11155111,
@@ -175,22 +213,24 @@ export function CreateVoteForm() {
 
       // Step 10: Submit newProcess on-chain
       const registry = new ProcessRegistryService(deployedAddresses.processRegistry.sepolia, signer)
-      await registry.newProcess(
-        ProcessStatus.READY,
-        Math.floor(Date.now() / 1000) + 60,
-        Number.parseInt(formData.duration) * (formData.durationUnit === 'hours' ? 3600 : 60),
-        ballotMode,
-        {
-          censusOrigin: 1,
-          maxVotes: censusSize.toString(),
-          censusRoot,
-          censusURI: censusId,
-        },
-        metadataUrl,
-        wallet.accounts[0].address,
-        processId,
-        { x: encryptionPubKey[0], y: encryptionPubKey[1] },
-        BigInt(stateRoot)
+      await SmartContractService.executeTx(
+        registry.newProcess(
+          ProcessStatus.READY,
+          Math.floor(Date.now() / 1000) + 60,
+          Number.parseInt(formData.duration) * (formData.durationUnit === 'hours' ? 3600 : 60),
+          ballotMode,
+          {
+            censusOrigin: 1,
+            maxVotes: census.censusSize.toString(),
+            censusRoot: census.censusRoot,
+            censusURI: census.censusURI,
+          },
+          metadataUrl,
+          wallet.accounts[0].address,
+          processId,
+          { x: encryptionPubKey[0], y: encryptionPubKey[1] },
+          BigInt(stateRoot)
+        )
       )
 
       setLaunchSuccess(true)
@@ -199,7 +239,7 @@ export function CreateVoteForm() {
       // Wait a moment to show success state, then navigate
       setTimeout(() => {
         navigate(`/vote/${processId}`)
-      }, 2000)
+      }, 5000)
     } catch (error) {
       console.error('Failed to launch vote:', error)
       setIsLaunching(false)
@@ -537,7 +577,6 @@ export function CreateVoteForm() {
                       value='ethereum-wallets'
                       id='ethereum-wallets'
                       className='border-davinci-callout-border'
-                      disabled
                     />
                     <Label htmlFor='ethereum-wallets' className='text-davinci-black-alt'>
                       Ethereum Wallets
@@ -761,7 +800,7 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
           }
         }}
       >
-        Create org (required rn to create a vote)
+        Create org (required rn to create a vote for the first time)
       </Button>
     </>
   )

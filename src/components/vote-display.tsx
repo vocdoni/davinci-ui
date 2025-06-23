@@ -14,8 +14,6 @@ import { VoteProgressTracker } from '~components/vote-progress-tracker'
 import { VotingModal } from '~components/voting-modal'
 import { truncateAddress } from '~lib/web3-utils'
 
-import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
-import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
 import {
   BallotProof,
   CircomProof,
@@ -24,7 +22,9 @@ import {
   type GetProcessResponse,
   type VoteBallot,
   type VoteRequest,
-} from '@vocdoni/davinci-sdk/sequencer'
+} from '@vocdoni/davinci-sdk'
+import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
+import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
 import { BrowserProvider } from 'ethers'
 
 interface VoteDisplayProps {
@@ -221,7 +221,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
         wasmUrl: info.ballotProofWasmHelperUrl,
       })
       await sdk.init()
-      console.log('✅ BallotProof SDK initialized')
+      console.info('✅ BallotProof SDK initialized')
 
       const kHex = Array.from(crypto.getRandomValues(new Uint8Array(8)))
         .map((b) => b.toString(16).padStart(2, '0'))
@@ -238,18 +238,18 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
         secret: '1234567890',
         weight: '1',
       }
-      console.log('✅ Ballot proof inputs:', inputs)
+      console.info('✅ Ballot proof inputs:', inputs)
 
       const out = await sdk.proofInputs(inputs)
 
-      console.log('✅ Ballot proof inputs generated:', out, info)
+      console.info('✅ Ballot proof inputs generated:', out, info)
 
       const pg = new CircomProof({
         wasmUrl: info.circuitUrl,
         zkeyUrl: info.provingKeyUrl,
         vkeyUrl: info.verificationKeyUrl,
       })
-      console.log('✅ CircomProof SDK initialized', pg)
+      console.info('✅ CircomProof SDK initialized', pg)
 
       const { proof, publicSignals } = await pg.generate(out.circomInputs)
       console.log('✅ Proof generated:', proof)
@@ -257,7 +257,13 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
 
       if (!ok) throw new Error(`Proof verification failed`)
 
-      const censusProof = await api.getCensusProof(processData.census.censusRoot, wallet.accounts[0].address)
+      console.info('ℹ️ Process census:', processData.census)
+
+      const censusProof = await api.getCensusProof(
+        processData.census.censusURI,
+        processData.census.censusRoot,
+        wallet.accounts[0].address
+      )
       const voteBallot: VoteBallot = {
         curveType: out.ballot.curveType,
         ciphertexts: out.ballot.ciphertexts,
@@ -265,8 +271,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
 
       const provider = new BrowserProvider(wallet.provider)
       const signer = await provider.getSigner()
-      console.log('voteid:', out.voteID)
-      console.log('vid hexed:', hexStringToUint8Array(out.voteID).toString())
+      console.info('ℹ️ voteid:', out.voteID)
       const signature = await signer.signMessage(hexStringToUint8Array(out.voteID))
 
       const voteRequest: VoteRequest = {
@@ -288,7 +293,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
 
       setJustVoted(true)
 
-      console.log('✅ Vote submitted successfully:', voteId)
+      console.info('✅ Vote submitted successfully:', voteId)
     } catch (error) {
       console.error('Error during voting process:', error)
 

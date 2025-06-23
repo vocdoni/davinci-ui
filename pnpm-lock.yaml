@@ -100,7 +100,7 @@ importers:
         version: 1.2.7(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@vocdoni/davinci-sdk':
         specifier: github:vocdoni/davinci-sdk#f/ts-bundling
-        version: https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/d6ea6823a901787cb16fdd39e2431f0475ca3dfe
+        version: https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/336b1b646f2dbbd029f9e13b92790fd4d7492f20
       '@web3-onboard/core':
         specifier: ^2.24.1
         version: 2.24.1(typescript@5.8.3)(zod@3.25.61)
@@ -167,6 +167,9 @@ importers:
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@3.4.17)
+      up-fetch:
+        specifier: ^2.1.6
+        version: 2.1.6
       vaul:
         specifier: ^0.9.6
         version: 0.9.9(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1876,9 +1879,9 @@ packages:
   '@vocdoni/davinci-contracts@0.0.5':
     resolution: {integrity: sha512-8uVE78hJUEQpmY5QIe2M4voDXbonfgOlv2Iqng3ko5jkpGmXBpyoa7RzEpjDAAdLPyTAknfgIC/C/bgtKya6FA==}
 
-  '@vocdoni/davinci-sdk@https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/d6ea6823a901787cb16fdd39e2431f0475ca3dfe':
-    resolution: {tarball: https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/d6ea6823a901787cb16fdd39e2431f0475ca3dfe}
-    version: 0.0.1
+  '@vocdoni/davinci-sdk@https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/336b1b646f2dbbd029f9e13b92790fd4d7492f20':
+    resolution: {tarball: https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/336b1b646f2dbbd029f9e13b92790fd4d7492f20}
+    version: 0.0.3-beta2
 
   '@walletconnect/core@2.21.0':
     resolution: {integrity: sha512-o6R7Ua4myxR8aRUAJ1z3gT9nM+jd2B2mfamu6arzy1Cc6vi10fIwFWb6vg3bC8xJ6o9H3n/cN5TOW3aA9Y1XVw==}
@@ -3495,6 +3498,10 @@ packages:
         optional: true
       uploadthing:
         optional: true
+
+  up-fetch@2.1.6:
+    resolution: {integrity: sha512-1ksUeTIFNXTcCuSukHjGMWF2QW4aYATNBQ3B6J6MdiI4xX3aqmA5MZVHAWcVpMDPPj0QcZleVqbSVLUKCsr0mA==}
+    engines: {node: '>=18'}
 
   update-browserslist-db@1.1.3:
     resolution: {integrity: sha512-UxhIZQ+QInVdunkDAaiazvvT/+fXL5Osr0JZlJulepYu6Jd7qJtDZjlur0emRlT71EN3ScPoE7gvsuIKKNavKw==}
@@ -5534,7 +5541,7 @@ snapshots:
 
   '@vocdoni/davinci-contracts@0.0.5': {}
 
-  '@vocdoni/davinci-sdk@https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/d6ea6823a901787cb16fdd39e2431f0475ca3dfe':
+  '@vocdoni/davinci-sdk@https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/336b1b646f2dbbd029f9e13b92790fd4d7492f20':
     dependencies:
       '@ethereumjs/common': 4.4.0
       '@vocdoni/davinci-contracts': 0.0.5
@@ -7696,6 +7703,8 @@ snapshots:
       ufo: 1.6.1
     optionalDependencies:
       idb-keyval: 6.2.2
+
+  up-fetch@2.1.6: {}
 
   update-browserslist-db@1.1.3(browserslist@4.25.0):
     dependencies:
