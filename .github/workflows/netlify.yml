@@ -33,6 +33,8 @@ jobs:
 
       - name: Build DAVINCI UI
         run: pnpm build
+        env:
+          BIGQUERY_URL: https://bigquery.elboletaire.com
 
       - name: Deploy to Netlify
         uses: nwtgck/actions-netlify@v2.0
