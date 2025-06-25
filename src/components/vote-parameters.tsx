@@ -136,7 +136,9 @@ export function VoteParameters({ voteData, processData }: VoteParametersProps) {
           <Clock className='w-4 h-4 text-davinci-black-alt mt-0.5 flex-shrink-0' />
           <div className='min-w-0 flex-1'>
             <h4 className='font-medium text-davinci-black-alt text-sm'>Duration</h4>
-            <p className='text-xs text-davinci-black-alt/80'>{Math.floor(processData.duration / 1000)} minutes</p>
+            <p className='text-xs text-davinci-black-alt/80'>
+              {Math.floor(processData.duration / 1000000000 / 60)} minutes
+            </p>
           </div>
         </div>
 
