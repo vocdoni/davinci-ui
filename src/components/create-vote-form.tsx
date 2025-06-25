@@ -173,7 +173,7 @@ export function CreateVoteForm() {
         version: '1.2' as ProtocolVersion,
         meta: {},
         type: {
-          name: ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION,
+          name: formData.votingMethod as ElectionResultsTypeNames,
           properties: {} as Record<string, never>,
         } as ElectionResultsType,
       }
@@ -399,17 +399,20 @@ export function CreateVoteForm() {
                 onValueChange={(value) => setFormData({ ...formData, votingMethod: value })}
               >
                 <div className='flex items-center space-x-2'>
-                  <RadioGroupItem value='single-choice' id='single-choice' className='border-davinci-callout-border' />
+                  <RadioGroupItem
+                    value={ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION}
+                    id='single-choice'
+                    className='border-davinci-callout-border'
+                  />
                   <Label htmlFor='single-choice' className='text-davinci-black-alt'>
                     Single Choice
                   </Label>
                 </div>
                 <div className='flex items-center space-x-2'>
                   <RadioGroupItem
-                    value='multiple-choice'
+                    value={ElectionResultsTypeNames.MULTIPLE_CHOICE}
                     id='multiple-choice'
                     className='border-davinci-callout-border'
-                    disabled
                   />
                   <Label htmlFor='multiple-choice' className='text-davinci-black-alt'>
                     Multiple Choice
@@ -425,10 +428,9 @@ export function CreateVoteForm() {
                 </div>
                 <div className='flex items-center space-x-2'>
                   <RadioGroupItem
-                    value='quadratic-voting'
+                    value={ElectionResultsTypeNames.QUADRATIC}
                     id='quadratic-voting'
                     className='border-davinci-callout-border'
-                    disabled
                   />
                   <Label htmlFor='quadratic-voting' className='text-davinci-black-alt'>
                     Quadratic Voting

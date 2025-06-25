@@ -206,6 +206,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
     if (!wallet) {
       throw new Error('Wallet not connected')
     }
+
     setVoteCount((prev) => prev + 1)
     setShowVotingModal(false)
 
@@ -228,13 +229,16 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
         .join('')
       const kStr = BigInt('0x' + kHex).toString()
 
+      const fieldValues =
+        voteData.type.name === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION ? [selectedChoice] : selectedChoices
+
       const inputs: BallotProofInputs = {
         address: wallet.accounts[0].address,
         processID: id,
         ballotMode: processData.ballotMode,
         encryptionKey: [processData.encryptionKey.x, processData.encryptionKey.y],
         k: kStr,
-        fieldValues: [selectedChoice],
+        fieldValues,
         secret: '1234567890',
         weight: '1',
       }
