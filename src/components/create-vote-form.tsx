@@ -519,7 +519,7 @@ export function CreateVoteForm() {
               )}
 
               {/* Quadratic Voting Configuration */}
-              {formData.votingMethod === 'quadratic-voting' && (
+              {formData.votingMethod === ElectionResultsTypeNames.QUADRATIC && (
                 <div className='bg-davinci-digital-highlight p-4 rounded-lg space-y-4 border border-davinci-callout-border'>
                   <h4 className='font-medium text-davinci-black-alt'>Quadratic Voting Configuration</h4>
                   <div>
