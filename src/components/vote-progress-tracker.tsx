@@ -2,19 +2,23 @@
 
 import type React from 'react'
 
+import { VoteStatus } from '@vocdoni/davinci-sdk/sequencer'
 import { AlertTriangle, CheckCircle, Clock, Cpu, Info, Package, RefreshCw, Shield } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Badge } from '~components/ui/badge'
 import { Button } from '~components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
 import { Progress } from '~components/ui/progress'
+import { useVoteStatus } from '~hooks/use-vote-status'
 
-export type VoteStatus = 'pending' | 'verified' | 'aggregated' | 'processed' | 'settled' | 'error'
+export { VoteStatus }
 
 interface VoteProgressTrackerProps {
   isVisible: boolean
   onResetProgress: () => void
   onVoteAgain: () => void
+  processId: string
+  voteId: string
 }
 
 interface ProgressStep {
@@ -28,7 +32,7 @@ interface ProgressStep {
 
 const progressSteps: ProgressStep[] = [
   {
-    id: 'pending',
+    id: VoteStatus.Pending,
     label: 'Pending',
     description: 'Vote submitted, awaiting verification',
     icon: <Clock className='w-4 h-4' />,
@@ -36,7 +40,7 @@ const progressSteps: ProgressStep[] = [
     bgColor: 'bg-blue-100',
   },
   {
-    id: 'verified',
+    id: VoteStatus.Verified,
     label: 'Verified',
     description: 'Vote successfully verified',
     icon: <CheckCircle className='w-4 h-4' />,
@@ -44,7 +48,7 @@ const progressSteps: ProgressStep[] = [
     bgColor: 'bg-green-100',
   },
   {
-    id: 'aggregated',
+    id: VoteStatus.Aggregated,
     label: 'Aggregated',
     description: 'Vote included in aggregated batch',
     icon: <Package className='w-4 h-4' />,
@@ -52,7 +56,7 @@ const progressSteps: ProgressStep[] = [
     bgColor: 'bg-purple-100',
   },
   {
-    id: 'processed',
+    id: VoteStatus.Processed,
     label: 'Processed',
     description: 'Vote incorporated into state transition batch',
     icon: <Cpu className='w-4 h-4' />,
@@ -60,7 +64,7 @@ const progressSteps: ProgressStep[] = [
     bgColor: 'bg-indigo-100',
   },
   {
-    id: 'settled',
+    id: VoteStatus.Settled,
     label: 'Settled',
     description: 'Vote finalized on Ethereum blockchain',
     icon: <Shield className='w-4 h-4' />,
@@ -69,73 +73,34 @@ const progressSteps: ProgressStep[] = [
   },
 ]
 
-export function VoteProgressTracker({ isVisible, onResetProgress, onVoteAgain }: VoteProgressTrackerProps) {
-  const [currentStatus, setCurrentStatus] = useState<VoteStatus>('pending')
-  const [progress, setProgress] = useState(0)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [showRecastNotification, setShowRecastNotification] = useState(false)
-  const [estimatedTime, setEstimatedTime] = useState('')
+const statusToProgress: Record<VoteStatus, number> = {
+  [VoteStatus.Pending]: 10,
+  [VoteStatus.Verified]: 25,
+  [VoteStatus.Aggregated]: 50,
+  [VoteStatus.Processed]: 75,
+  [VoteStatus.Settled]: 100,
+  [VoteStatus.Error]: 0,
+}
 
-  // Simulate vote processing progression
+export function VoteProgressTracker({
+  isVisible,
+  onResetProgress,
+  onVoteAgain,
+  processId,
+  voteId,
+}: VoteProgressTrackerProps) {
+  const { data: voteStatusData, isLoading, error } = useVoteStatus(processId, voteId)
+
+  const currentStatus = voteStatusData?.status || VoteStatus.Pending
+  const progress = statusToProgress[currentStatus]
+  const isProcessing = currentStatus !== VoteStatus.Settled && currentStatus !== VoteStatus.Error && !error
+  const showRecastNotification = currentStatus === VoteStatus.Settled
+
   useEffect(() => {
-    if (!isVisible) return
-
-    setIsProcessing(true)
-    setCurrentStatus('pending')
-    setProgress(0)
-    setShowRecastNotification(false)
-
-    const progressSequence = async () => {
-      // Pending -> Verified (2-4 seconds)
-      await new Promise((resolve) => setTimeout(resolve, 2000 + Math.random() * 2000))
-      setCurrentStatus('verified')
-      setProgress(20)
-
-      // Verified -> Aggregated (3-6 seconds)
-      await new Promise((resolve) => setTimeout(resolve, 3000 + Math.random() * 3000))
-      setCurrentStatus('aggregated')
-      setProgress(40)
-
-      // Aggregated -> Processed (4-8 seconds)
-      await new Promise((resolve) => setTimeout(resolve, 4000 + Math.random() * 4000))
-      setCurrentStatus('processed')
-      setProgress(70)
-
-      // Processed -> Settled (5-10 seconds)
-      await new Promise((resolve) => setTimeout(resolve, 5000 + Math.random() * 5000))
-      setCurrentStatus('settled')
-      setProgress(100)
-      setIsProcessing(false)
-      setShowRecastNotification(true)
+    if (error) {
+      console.error('Error fetching vote status:', error)
     }
-
-    // Small chance of error (5%)
-    if (Math.random() < 0.05) {
-      setTimeout(
-        () => {
-          setCurrentStatus('error')
-          setIsProcessing(false)
-          setProgress(0)
-        },
-        3000 + Math.random() * 5000
-      )
-    } else {
-      progressSequence()
-    }
-  }, [isVisible])
-
-  // Update estimated time based on current status
-  useEffect(() => {
-    const timeEstimates = {
-      pending: '~30 seconds',
-      verified: '~25 seconds',
-      aggregated: '~20 seconds',
-      processed: '~10 seconds',
-      settled: 'Complete',
-      error: 'Failed',
-    }
-    setEstimatedTime(timeEstimates[currentStatus])
-  }, [currentStatus])
+  }, [error])
 
   if (!isVisible) return null
 
@@ -147,7 +112,7 @@ export function VoteProgressTracker({ isVisible, onResetProgress, onVoteAgain }:
       <CardHeader className='pb-4'>
         <CardTitle className='flex items-center gap-2 text-davinci-black-alt text-lg'>
           <div
-            className={`w-2 h-2 rounded-full ${isProcessing ? 'bg-blue-500 animate-pulse' : currentStatus === 'settled' ? 'bg-green-500' : 'bg-red-500'}`}
+            className={`w-2 h-2 rounded-full ${isProcessing ? 'bg-blue-500 animate-pulse' : currentStatus === VoteStatus.Settled ? 'bg-green-500' : 'bg-red-500'}`}
           />
           Vote Processing Status
         </CardTitle>
@@ -158,37 +123,47 @@ export function VoteProgressTracker({ isVisible, onResetProgress, onVoteAgain }:
           <div className='flex items-center gap-3'>
             <div className={`p-2 rounded-full ${getCurrentStep()?.bgColor || 'bg-gray-100'}`}>
               <div className={getCurrentStep()?.color || 'text-gray-600'}>
-                {currentStatus === 'error' ? <AlertTriangle className='w-4 h-4' /> : getCurrentStep()?.icon}
+                {currentStatus === VoteStatus.Error || error ? (
+                  <AlertTriangle className='w-4 h-4' />
+                ) : (
+                  getCurrentStep()?.icon
+                )}
               </div>
             </div>
             <div>
               <p className='font-semibold text-davinci-black-alt'>
-                {currentStatus === 'error' ? 'Processing Error' : getCurrentStep()?.label}
+                {isLoading
+                  ? 'Loading...'
+                  : currentStatus === VoteStatus.Error || error
+                    ? 'Processing Error'
+                    : getCurrentStep()?.label}
               </p>
               <p className='text-sm text-davinci-black-alt/70'>
-                {currentStatus === 'error'
-                  ? 'An error occurred while processing your vote'
-                  : getCurrentStep()?.description}
+                {isLoading
+                  ? 'Fetching vote status...'
+                  : currentStatus === VoteStatus.Error || error
+                    ? 'An error occurred while processing your vote'
+                    : getCurrentStep()?.description}
               </p>
             </div>
           </div>
           <div className='text-right'>
             <Badge
               className={`${
-                currentStatus === 'settled'
+                currentStatus === VoteStatus.Settled
                   ? 'bg-green-100 text-green-800'
-                  : currentStatus === 'error'
+                  : currentStatus === VoteStatus.Error || error
                     ? 'bg-red-100 text-red-800'
                     : 'bg-blue-100 text-blue-800'
               }`}
             >
-              {estimatedTime}
+              {currentStatus === VoteStatus.Settled ? 'Complete' : isProcessing ? 'Processing' : 'Failed'}
             </Badge>
           </div>
         </div>
 
         {/* Progress Bar */}
-        {currentStatus !== 'error' && (
+        {currentStatus !== VoteStatus.Error && !error && (
           <div className='space-y-2'>
             <div className='flex justify-between text-sm text-davinci-black-alt/70'>
               <span>Progress</span>
@@ -203,9 +178,9 @@ export function VoteProgressTracker({ isVisible, onResetProgress, onVoteAgain }:
           <h4 className='font-medium text-davinci-black-alt text-sm'>Processing Steps</h4>
           <div className='space-y-2'>
             {progressSteps.map((step, index) => {
-              const isCompleted = currentStatus !== 'error' && index <= currentStepIndex
+              const isCompleted = currentStatus !== VoteStatus.Error && !error && index <= currentStepIndex
               const isCurrent = currentStatus === step.id
-              const isPending = currentStatus !== 'error' && index > currentStepIndex
+              const isPending = currentStatus !== VoteStatus.Error && !error && index > currentStepIndex
 
               return (
                 <div key={step.id} className='flex items-center gap-3'>
@@ -252,7 +227,7 @@ export function VoteProgressTracker({ isVisible, onResetProgress, onVoteAgain }:
         </div>
 
         {/* Error State Actions */}
-        {currentStatus === 'error' && (
+        {(currentStatus === VoteStatus.Error || error) && (
           <div className='bg-red-50 p-4 rounded-lg border border-red-200'>
             <div className='flex items-start gap-3'>
               <AlertTriangle className='w-5 h-5 text-red-600 mt-0.5 flex-shrink-0' />
@@ -281,7 +256,7 @@ export function VoteProgressTracker({ isVisible, onResetProgress, onVoteAgain }:
         )}
 
         {/* Settlement Success & Recast Notification */}
-        {showRecastNotification && currentStatus === 'settled' && (
+        {showRecastNotification && currentStatus === VoteStatus.Settled && (
           <div className='bg-emerald-50 p-4 rounded-lg border border-emerald-200'>
             <div className='flex items-start gap-3'>
               <Shield className='w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0' />
@@ -311,7 +286,7 @@ export function VoteProgressTracker({ isVisible, onResetProgress, onVoteAgain }:
         )}
 
         {/* Processing Info */}
-        {isProcessing && currentStatus !== 'error' && (
+        {isProcessing && !error && (
           <div className='bg-blue-50 p-3 rounded-lg border border-blue-200'>
             <div className='flex items-start gap-2'>
               <Info className='w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0' />

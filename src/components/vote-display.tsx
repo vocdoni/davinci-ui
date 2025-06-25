@@ -82,8 +82,9 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
   const [timeRemaining, setTimeRemaining] = useState('')
   const [voteEnded, setVoteEnded] = useState(false)
   const [results, setResults] = useState<VoteResults>({})
-  const [justVoted, setJustVoted] = useState(false)
   const [showProgressTracker, setShowProgressTracker] = useState(false)
+  const [currentVoteId, setCurrentVoteId] = useState<string>('')
+  const [isVoting, setIsVoting] = useState(false)
   const isConnected = !!wallet
 
   // Initialize quadratic votes
@@ -176,16 +177,6 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
     return () => clearInterval(interval)
   }, [processData?.startTime, voteEnded])
 
-  // Clear "just voted" state after a few seconds
-  useEffect(() => {
-    if (justVoted) {
-      const timeout = setTimeout(() => {
-        setJustVoted(false)
-      }, 3000)
-      return () => clearTimeout(timeout)
-    }
-  }, [justVoted])
-
   const handleConnectWallet = async () => {
     setIsCheckingEligibility(true)
     try {
@@ -209,6 +200,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
 
     setVoteCount((prev) => prev + 1)
     setShowVotingModal(false)
+    setIsVoting(true)
 
     try {
       // Initialize API service
@@ -293,15 +285,16 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
       const voteId = await api.submitVote(voteRequest)
 
       // Show progress tracker
+      setCurrentVoteId(voteId)
       setShowProgressTracker(true)
-
-      setJustVoted(true)
 
       console.info('✅ Vote submitted successfully:', voteId)
     } catch (error) {
       console.error('Error during voting process:', error)
 
       return
+    } finally {
+      setIsVoting(false)
     }
 
     // Clear selections after voting
@@ -319,10 +312,12 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
 
   const handleResetProgress = () => {
     setShowProgressTracker(false)
+    setCurrentVoteId('')
   }
 
   const handleVoteAgain = () => {
     setShowProgressTracker(false)
+    setCurrentVoteId('')
     // Reset form to allow voting again
     setSelectedChoice('')
     setSelectedChoices([])
@@ -449,14 +444,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
         </CardContent>
       </Card>
 
-      {/* Vote Progress Tracker */}
-      {showProgressTracker && (
-        <VoteProgressTracker
-          isVisible={showProgressTracker}
-          onResetProgress={handleResetProgress}
-          onVoteAgain={handleVoteAgain}
-        />
-      )}
+      {/* Vote Progress Tracker - moved inside voting interface */}
 
       {/* Results Display (when vote ended) */}
       {voteEnded && (
@@ -625,19 +613,15 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
               </div>
             )}
 
-            {/* Vote Success Message (temporary) */}
-            {justVoted && (
-              <div className='bg-green-50 p-4 rounded-lg border border-green-200'>
-                <div className='flex items-center gap-3'>
-                  <CheckCircle className='w-5 h-5 text-green-600' />
-                  <div>
-                    <p className='font-medium text-green-800'>Vote Recorded!</p>
-                    <p className='text-sm text-green-700'>
-                      Your vote has been securely recorded. You can vote again to change your choice.
-                    </p>
-                  </div>
-                </div>
-              </div>
+            {/* Vote Progress Tracker */}
+            {showProgressTracker && currentVoteId && (
+              <VoteProgressTracker
+                isVisible={showProgressTracker}
+                onResetProgress={handleResetProgress}
+                onVoteAgain={handleVoteAgain}
+                processId={id}
+                voteId={currentVoteId}
+              />
             )}
 
             {/* Voting Method Instructions - always visible */}
@@ -946,6 +930,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
                   onClick={handleVoteSubmit}
                   disabled={!isVoteValid()}
                   className='w-full bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base'
+                  loading={isVoting}
                 >
                   <img src='/images/davinci-icon.png' alt='' className='w-4 h-4 mr-2' />
                   {voteCount > 0 ? 'Update Vote' : 'Vote'}

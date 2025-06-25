@@ -559,16 +559,6 @@ export function CreateVoteForm() {
                 <div className='space-y-2'>
                   <div className='flex items-center space-x-2'>
                     <RadioGroupItem
-                      value='hardcoded-wallets'
-                      id='hardcoded-wallets'
-                      className='border-davinci-callout-border'
-                    />
-                    <Label htmlFor='hardcoded-wallets' className='text-davinci-black-alt'>
-                      Hardcoded wallets 🫠
-                    </Label>
-                  </div>
-                  <div className='flex items-center space-x-2'>
-                    <RadioGroupItem
                       value='ethereum-wallets'
                       id='ethereum-wallets'
                       className='border-davinci-callout-border'
