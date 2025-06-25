@@ -133,9 +133,6 @@ export function CreateVoteForm() {
       // Initialize API service
       const api = new VocdoniApiService(import.meta.env.SEQUENCER_URL)
 
-      // Step 2: Fetch circuit info (unnecessary)
-      // const info = await api.getInfo()
-
       const census = {
         censusURI: '',
         censusRoot: '',
@@ -207,16 +204,8 @@ export function CreateVoteForm() {
       const nonce = await provider.getTransactionCount(wallet.accounts[0].address)
       const signature = await signer.signMessage(`${11155111}${nonce}`) // 11155111 is Sepolia chain ID
 
-      const ballotMode = {
-        maxCount: 1,
-        maxValue: '8', // (formData.choices.length - 1).toString(),
-        minValue: '0',
-        forceUniqueness: false,
-        costFromWeight: false,
-        costExponent: 0,
-        maxTotalCost: '36', //  metadata.questions[0].choices.reduce((p, n) => p + n.value, 0).toString(),
-        minTotalCost: '0',
-      }
+      const ballotMode = generateBallotMode(metadata, formData)
+      console.log('ballot mode', ballotMode)
 
       const { processId, encryptionPubKey, stateRoot } = await api.createProcess({
         censusRoot: census.censusRoot,
@@ -829,4 +818,43 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
       </Button>
     </>
   )
+}
+
+const generateBallotMode = (election: ElectionMetadata, form: Purosesu): BallotMode => {
+  switch (election.type.name) {
+    default:
+    case ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION:
+      return {
+        maxCount: 1,
+        maxValue: election.questions[0].choices.reduce((p, n) => (p > n.value ? p : n.value), 0).toString(),
+        minValue: '0',
+        forceUniqueness: false,
+        costFromWeight: false,
+        costExponent: 1,
+        maxTotalCost: '0',
+        minTotalCost: '0',
+      }
+    case ElectionResultsTypeNames.MULTIPLE_CHOICE:
+      return {
+        maxCount: election.questions[0].choices.length,
+        maxValue: '1',
+        minValue: '0',
+        forceUniqueness: false,
+        costFromWeight: false,
+        costExponent: 1,
+        maxTotalCost: form.multipleChoiceMax,
+        minTotalCost: form.multipleChoiceMin,
+      }
+    case ElectionResultsTypeNames.QUADRATIC:
+      return {
+        maxCount: election.questions[0].choices.length,
+        maxValue: '0',
+        minValue: '0',
+        forceUniqueness: false,
+        costFromWeight: false,
+        costExponent: 2,
+        maxTotalCost: form.quadraticCredits,
+        minTotalCost: '0',
+      }
+  }
 }
