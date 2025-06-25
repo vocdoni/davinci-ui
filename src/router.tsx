@@ -29,7 +29,6 @@ const VoteResultsLoading = () => (
 // Lazy load pages
 const HomePage = lazy(() => import('./pages/HomePage'))
 const VotePage = lazy(() => import('./pages/VotePage'))
-const ExplorerPage = lazy(() => import('./pages/ExplorerPage'))
 const ImplementPage = lazy(() => import('./pages/ImplementPage'))
 const NewsletterPage = lazy(() => import('./pages/NewsletterPage'))
 const ParticipatePage = lazy(() => import('./pages/ParticipatePage'))
@@ -53,14 +52,6 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<Loading />}>
             <VotePage />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'explorer',
-        element: (
-          <Suspense fallback={<Loading />}>
-            <ExplorerPage />
           </Suspense>
         ),
       },

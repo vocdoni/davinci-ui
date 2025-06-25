@@ -32,8 +32,6 @@ export function FloatingHeader() {
       setActiveLink('implement')
     } else if (pathname === '/participate') {
       setActiveLink('participate')
-    } else if (pathname === '/explorer') {
-      setActiveLink('explorer')
     }
   }, [pathname])
 
@@ -61,7 +59,6 @@ export function FloatingHeader() {
 
   const navigationItems: NavigationItem[] = [
     { value: 'create-vote', label: 'Create a Vote', href: '/' },
-    { value: 'explorer', label: 'Explorer', href: '/explorer' },
     { value: 'implement', label: 'Implement DAVINCI', href: '/implement' },
     { value: 'participate', label: 'Participate', href: '/participate' },
     {
