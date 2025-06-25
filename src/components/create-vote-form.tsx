@@ -128,7 +128,7 @@ export function CreateVoteForm() {
 
           census.censusSize = snapshot.participantCount
           census.censusRoot = snapshot.censusRoot
-          census.censusURI = `${import.meta.env.VITE_BIGQUERY_URL}/censuses/${census.censusRoot}`
+          census.censusURI = `${import.meta.env.BIGQUERY_URL}/censuses/${census.censusRoot}`
           break
         }
         default: {
@@ -151,6 +151,8 @@ export function CreateVoteForm() {
           census.censusSize = censusSize
         }
       }
+
+      console.info('Census created:', census)
 
       // Step 7: Create and push metadata
       const metadata: ElectionMetadata = {
@@ -180,7 +182,7 @@ export function CreateVoteForm() {
       }
       const metadataHash = await api.pushMetadata(metadata)
       const metadataUrl = api.getMetadataUrl(metadataHash)
-      console.log('Metadata URL:', metadataUrl)
+      console.info('Metadata URL:', metadataUrl)
 
       // Step 8: Create process via API
       const provider = new BrowserProvider(wallet.provider)
@@ -189,7 +191,7 @@ export function CreateVoteForm() {
       const signature = await signer.signMessage(`${11155111}${nonce}`) // 11155111 is Sepolia chain ID
 
       const ballotMode = generateBallotMode(metadata, formData)
-      console.log('ballot mode', ballotMode)
+      console.info('Ballot mode:', ballotMode)
 
       const { processId, encryptionPubKey, stateRoot } = await api.createProcess({
         censusRoot: census.censusRoot,
