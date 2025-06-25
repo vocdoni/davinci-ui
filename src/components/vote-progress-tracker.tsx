@@ -14,8 +14,6 @@ import { useVoteStatus } from '~hooks/use-vote-status'
 export { VoteStatus }
 
 interface VoteProgressTrackerProps {
-  isVisible: boolean
-  onResetProgress: () => void
   onVoteAgain: () => void
   processId: string
   voteId: string
@@ -82,13 +80,7 @@ const statusToProgress: Record<VoteStatus, number> = {
   [VoteStatus.Error]: 0,
 }
 
-export function VoteProgressTracker({
-  isVisible,
-  onResetProgress,
-  onVoteAgain,
-  processId,
-  voteId,
-}: VoteProgressTrackerProps) {
+export function VoteProgressTracker({ onVoteAgain, processId, voteId }: VoteProgressTrackerProps) {
   const { data: voteStatusData, isLoading, error } = useVoteStatus(processId, voteId)
 
   const currentStatus = voteStatusData?.status || VoteStatus.Pending
@@ -102,7 +94,7 @@ export function VoteProgressTracker({
     }
   }, [error])
 
-  if (!isVisible) return null
+  if (!voteId) return null
 
   const getCurrentStep = () => progressSteps.find((step) => step.id === currentStatus)
   const currentStepIndex = progressSteps.findIndex((step) => step.id === currentStatus)
@@ -241,14 +233,6 @@ export function VoteProgressTracker({
                     <RefreshCw className='w-3 h-3 mr-1' />
                     Try Again
                   </Button>
-                  <Button
-                    onClick={onResetProgress}
-                    variant='outline'
-                    size='sm'
-                    className='border-red-300 text-red-700 hover:bg-red-50'
-                  >
-                    Dismiss
-                  </Button>
                 </div>
               </div>
             </div>
@@ -270,14 +254,6 @@ export function VoteProgressTracker({
                   <Button onClick={onVoteAgain} size='sm' className='bg-emerald-600 hover:bg-emerald-700 text-white'>
                     <RefreshCw className='w-3 h-3 mr-1' />
                     Vote Again
-                  </Button>
-                  <Button
-                    onClick={onResetProgress}
-                    variant='outline'
-                    size='sm'
-                    className='border-emerald-300 text-emerald-700 hover:bg-emerald-50'
-                  >
-                    Dismiss
                   </Button>
                 </div>
               </div>

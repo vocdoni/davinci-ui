@@ -12,6 +12,7 @@ import { Label } from '~components/ui/label'
 import { RadioGroup, RadioGroupItem } from '~components/ui/radio-group'
 import { VoteProgressTracker } from '~components/vote-progress-tracker'
 import { VotingModal } from '~components/voting-modal'
+import { usePersistedVote } from '~hooks/use-persisted-vote'
 import { truncateAddress } from '~lib/web3-utils'
 
 import {
@@ -82,9 +83,8 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
   const [timeRemaining, setTimeRemaining] = useState('')
   const [voteEnded, setVoteEnded] = useState(false)
   const [results, setResults] = useState<VoteResults>({})
-  const [showProgressTracker, setShowProgressTracker] = useState(false)
-  const [currentVoteId, setCurrentVoteId] = useState<string>('')
   const [isVoting, setIsVoting] = useState(false)
+  const { voteId, trackVote, resetVote } = usePersistedVote(id)
   const isConnected = !!wallet
 
   // Initialize quadratic votes
@@ -282,13 +282,12 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
         signature,
       }
 
-      const voteId = await api.submitVote(voteRequest)
+      const submittedVoteId = await api.submitVote(voteRequest)
 
-      // Show progress tracker
-      setCurrentVoteId(voteId)
-      setShowProgressTracker(true)
+      // Track the vote
+      trackVote(submittedVoteId)
 
-      console.info('✅ Vote submitted successfully:', voteId)
+      console.info('✅ Vote submitted successfully:', submittedVoteId)
     } catch (error) {
       console.error('Error during voting process:', error)
 
@@ -310,14 +309,8 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
     // }
   }
 
-  const handleResetProgress = () => {
-    setShowProgressTracker(false)
-    setCurrentVoteId('')
-  }
-
   const handleVoteAgain = () => {
-    setShowProgressTracker(false)
-    setCurrentVoteId('')
+    resetVote()
     // Reset form to allow voting again
     setSelectedChoice('')
     setSelectedChoices([])
@@ -614,15 +607,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
             )}
 
             {/* Vote Progress Tracker */}
-            {showProgressTracker && currentVoteId && (
-              <VoteProgressTracker
-                isVisible={showProgressTracker}
-                onResetProgress={handleResetProgress}
-                onVoteAgain={handleVoteAgain}
-                processId={id}
-                voteId={currentVoteId}
-              />
-            )}
+            {voteId && <VoteProgressTracker onVoteAgain={handleVoteAgain} processId={id} voteId={voteId} />}
 
             {/* Voting Method Instructions - always visible */}
             {votingMethod.type === ElectionResultsTypeNames.MULTIPLE_CHOICE && (
