@@ -11,12 +11,6 @@ export const web3Onboard = init({
   wallets: [injected, walletConnect],
   chains: [
     {
-      id: 1,
-      token: 'ETH',
-      label: 'Ethereum Mainnet',
-      rpcUrl: 'https://eth.llamarpc.com',
-    },
-    {
       id: '0xaa36a7',
       token: 'ETH',
       label: 'Sepolia',
