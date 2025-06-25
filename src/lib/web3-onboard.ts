@@ -14,7 +14,7 @@ export const web3Onboard = init({
       id: '0xaa36a7',
       token: 'ETH',
       label: 'Sepolia',
-      rpcUrl: 'wss://ethereum-sepolia-rpc.publicnode.com',
+      rpcUrl: 'https://ethereum-sepolia-rpc.publicnode.com',
     },
   ],
   appMetadata: {
