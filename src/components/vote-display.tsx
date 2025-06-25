@@ -454,16 +454,6 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
         />
       )}
 
-      {/* Vote Question */}
-      <Card className='border-davinci-callout-border'>
-        <CardHeader className='bg-davinci-paper-base'>
-          <CardTitle className='text-xl text-davinci-black-alt'>Vote Question</CardTitle>
-        </CardHeader>
-        <CardContent className='pt-6 bg-davinci-text-base'>
-          <h2 className='text-2xl font-bold text-davinci-black-alt mb-4'>{voteData.questions[0].title.default}</h2>
-        </CardContent>
-      </Card>
-
       {/* Results Display (when vote ended) */}
       {voteEnded && (
         <Card className='border-davinci-callout-border'>

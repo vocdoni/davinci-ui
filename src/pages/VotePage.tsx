@@ -1,11 +1,14 @@
+import { useCopyToClipboard } from '@uidotdev/usehooks'
 import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
 import { VocdoniApiService, type GetProcessResponse } from '@vocdoni/davinci-sdk/sequencer'
+import { LucideCheck, LucideCopy, LucideSearch } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { NewsletterCard } from '~components/newsletter-card'
 import { ShareableLink } from '~components/shareable-link'
 import { VoteDisplay } from '~components/vote-display'
 import { TotalVotesCard, VoteParameters } from '~components/vote-parameters'
+import { truncateAddress } from '~lib/web3-utils'
 
 export default function VotePage() {
   const params = useParams()
@@ -15,6 +18,8 @@ export default function VotePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [currentTotalVotes, setCurrentTotalVotes] = useState(0)
   const [voteEnded, setVoteEnded] = useState(false)
+  const [copiedText, copyToClipboard] = useCopyToClipboard()
+  const hasCopiedText = Boolean(copiedText)
 
   useEffect(() => {
     setIsClient(true)
@@ -61,8 +66,34 @@ export default function VotePage() {
       <div className='max-w-7xl mx-auto'>
         {/* Page Header */}
         <div className='text-center mb-8'>
-          <h1 className='text-3xl font-bold text-davinci-black-alt mb-2 font-averia'>Vote #{params.id}</h1>
-          <p className='text-davinci-black-alt/80'>Cast your vote on this important community decision</p>
+          <h1 className='text-3xl font-bold text-davinci-black-alt mb-2 font-averia'>
+            {voteData.questions[0].title.default}
+          </h1>
+          <div className='flex items-center justify-center gap-2 text-davinci-black-alt/70'>
+            <span className='text-sm font-medium'>Process ID:</span>
+            <code className='text-sm font-mono bg-davinci-soft-neutral/30 px-2 py-1 rounded border border-davinci-callout-border'>
+              {truncateAddress(params.id as string, 8)}
+            </code>
+            <button
+              className='inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-transparent h-6 w-6 hover:bg-davinci-soft-neutral/20 transition-colors'
+              title='Copy full Process ID'
+              onClick={() => copyToClipboard(params.id as string)}
+            >
+              {hasCopiedText ? (
+                <LucideCheck className='w-3 h-3 text-davinci-black-alt/60 hover:text-davinci-black-alt' />
+              ) : (
+                <LucideCopy className='w-3 h-3 text-davinci-black-alt/60 hover:text-davinci-black-alt' />
+              )}
+            </button>
+            <a
+              className='inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-transparent h-6 w-6 hover:bg-davinci-soft-neutral/20 transition-colors'
+              title='Check Process Details'
+              target='_blank'
+              href={import.meta.env.SEQUENCER_URL + '/app?processId=' + params.id}
+            >
+              <LucideSearch className='w-3 h-3 text-davinci-black-alt/60 hover:text-davinci-black-alt' />
+            </a>
+          </div>
         </div>
 
         {/* Two Column Layout */}
