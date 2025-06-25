@@ -1,9 +1,12 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Web3OnboardProvider } from '@web3-onboard/react'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
 import { web3Onboard } from '~lib/web3-onboard'
 import { router } from '~router'
+
+const queryClient = new QueryClient()
 
 import '@fontsource/averia-libre/400.css'
 import '@fontsource/averia-libre/700.css'
@@ -17,8 +20,10 @@ document.documentElement.style.setProperty('--font-averia-libre', 'Averia Libre,
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <Web3OnboardProvider web3Onboard={web3Onboard}>
-      <RouterProvider router={router} />
-    </Web3OnboardProvider>
+    <QueryClientProvider client={queryClient}>
+      <Web3OnboardProvider web3Onboard={web3Onboard}>
+        <RouterProvider router={router} />
+      </Web3OnboardProvider>
+    </QueryClientProvider>
   </React.StrictMode>
 )

@@ -40,6 +40,7 @@
     "@radix-ui/react-toggle": "1.1.1",
     "@radix-ui/react-toggle-group": "1.1.1",
     "@radix-ui/react-tooltip": "latest",
+    "@tanstack/react-query": "^5.81.2",
     "@uidotdev/usehooks": "^2.4.1",
     "@vocdoni/davinci-sdk": "github:vocdoni/davinci-sdk#f/ts-bundling",
     "@web3-onboard/core": "^2.24.1",

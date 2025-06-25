@@ -19,7 +19,6 @@ import { BrowserProvider } from 'ethers'
 import { Calendar, CheckCircle, Clock, HelpCircle, Plus, Rocket, Users, Wallet, X } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { up } from 'up-fetch'
 import { Button } from '~components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~components/ui/card'
 import { Input } from '~components/ui/input'
@@ -29,31 +28,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~
 import { Separator } from '~components/ui/separator'
 import { Textarea } from '~components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~components/ui/tooltip'
+import { useSnapshots } from '~hooks/use-snapshots'
 import ConnectWalletButton from './ui/connect-wallet-button'
+import { IndeterminateProgress } from './ui/indeterminate-progress'
 
 interface Choice {
   id: string
   text: string
-}
-
-const upfetch = up(fetch)
-
-type Snapshot = {
-  snapshotDate: string // ISO date string
-  censusRoot: string
-  participantCount: number
-  minBalance: number
-  queryName: string
-  createdAt: string // ISO date string
-}
-
-type SnapshotsResponse = {
-  snapshots: Snapshot[]
-  total: number
-  page: number
-  pageSize: number
-  hasNext: boolean
-  hasPrev: boolean
 }
 
 const durationUnits = [
@@ -94,6 +75,7 @@ export function CreateVoteForm() {
     duration: '',
     durationUnit: 'minutes',
   })
+  const { data: snapshot, isLoading: isLoadingSnapshot } = useSnapshots()
 
   const addChoice = () => {
     if (formData.choices.length < 8) {
@@ -140,11 +122,13 @@ export function CreateVoteForm() {
       }
       switch (formData.censusType) {
         case 'ethereum-wallets': {
-          const snapshots = await upfetch<SnapshotsResponse>(`${import.meta.env.BIGQUERY_URL}/snapshots`)
+          if (!snapshot) {
+            throw new Error('No snapshot data available')
+          }
 
-          census.censusSize = snapshots.snapshots[0].participantCount
-          census.censusRoot = snapshots.snapshots[0].censusRoot
-          census.censusURI = `${import.meta.env.BIGQUERY_URL}/censuses/${census.censusRoot}`
+          census.censusSize = snapshot.participantCount
+          census.censusRoot = snapshot.censusRoot
+          census.censusURI = `${import.meta.env.VITE_BIGQUERY_URL}/censuses/${census.censusRoot}`
           break
         }
         default: {
@@ -266,8 +250,8 @@ export function CreateVoteForm() {
     return hasQuestion && hasValidChoices && hasVotingMethod && hasCensusType && hasDuration
   }
 
-  const getCurrentTimestamp = () => {
-    return new Date().toLocaleString('en-US', {
+  const formatSnapshotDate = (date: string) => {
+    return new Date(date).toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -600,13 +584,28 @@ export function CreateVoteForm() {
                         <div className='space-y-2'>
                           <p className='text-sm font-medium text-davinci-black-alt'>Ethereum Wallet Requirements</p>
                           <p className='text-sm text-davinci-black-alt/80'>
-                            Only wallets with a minimum balance of <strong>0.001 ETH</strong> can participate in this
+                            Only wallets with some <strong>activity in the last 90 days</strong> can participate in this
                             vote.
                           </p>
-                          <div className='flex items-center gap-2 text-xs text-davinci-black-alt/70'>
-                            <Calendar className='w-3 h-3' />
-                            <span>Snapshot taken: {getCurrentTimestamp()}</span>
-                          </div>
+                          {isLoadingSnapshot ? (
+                            <div className='space-y-2'>
+                              <IndeterminateProgress className='h-1' />
+                              <div className='flex items-center gap-2 text-xs text-davinci-black-alt/70'>
+                                <Calendar className='w-3 h-3' />
+                                <span>Loading latest snapshot...</span>
+                              </div>
+                            </div>
+                          ) : snapshot ? (
+                            <div className='flex items-center gap-2 text-xs text-davinci-black-alt/70'>
+                              <Calendar className='w-3 h-3' />
+                              <span>Snapshot taken: {formatSnapshotDate(snapshot.snapshotDate)}</span>
+                            </div>
+                          ) : (
+                            <div className='flex items-center gap-2 text-xs text-davinci-black-alt/70'>
+                              <Calendar className='w-3 h-3' />
+                              <span>Error loading snapshot data</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
