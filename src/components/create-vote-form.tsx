@@ -8,6 +8,7 @@ import {
 } from '@vocdoni/davinci-sdk/contracts'
 import {
   ElectionResultsTypeNames,
+  type BallotMode,
   type ElectionMetadata,
   type ElectionResultsType,
   type ProtocolVersion,
@@ -55,17 +56,36 @@ type SnapshotsResponse = {
   hasPrev: boolean
 }
 
+const durationUnits = [
+  { value: 'minutes', label: 'Minutes' },
+  { value: 'hours', label: 'Hours' },
+] as const
+
+type DurationUnit = (typeof durationUnits)[number]['value']
+
+type Purosesu = {
+  question: string
+  choices: Choice[]
+  votingMethod: string
+  multipleChoiceMin: string
+  multipleChoiceMax: string
+  quadraticCredits: string
+  censusType: string
+  duration: string
+  durationUnit: DurationUnit
+}
+
 export function CreateVoteForm() {
   const navigate = useNavigate()
   const [isLaunching, setIsLaunching] = useState(false)
   const [launchSuccess, setLaunchSuccess] = useState(false)
   const [{ wallet }] = useConnectWallet()
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Purosesu>({
     question: '',
     choices: [
       { id: '1', text: '' },
       { id: '2', text: '' },
-    ] as Choice[],
+    ],
     votingMethod: '',
     multipleChoiceMin: '1',
     multipleChoiceMax: '2',
@@ -664,14 +684,17 @@ export function CreateVoteForm() {
                 <div className='w-32'>
                   <Select
                     value={formData.durationUnit}
-                    onValueChange={(value) => setFormData({ ...formData, durationUnit: value })}
+                    onValueChange={(value) => setFormData({ ...formData, durationUnit: value as DurationUnit })}
                   >
                     <SelectTrigger className='border-davinci-callout-border'>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className='bg-davinci-paper-base border-davinci-callout-border'>
-                      <SelectItem value='minutes'>Minutes</SelectItem>
-                      <SelectItem value='hours'>Hours</SelectItem>
+                      {durationUnits.map((unit) => (
+                        <SelectItem key={unit.value} value={unit.value}>
+                          {unit.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
