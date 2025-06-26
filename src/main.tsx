@@ -6,16 +6,17 @@ import { RouterProvider } from 'react-router-dom'
 import { web3Onboard } from '~lib/web3-onboard'
 import { router } from '~router'
 
-const queryClient = new QueryClient()
-
 import '@fontsource/averia-libre/400.css'
 import '@fontsource/averia-libre/700.css'
 import '@fontsource/work-sans/400.css'
-import '@fontsource/work-sans/700.css'
+import '@fontsource/work-sans/500.css'
+import '@fontsource/work-sans/600.css'
 import './styles/globals.css'
 
+const queryClient = new QueryClient()
+
 // Set up font variables
-document.documentElement.style.setProperty('--font-work-sans', 'Work Sans Variable, sans-serif')
+document.documentElement.style.setProperty('--font-work-sans', 'Work Sans, sans-serif')
 document.documentElement.style.setProperty('--font-averia-libre', 'Averia Libre, serif')
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
