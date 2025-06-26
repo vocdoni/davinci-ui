@@ -8,5 +8,14 @@ export default defineConfig({
   define: {
     'import.meta.env.SEQUENCER_URL': JSON.stringify(process.env.SEQUENCER_URL || 'https://sequencer1.davinci.vote'),
     'import.meta.env.BIGQUERY_URL': JSON.stringify(process.env.BIGQUERY_URL || 'https://c3.davinci.vote'),
+    'import.meta.env.SHARE_TEXT': JSON.stringify(
+      process.env.SHARE_TEXT ||
+        `🗳️ Just launched a vote with DAVINCI, the anonymous, verifiable & anti-coercion voting protocol by @vocdoni!
+
+"{title}" {link}
+
+Want to create your own vote & earn rewards?
+👉 {app}`
+    ),
   },
 })

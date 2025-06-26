@@ -60,7 +60,7 @@ export default function VotePage() {
           {/* Right Column - Info Cards */}
           <div className='lg:col-span-4 space-y-6'>
             <TotalVotesCard voteData={meta} processData={process as GetProcessResponse} />
-            <ShareableLink voteId={params.id as string} />
+            <ShareableLink voteId={params.id as string} voteData={meta} />
             <VoteParameters voteData={meta} processData={process as GetProcessResponse} />
             <NewsletterCard />
           </div>

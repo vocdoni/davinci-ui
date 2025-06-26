@@ -1,21 +1,23 @@
 'use client'
 
-import { Check, Copy, ExternalLink, Share2 } from 'lucide-react'
+import type { ElectionMetadata } from '@vocdoni/davinci-sdk'
+import { Check, Copy, Share2 } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '~components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
 import { Input } from '~components/ui/input'
+import { truncateText } from '~lib/utils'
 
 interface ShareableLinkProps {
   voteId: string
+  voteData: ElectionMetadata
 }
 
-export function ShareableLink({ voteId }: ShareableLinkProps) {
+export function ShareableLink({ voteId, voteData }: ShareableLinkProps) {
   const [copied, setCopied] = useState(false)
 
   // Generate the shareable URL
-  const shareUrl =
-    typeof window !== 'undefined' ? `${window.location.origin}/vote/${voteId}` : `https://davinci.vote/vote/${voteId}`
+  const shareUrl = `${window.location.origin}/vote/${voteId}`
 
   const handleCopy = async () => {
     try {
@@ -35,7 +37,12 @@ export function ShareableLink({ voteId }: ShareableLinkProps) {
         url: shareUrl,
       })
     } else {
-      handleCopy()
+      const link = `https://x.com/intent/post?text=${encodeURIComponent(
+        import.meta.env.SHARE_TEXT.replace('{link}', shareUrl)
+          .replace('{app}', window.location.origin)
+          .replace('{title}', truncateText(voteData.title.default, 60))
+      )}`
+      window.open(link, '_blank', 'noopener,noreferrer')
     }
   }
 
@@ -65,26 +72,15 @@ export function ShareableLink({ voteId }: ShareableLinkProps) {
             </Button>
           </div>
 
-          <div className='grid grid-cols-2 gap-2'>
-            <Button
-              onClick={handleShare}
-              variant='outline'
-              size='sm'
-              className='border-davinci-callout-border text-davinci-black-alt hover:bg-davinci-soft-neutral/20'
-            >
-              <Share2 className='w-3 h-3 mr-1' />
-              Share
-            </Button>
-            <Button
-              onClick={() => window.open(shareUrl, '_blank')}
-              variant='outline'
-              size='sm'
-              className='border-davinci-callout-border text-davinci-black-alt hover:bg-davinci-soft-neutral/20'
-            >
-              <ExternalLink className='w-3 h-3 mr-1' />
-              Open
-            </Button>
-          </div>
+          <Button
+            onClick={handleShare}
+            variant='outline'
+            size='sm'
+            className='w-full border-davinci-callout-border text-davinci-black-alt hover:bg-davinci-soft-neutral/20'
+          >
+            <Share2 className='w-3 h-3 mr-1' />
+            Share
+          </Button>
         </div>
       </CardContent>
     </Card>
