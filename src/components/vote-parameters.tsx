@@ -173,16 +173,16 @@ export function VoteParameters({ voteData, processData }: VoteParametersProps) {
 interface TotalVotesCardProps {
   voteData: ElectionMetadata
   processData: GetProcessResponse
-  currentTotalVotes: number
-  voteEnded: boolean
 }
 
-export function TotalVotesCard({ voteData, processData, currentTotalVotes, voteEnded }: TotalVotesCardProps) {
+export function TotalVotesCard({ voteData, processData }: TotalVotesCardProps) {
+  const voteEnded = [ProcessStatus.ENDED, ProcessStatus.CANCELED, ProcessStatus.RESULTS].includes(processData.status)
+
   return (
     <Card className='border-davinci-callout-border mb-6'>
       <CardContent className='p-6'>
         <div className='text-center'>
-          <p className='text-3xl font-bold text-davinci-black-alt'>{currentTotalVotes.toLocaleString()}</p>
+          <p className='text-3xl font-bold text-davinci-black-alt'>{processData.voteCount.toLocaleString()}</p>
           <p className='text-sm text-davinci-black-alt/80'>{!voteEnded ? 'Votes Cast So Far' : 'Final Vote Count'}</p>
         </div>
       </CardContent>

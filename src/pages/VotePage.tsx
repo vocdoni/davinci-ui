@@ -1,65 +1,19 @@
 import { useCopyToClipboard } from '@uidotdev/usehooks'
-import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
-import { VocdoniApiService, type GetProcessResponse } from '@vocdoni/davinci-sdk/sequencer'
+import { type GetProcessResponse } from '@vocdoni/davinci-sdk/sequencer'
 import { LucideCheck, LucideCopy, LucideSearch } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useLoaderData, useParams } from 'react-router-dom'
 import { NewsletterCard } from '~components/newsletter-card'
 import { ShareableLink } from '~components/shareable-link'
 import { VoteDisplay } from '~components/vote-display'
 import { TotalVotesCard, VoteParameters } from '~components/vote-parameters'
 import { truncateAddress } from '~lib/web3-utils'
+import type { ProcessLoaderData } from '~src/types'
 
 export default function VotePage() {
+  const { meta, process } = useLoaderData() as ProcessLoaderData
   const params = useParams()
-  const [voteData, setVoteData] = useState<ElectionMetadata | null>(null)
-  const [processData, setProcessData] = useState<GetProcessResponse | null>(null)
-  const [isClient, setIsClient] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [currentTotalVotes, setCurrentTotalVotes] = useState(0)
-  const [voteEnded, setVoteEnded] = useState(false)
   const [copiedText, copyToClipboard] = useCopyToClipboard()
   const hasCopiedText = Boolean(copiedText)
-
-  useEffect(() => {
-    setIsClient(true)
-    ;(async () => {
-      const api = new VocdoniApiService(import.meta.env.SEQUENCER_URL)
-
-      const process = await api.getProcess(params.id as string)
-      const meta = await api.getMetadata(process.metadataURI.substring(process.metadataURI.lastIndexOf('/') + 1))
-
-      setVoteData(meta)
-      setProcessData(process)
-      setIsLoading(false)
-    })()
-  }, [params.id])
-
-  if (!isClient || isLoading) {
-    return (
-      <div className='px-4'>
-        <div className='max-w-7xl mx-auto'>
-          <div className='text-center py-16'>
-            <div className='w-8 h-8 border-2 border-davinci-black-alt/30 border-t-davinci-black-alt rounded-full animate-spin mx-auto mb-4' />
-            <h1 className='text-2xl font-bold text-davinci-black-alt'>Loading vote...</h1>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!voteData) {
-    return (
-      <div className='px-4'>
-        <div className='max-w-7xl mx-auto'>
-          <div className='text-center py-16'>
-            <h1 className='text-2xl font-bold text-davinci-black-alt mb-4'>Vote Not Found</h1>
-            <p className='text-davinci-black-alt/80'>The vote you're looking for doesn't exist or has been removed.</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className='px-4'>
@@ -67,7 +21,7 @@ export default function VotePage() {
         {/* Page Header */}
         <div className='text-center mb-8'>
           <h1 className='text-3xl font-bold text-davinci-black-alt mb-2 font-averia'>
-            {voteData.questions[0].title.default}
+            {meta.questions[0].title.default}
           </h1>
           <div className='flex items-center justify-center gap-2 text-davinci-black-alt/70'>
             <span className='text-sm font-medium'>Process ID:</span>
@@ -100,19 +54,14 @@ export default function VotePage() {
         <div className='grid grid-cols-1 lg:grid-cols-12 gap-8'>
           {/* Left Column - Vote Display (wider) */}
           <div className='lg:col-span-8'>
-            <VoteDisplay voteData={voteData} processData={processData as GetProcessResponse} id={params.id as string} />
+            <VoteDisplay voteData={meta} processData={process as GetProcessResponse} id={params.id as string} />
           </div>
 
           {/* Right Column - Info Cards */}
           <div className='lg:col-span-4 space-y-6'>
-            <TotalVotesCard
-              voteData={voteData}
-              processData={processData as GetProcessResponse}
-              currentTotalVotes={currentTotalVotes}
-              voteEnded={voteEnded}
-            />
+            <TotalVotesCard voteData={meta} processData={process as GetProcessResponse} />
             <ShareableLink voteId={params.id as string} />
-            <VoteParameters voteData={voteData} processData={processData as GetProcessResponse} />
+            <VoteParameters voteData={meta} processData={process as GetProcessResponse} />
             <NewsletterCard />
           </div>
         </div>

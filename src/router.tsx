@@ -1,5 +1,8 @@
+import type { ElectionMetadata } from '@vocdoni/davinci-sdk'
 import { Suspense, lazy } from 'react'
-import { createBrowserRouter } from 'react-router-dom'
+import { RouterProvider, createBrowserRouter } from 'react-router-dom'
+import { up } from 'up-fetch'
+import { useVocdoniApi } from '~components/vocdoni-api-context'
 import { Layout } from './Layout'
 
 // Loading components
@@ -14,79 +17,79 @@ const Loading = () => (
   </div>
 )
 
-const VoteResultsLoading = () => (
-  <div className='px-4'>
-    <div className='max-w-7xl mx-auto'>
-      <div className='text-center py-16'>
-        <div className='w-8 h-8 border-2 border-davinci-black-alt/30 border-t-davinci-black-alt rounded-full animate-spin mx-auto mb-4' />
-        <h1 className='text-2xl font-bold text-davinci-black-alt'>Loading vote results...</h1>
-        <p className='text-davinci-black-alt/80 mt-2'>Preparing the completed vote demonstration</p>
-      </div>
-    </div>
-  </div>
-)
-
 // Lazy load pages
 const HomePage = lazy(() => import('./pages/HomePage'))
 const VotePage = lazy(() => import('./pages/VotePage'))
 const ImplementPage = lazy(() => import('./pages/ImplementPage'))
 const NewsletterPage = lazy(() => import('./pages/NewsletterPage'))
 const ParticipatePage = lazy(() => import('./pages/ParticipatePage'))
-const PublicVoteSampleEndPage = lazy(() => import('./pages/PublicVoteSampleEndPage'))
 
-export const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <Layout />,
-    children: [
-      {
-        index: true,
-        element: (
-          <Suspense fallback={<Loading />}>
-            <HomePage />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'vote/:id',
-        element: (
-          <Suspense fallback={<Loading />}>
-            <VotePage />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'implement',
-        element: (
-          <Suspense fallback={<Loading />}>
-            <ImplementPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'newsletter',
-        element: (
-          <Suspense fallback={<Loading />}>
-            <NewsletterPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'participate',
-        element: (
-          <Suspense fallback={<Loading />}>
-            <ParticipatePage />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'public-vote-sample-end',
-        element: (
-          <Suspense fallback={<VoteResultsLoading />}>
-            <PublicVoteSampleEndPage />
-          </Suspense>
-        ),
-      },
-    ],
-  },
-])
+const upfetch = up(fetch)
+
+const Provider = () => {
+  const api = useVocdoniApi()
+
+  const router = createBrowserRouter([
+    {
+      path: '/',
+      element: <Layout />,
+      children: [
+        {
+          index: true,
+          element: (
+            <Suspense fallback={<Loading />}>
+              <HomePage />
+            </Suspense>
+          ),
+        },
+        {
+          path: 'vote/:id',
+          element: (
+            <Suspense fallback={<Loading />}>
+              <VotePage />
+            </Suspense>
+          ),
+          loader: async ({ params }) => {
+            if (!params.id) {
+              throw new Error('Vote ID is required')
+            }
+            const process = await api.getProcess(params.id)
+            if (!process) {
+              throw new Error('Vote not found')
+            }
+            const meta = await upfetch<ElectionMetadata>(process.metadataURI)
+            return { id: params.id, process, meta }
+          },
+        },
+        {
+          path: 'implement',
+          element: (
+            <Suspense fallback={<Loading />}>
+              <ImplementPage />
+            </Suspense>
+          ),
+        },
+        {
+          path: 'newsletter',
+          element: (
+            <Suspense fallback={<Loading />}>
+              <NewsletterPage />
+            </Suspense>
+          ),
+        },
+        {
+          path: 'participate',
+          element: (
+            <Suspense fallback={<Loading />}>
+              <ParticipatePage />
+            </Suspense>
+          ),
+        },
+      ],
+    },
+  ])
+
+  return <RouterProvider router={router} />
+}
+
+export { Provider as RouterProvider }
