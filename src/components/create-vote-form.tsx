@@ -141,6 +141,10 @@ export function CreateVoteForm() {
               key: '0x8349DE968A70B79D09886DA1690CC259b67CbCbC',
               weight: '1',
             },
+            {
+              key: '0xf3B06b503652a5E075D423F97056DFde0C4b066F',
+              weight: '1',
+            },
           ]
           await api.addParticipants(censusId, participants)
           const censusRoot = await api.getCensusRoot(censusId)
@@ -559,6 +563,16 @@ export function CreateVoteForm() {
                 onValueChange={(value) => setFormData({ ...formData, censusType: value })}
               >
                 <div className='space-y-2'>
+                  <div className='flex items-center space-x-2'>
+                    <RadioGroupItem
+                      value='hardcoded-wallets'
+                      id='hardcoded-wallets'
+                      className='border-davinci-callout-border'
+                    />
+                    <Label htmlFor='hardcoded-wallets' className='text-davinci-black-alt'>
+                      Hardcoded Wallets 🫠
+                    </Label>
+                  </div>
                   <div className='flex items-center space-x-2'>
                     <RadioGroupItem
                       value='ethereum-wallets'

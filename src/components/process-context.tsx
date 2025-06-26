@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { CensusProof, ElectionMetadata, GetProcessResponse } from '@vocdoni/davinci-sdk'
 import { useConnectWallet } from '@web3-onboard/react'
 import { createContext, useContext, useMemo, type FC, type PropsWithChildren } from 'react'
+import { up } from 'up-fetch'
 import { useVocdoniApi } from './vocdoni-api-context'
 
 type Process = {
@@ -24,13 +25,14 @@ const ProcessContext = createContext<ProcessContextValue | undefined>(undefined)
 
 type ProcessProviderProps = PropsWithChildren<{ process: Process }>
 
+const upfetch = up(fetch)
+
 export const ProcessProvider: FC<ProcessProviderProps> = ({ children, process }) => {
   const api = useVocdoniApi()
   const [{ wallet }] = useConnectWallet()
 
   const address = wallet?.accounts?.[0]?.address ?? null
   const censusRoot = process.process.census.censusRoot
-  const censusURI = process.process.census.censusURI
 
   const {
     data: censusProof,
@@ -41,7 +43,12 @@ export const ProcessProvider: FC<ProcessProviderProps> = ({ children, process })
     enabled: !!address && !!censusRoot,
     queryKey: ['census-proof', censusRoot, address],
     queryFn: async () => {
-      return await api.getCensusProof(censusURI, censusRoot, address!)
+      if (process.process.census.censusURI.startsWith('http')) {
+        return await upfetch<CensusProof>(`${process.process.census.censusURI}/proof`, {
+          params: { key: address },
+        })
+      }
+      return await api.getCensusProof(censusRoot, address!)
     },
     retry: false,
     staleTime: 1000 * 60 * 5,

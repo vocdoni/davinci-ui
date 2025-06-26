@@ -1,11 +1,18 @@
-import type { ElectionMetadata } from '@vocdoni/davinci-sdk'
+import { useQueryClient } from '@tanstack/react-query'
 import { Suspense, lazy } from 'react'
-import { RouterProvider, createBrowserRouter } from 'react-router-dom'
-import { up } from 'up-fetch'
+import { RouterProvider as ReactRouterProvider, createBrowserRouter } from 'react-router-dom'
 import { useVocdoniApi } from '~components/vocdoni-api-context'
+import { getProcessQuery } from '~hooks/use-process-query'
+import AppError from './AppError'
 import { Layout } from './Layout'
 
-// Loading components
+// Lazy load pages
+const HomePage = lazy(() => import('./pages/HomePage'))
+const VotePage = lazy(() => import('./pages/VotePage'))
+const ImplementPage = lazy(() => import('./pages/ImplementPage'))
+const NewsletterPage = lazy(() => import('./pages/NewsletterPage'))
+const ParticipatePage = lazy(() => import('./pages/ParticipatePage'))
+
 const Loading = () => (
   <div className='px-4'>
     <div className='max-w-7xl mx-auto'>
@@ -17,17 +24,9 @@ const Loading = () => (
   </div>
 )
 
-// Lazy load pages
-const HomePage = lazy(() => import('./pages/HomePage'))
-const VotePage = lazy(() => import('./pages/VotePage'))
-const ImplementPage = lazy(() => import('./pages/ImplementPage'))
-const NewsletterPage = lazy(() => import('./pages/NewsletterPage'))
-const ParticipatePage = lazy(() => import('./pages/ParticipatePage'))
-
-const upfetch = up(fetch)
-
-const Provider = () => {
+export const RouterProvider = () => {
   const api = useVocdoniApi()
+  const queryClient = useQueryClient()
 
   const router = createBrowserRouter([
     {
@@ -49,16 +48,14 @@ const Provider = () => {
               <VotePage />
             </Suspense>
           ),
+          errorElement: <AppError />,
           loader: async ({ params }) => {
-            if (!params.id) {
-              throw new Error('Vote ID is required')
-            }
-            const process = await api.getProcess(params.id)
-            if (!process) {
-              throw new Error('Vote not found')
-            }
-            const meta = await upfetch<ElectionMetadata>(process.metadataURI)
-            return { id: params.id, process, meta }
+            if (!params.id) throw new Error('Vote ID is required')
+            const id = params.id
+            const query = getProcessQuery(id, api)
+
+            const data = await queryClient.ensureQueryData(query)
+            return { id, ...data }
           },
         },
         {
@@ -85,11 +82,13 @@ const Provider = () => {
             </Suspense>
           ),
         },
+        {
+          path: '*',
+          element: <AppError />,
+        },
       ],
     },
   ])
 
-  return <RouterProvider router={router} />
+  return <ReactRouterProvider router={router} />
 }
-
-export { Provider as RouterProvider }

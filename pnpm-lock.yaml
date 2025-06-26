@@ -106,7 +106,7 @@ importers:
         version: 2.4.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@vocdoni/davinci-sdk':
         specifier: github:vocdoni/davinci-sdk#f/ts-bundling
-        version: https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/336b1b646f2dbbd029f9e13b92790fd4d7492f20
+        version: https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/1fb45ecd22b2e06db377d4a92e819d9e9a118631
       '@web3-onboard/core':
         specifier: ^2.24.1
         version: 2.24.1(typescript@5.8.3)(zod@3.25.61)
@@ -1900,8 +1900,8 @@ packages:
   '@vocdoni/davinci-contracts@0.0.5':
     resolution: {integrity: sha512-8uVE78hJUEQpmY5QIe2M4voDXbonfgOlv2Iqng3ko5jkpGmXBpyoa7RzEpjDAAdLPyTAknfgIC/C/bgtKya6FA==}
 
-  '@vocdoni/davinci-sdk@https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/336b1b646f2dbbd029f9e13b92790fd4d7492f20':
-    resolution: {tarball: https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/336b1b646f2dbbd029f9e13b92790fd4d7492f20}
+  '@vocdoni/davinci-sdk@https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/1fb45ecd22b2e06db377d4a92e819d9e9a118631':
+    resolution: {tarball: https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/1fb45ecd22b2e06db377d4a92e819d9e9a118631}
     version: 0.0.3-beta2
 
   '@walletconnect/core@2.21.0':
@@ -5574,7 +5574,7 @@ snapshots:
 
   '@vocdoni/davinci-contracts@0.0.5': {}
 
-  '@vocdoni/davinci-sdk@https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/336b1b646f2dbbd029f9e13b92790fd4d7492f20':
+  '@vocdoni/davinci-sdk@https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/1fb45ecd22b2e06db377d4a92e819d9e9a118631':
     dependencies:
       '@ethereumjs/common': 4.4.0
       '@vocdoni/davinci-contracts': 0.0.5

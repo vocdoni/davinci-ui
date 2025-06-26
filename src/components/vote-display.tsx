@@ -1,7 +1,17 @@
-'use client'
-
+import {
+  BallotProof,
+  CircomProof,
+  ProcessStatus,
+  VocdoniApiService,
+  type BallotProofInputs,
+  type VoteBallot,
+  type VoteRequest,
+} from '@vocdoni/davinci-sdk'
+import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
+import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
 import { useConnectWallet } from '@web3-onboard/react'
-import { BarChart3, CheckCircle, Clock, Diamond, Lock, Minus, Plus, Users, Wallet } from 'lucide-react'
+import { BrowserProvider } from 'ethers'
+import { BarChart3, CheckCircle, Clock, Diamond, Lock, Minus, Plus, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Badge } from '~components/ui/badge'
 import { Button } from '~components/ui/button'
@@ -13,20 +23,11 @@ import { RadioGroup, RadioGroupItem } from '~components/ui/radio-group'
 import { VoteProgressTracker } from '~components/vote-progress-tracker'
 import { VotingModal } from '~components/voting-modal'
 import { usePersistedVote } from '~hooks/use-persisted-vote'
+import { useProcessQuery } from '~hooks/use-process-query'
 import { truncateAddress } from '~lib/web3-utils'
-
-import {
-  BallotProof,
-  CircomProof,
-  VocdoniApiService,
-  type BallotProofInputs,
-  type VoteBallot,
-  type VoteRequest,
-} from '@vocdoni/davinci-sdk'
-import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
-import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
-import { BrowserProvider } from 'ethers'
 import { useProcess } from './process-context'
+import ConnectWalletButton from './ui/connect-wallet-button'
+import { Spinner } from './ui/spinner'
 import VotingTimeRemaining from './voting-time-remaining'
 
 interface VotingMethod {
@@ -67,25 +68,24 @@ interface QuadraticVote {
 }
 
 export function VoteDisplay() {
-  const [{ wallet }, connect] = useConnectWallet()
+  const [{ wallet }] = useConnectWallet()
   const {
     censusProof,
     isInCensus,
     isAbleToVote,
-    censusProofError,
+    isCensusProofLoading,
     process: { meta, process },
   } = useProcess()
+  const processQuery = useProcessQuery(process.id)
   const [selectedChoice, setSelectedChoice] = useState('')
   const [selectedChoices, setSelectedChoices] = useState<string[]>([])
   const [quadraticVotes, setQuadraticVotes] = useState<QuadraticVote>({})
   const [voteCount, setVoteCount] = useState(0)
   const [showVotingModal, setShowVotingModal] = useState(false)
-  const [isCheckingEligibility, setIsCheckingEligibility] = useState(false)
-  const [voteEnded, setVoteEnded] = useState(false)
-  const [results, setResults] = useState<VoteResults>({})
   const [isVoting, setIsVoting] = useState(false)
   const { voteId, trackVote, resetVote } = usePersistedVote(process.id)
   const isConnected = !!wallet
+  const voteEnded = process.status === ProcessStatus.ENDED || process.status === ProcessStatus.RESULTS
 
   // Initialize quadratic votes
   useEffect(() => {
@@ -113,17 +113,6 @@ export function VoteDisplay() {
   const getRemainingCredits = (): number => {
     const votingMethod = getVotingMethod(meta)
     return (votingMethod.credits || 100) - getTotalCreditsUsed()
-  }
-
-  const handleConnectWallet = async () => {
-    setIsCheckingEligibility(true)
-    try {
-      await connect()
-    } catch (error) {
-      console.error('Error connecting wallet:', error)
-    } finally {
-      setIsCheckingEligibility(false)
-    }
   }
 
   const handleVoteSubmit = () => {
@@ -163,7 +152,13 @@ export function VoteDisplay() {
       const kStr = BigInt('0x' + kHex).toString()
 
       const fieldValues =
-        meta.type.name === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION ? [selectedChoice] : selectedChoices
+        meta.type.name === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION
+          ? (() => {
+              const result = Array(8).fill('0')
+              result[Number(selectedChoice)] = '1'
+              return result
+            })()
+          : selectedChoices
 
       const inputs: BallotProofInputs = {
         address: wallet.accounts[0].address,
@@ -201,6 +196,7 @@ export function VoteDisplay() {
 
       const provider = new BrowserProvider(wallet.provider)
       const signer = await provider.getSigner()
+      console.info('ℹ️ census proof:', censusProof)
       console.info('ℹ️ voteid:', out.voteID)
       const signature = await signer.signMessage(hexStringToUint8Array(out.voteID))
 
@@ -222,6 +218,9 @@ export function VoteDisplay() {
       trackVote(submittedVoteId)
 
       console.info('✅ Vote submitted successfully:', submittedVoteId)
+
+      // refetch process info
+      await processQuery.refetch()
     } catch (error) {
       console.error('Error during voting process:', error)
 
@@ -233,14 +232,14 @@ export function VoteDisplay() {
     // Clear selections after voting
     setSelectedChoice('')
     setSelectedChoices([])
-    // const votingMethod = getVotingMethod(meta)
-    // if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
-    //   const resetVotes: QuadraticVote = {}
-    //   meta.questions[0].choices.forEach((choice) => {
-    //     resetVotes[choice.value.toString()] = 0
-    //   })
-    //   setQuadraticVotes(resetVotes)
-    // }
+    const votingMethod = getVotingMethod(meta)
+    if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
+      const resetVotes: QuadraticVote = {}
+      meta.questions[0].choices.forEach((choice) => {
+        resetVotes[choice.value.toString()] = 0
+      })
+      setQuadraticVotes(resetVotes)
+    }
   }
 
   const handleVoteAgain = () => {
@@ -327,26 +326,8 @@ export function VoteDisplay() {
     }
   }
 
-  const getWinningChoice = () => {
-    if (!results || Object.keys(results).length === 0) return null
-
-    let maxVotes = 0
-    let winningChoiceId = ''
-
-    Object.entries(results).forEach(([choiceId, result]) => {
-      if (result.votes > maxVotes) {
-        maxVotes = result.votes
-        winningChoiceId = choiceId
-      }
-    })
-
-    return meta.questions[0].choices.find((choice) => choice.value.toString() === winningChoiceId)
-  }
-
-  const winningChoice = getWinningChoice()
   const votingMethod = getVotingMethod(meta)
 
-  console.log('proof:', censusProof, censusProofError)
   return (
     <div className='space-y-6'>
       {/* Vote Status */}
@@ -400,7 +381,7 @@ export function VoteDisplay() {
                 </div>
                 <div className='text-center'>
                   <p className='text-2xl font-bold text-davinci-black-alt'>
-                    {Object.values(results).filter((r) => r.votes > 0).length}
+                    {Array.from(process.result).filter((r) => Number(r) > 0).length}
                   </p>
                   <p className='text-xs text-davinci-black-alt/60'>Choices with Votes</p>
                 </div>
@@ -421,13 +402,13 @@ export function VoteDisplay() {
                     {meta.questions[0].choices
                       .map((choice) => ({
                         ...choice,
-                        result: results[choice.value.toString()],
+                        result: process.result[choice.value],
                       }))
-                      .sort((a, b) => (b.result?.votes || 0) - (a.result?.votes || 0))
+                      .sort((a, b) => (Number(b.result) || 0) - (Number(a.result) || 0))
                       .map((choice, index) => {
-                        const result = choice.result
-                        const percentage = result?.percentage || 0
-                        const votes = result?.votes || 0
+                        const result = process.result[choice.value] || '0'
+                        const percentage = (Number(result) / Number(process.voteCount)) * 100 || 0
+                        const votes = result || 0
 
                         // Color scheme based on ranking
                         const getBarColor = () => {
@@ -793,23 +774,7 @@ export function VoteDisplay() {
             {/* Dynamic Action Button */}
             {!isConnected ? (
               <div className='space-y-4'>
-                <Button
-                  onClick={handleConnectWallet}
-                  disabled={isCheckingEligibility}
-                  className='w-full bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base'
-                >
-                  {isCheckingEligibility ? (
-                    <>
-                      <div className='w-4 h-4 border-2 border-davinci-text-base/30 border-t-davinci-text-base rounded-full animate-spin mr-2' />
-                      Connecting...
-                    </>
-                  ) : (
-                    <>
-                      <Wallet className='w-4 h-4 mr-2' />
-                      Connect wallet to vote
-                    </>
-                  )}
-                </Button>
+                <ConnectWalletButton className='w-full' />
                 <div className='bg-davinci-digital-highlight p-3 rounded-lg border border-davinci-callout-border'>
                   <p className='text-xs text-davinci-black-alt/80 text-center'>
                     Connect your wallet to verify eligibility and cast your vote. Your selections will be saved.
@@ -818,12 +783,24 @@ export function VoteDisplay() {
               </div>
             ) : !isInCensus ? (
               <div className='text-center space-y-4'>
-                <div className='bg-red-50 p-6 rounded-lg border border-red-200'>
-                  <div className='w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4'>
-                    <Lock className='w-6 h-6 text-red-600' />
+                <div
+                  className={`${isCensusProofLoading ? 'bg-blue-50 border-blue-200' : 'bg-red-50 border-red-200'} p-6 rounded-lg border `}
+                >
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 ${!isCensusProofLoading && 'bg-red-100'}`}
+                  >
+                    {isCensusProofLoading ? <Spinner /> : <Lock className='w-6 h-6 text-red-600' />}
                   </div>
-                  <h3 className='text-lg font-semibold text-red-800 mb-2'>Not Eligible</h3>
-                  <p className='text-red-700'>Your wallet doesn't meet the requirements to participate in this vote.</p>
+                  {isCensusProofLoading ? (
+                    <p className='text-sm text-blue-800'>Checking eligibility...</p>
+                  ) : (
+                    <>
+                      <h3 className='text-lg font-semibold text-red-800 mb-2'>Not Eligible</h3>
+                      <p className='text-red-700'>
+                        Your wallet doesn't meet the requirements to participate in this vote.
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (
@@ -913,11 +890,19 @@ export const WalletEligibilityStatus = () => {
   const address = wallet?.accounts?.[0]?.address ?? null
   const isConnected = !!address
 
-  const { isInCensus, isCensusProofLoading } = useProcess()
+  const {
+    isInCensus,
+    isCensusProofLoading,
+    process: { process },
+  } = useProcess()
 
   if (!isConnected) return null
 
   const bg = isInCensus ? 'bg-davinci-digital-highlight' : 'bg-yellow-100'
+
+  // estimate time left for the process to end and show and alert when 5 minutes are left
+  const votingEndTime = new Date(new Date(process.startTime).getTime() + process.duration / 1_000_000)
+  const timeLeft = votingEndTime.getTime() - Date.now()
 
   return (
     <div className={`${bg} p-4 rounded-lg border border-davinci-callout-border`}>
@@ -933,6 +918,11 @@ export const WalletEligibilityStatus = () => {
                 ? 'Eligible to vote'
                 : 'Not eligible to vote'}
           </p>
+          {timeLeft < 5 * 60 * 1000 && timeLeft > 0 && (
+            <p className='text-sm text-red-600 mt-2'>
+              ⚠️ Voting ends in less than 5 minutes! Please cast your vote soon.
+            </p>
+          )}
         </div>
       </div>
     </div>

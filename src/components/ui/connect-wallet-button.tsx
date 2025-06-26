@@ -1,9 +1,9 @@
 import { useConnectWallet } from '@web3-onboard/react'
 import { Loader2, Wallet } from 'lucide-react'
 import { truncateAddress } from '~lib/web3-utils'
-import { Button } from './button'
+import { Button, type ButtonProps } from './button'
 
-const ConnectWalletButton = () => {
+const ConnectWalletButton = (props: ButtonProps) => {
   const [{ connecting, wallet }, connect, disconnect] = useConnectWallet()
 
   const handleConnectWallet = async () => {
@@ -16,8 +16,9 @@ const ConnectWalletButton = () => {
 
   return (
     <Button
-      className='bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base whitespace-nowrap'
       onClick={handleConnectWallet}
+      {...props}
+      className={`bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base whitespace-nowrap ${props.className}`}
     >
       {connecting ? (
         <>
