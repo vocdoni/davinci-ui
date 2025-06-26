@@ -50,7 +50,7 @@ export default {
           'black-alt': '#3B2B21',
           'text-base': '#FFFFFF',
           'text-inverse': '#000000',
-          'digital-highlight': '#D9FFE5',
+          'digital-highlight': '#d9faff',
           'callout-border': '#C1DFCD',
           'secondary-accent': '#C5C8F7',
         },
