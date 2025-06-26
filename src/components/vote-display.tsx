@@ -20,19 +20,14 @@ import {
   CircomProof,
   VocdoniApiService,
   type BallotProofInputs,
-  type GetProcessResponse,
   type VoteBallot,
   type VoteRequest,
 } from '@vocdoni/davinci-sdk'
 import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
 import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
 import { BrowserProvider } from 'ethers'
-
-interface VoteDisplayProps {
-  voteData: ElectionMetadata
-  processData: GetProcessResponse
-  id: string
-}
+import { useProcess } from './process-context'
+import VotingTimeRemaining from './voting-time-remaining'
 
 interface VotingMethod {
   type: ElectionResultsTypeNames
@@ -41,8 +36,8 @@ interface VotingMethod {
   credits?: number
 }
 
-function getVotingMethod(voteData: ElectionMetadata): VotingMethod {
-  const { type } = voteData
+function getVotingMethod(meta: ElectionMetadata): VotingMethod {
+  const { type } = meta
   switch (type.name) {
     case ElectionResultsTypeNames.MULTIPLE_CHOICE:
       return {
@@ -71,33 +66,38 @@ interface QuadraticVote {
   [choiceId: string]: number
 }
 
-export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
+export function VoteDisplay() {
   const [{ wallet }, connect] = useConnectWallet()
-  const [isEligible, setIsEligible] = useState(true)
+  const {
+    censusProof,
+    isInCensus,
+    isAbleToVote,
+    censusProofError,
+    process: { meta, process },
+  } = useProcess()
   const [selectedChoice, setSelectedChoice] = useState('')
   const [selectedChoices, setSelectedChoices] = useState<string[]>([])
   const [quadraticVotes, setQuadraticVotes] = useState<QuadraticVote>({})
   const [voteCount, setVoteCount] = useState(0)
   const [showVotingModal, setShowVotingModal] = useState(false)
   const [isCheckingEligibility, setIsCheckingEligibility] = useState(false)
-  const [timeRemaining, setTimeRemaining] = useState('')
   const [voteEnded, setVoteEnded] = useState(false)
   const [results, setResults] = useState<VoteResults>({})
   const [isVoting, setIsVoting] = useState(false)
-  const { voteId, trackVote, resetVote } = usePersistedVote(id)
+  const { voteId, trackVote, resetVote } = usePersistedVote(process.id)
   const isConnected = !!wallet
 
   // Initialize quadratic votes
   useEffect(() => {
-    const votingMethod = getVotingMethod(voteData)
+    const votingMethod = getVotingMethod(meta)
     if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
       const initialVotes: QuadraticVote = {}
-      voteData.questions[0].choices.forEach((choice) => {
+      meta.questions[0].choices.forEach((choice) => {
         initialVotes[choice.value.toString()] = 0
       })
       setQuadraticVotes(initialVotes)
     }
-  }, [voteData.questions, voteData.type.name])
+  }, [meta.questions, meta.type.name])
 
   // Calculate quadratic cost
   const calculateQuadraticCost = (votes: number): number => {
@@ -111,71 +111,9 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
 
   // Get remaining credits
   const getRemainingCredits = (): number => {
-    const votingMethod = getVotingMethod(voteData)
+    const votingMethod = getVotingMethod(meta)
     return (votingMethod.credits || 100) - getTotalCreditsUsed()
   }
-
-  // Generate realistic vote results
-  const generateResults = (): VoteResults => {
-    const totalVotes = Number(processData.voteCount)
-    const results: VoteResults = {}
-    let remainingVotes = totalVotes
-
-    voteData.questions[0].choices.forEach((choice, index) => {
-      if (index === voteData.questions[0].choices.length - 1) {
-        results[choice.value.toString()] = {
-          votes: remainingVotes,
-          percentage: (remainingVotes / totalVotes) * 100,
-        }
-      } else {
-        const maxVotes = Math.floor(remainingVotes * 0.6)
-        const minVotes = Math.floor(remainingVotes * 0.1)
-        const votes = Math.floor(Math.random() * (maxVotes - minVotes) + minVotes)
-
-        results[choice.value.toString()] = {
-          votes,
-          percentage: (votes / totalVotes) * 100,
-        }
-        remainingVotes -= votes
-      }
-    })
-
-    return results
-  }
-
-  // Update countdown timer
-  useEffect(() => {
-    const updateTimer = () => {
-      const now = new Date()
-      const startTime = new Date(processData.startTime)
-      const endTime = new Date(startTime.getTime() + processData.duration / 1000000)
-
-      const timeLeft = endTime.getTime() - now.getTime()
-      if (timeLeft <= 0) {
-        setTimeRemaining('00:00:00')
-        // This clearly won't work this way...
-        if (!voteEnded) {
-          setVoteEnded(true)
-          setResults(generateResults())
-        }
-        return
-      }
-
-      const hours = Math.floor(timeLeft / (1000 * 60 * 60))
-      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60))
-      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000)
-
-      setTimeRemaining(
-        `${hours.toString().padStart(2, '0')}:${minutes
-          .toString()
-          .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-      )
-    }
-
-    updateTimer()
-    const interval = setInterval(updateTimer, 1000)
-    return () => clearInterval(interval)
-  }, [processData?.startTime, voteEnded])
 
   const handleConnectWallet = async () => {
     setIsCheckingEligibility(true)
@@ -203,6 +141,9 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
     setIsVoting(true)
 
     try {
+      if (!censusProof) {
+        throw new Error('Census proof is required to vote')
+      }
       // Initialize API service
       const api = new VocdoniApiService(import.meta.env.SEQUENCER_URL)
 
@@ -214,7 +155,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
         wasmUrl: info.ballotProofWasmHelperUrl,
       })
       await sdk.init()
-      console.info('✅ BallotProof SDK initialized')
+      console.info('ℹ️ BallotProof SDK initialized')
 
       const kHex = Array.from(crypto.getRandomValues(new Uint8Array(8)))
         .map((b) => b.toString(16).padStart(2, '0'))
@@ -222,19 +163,19 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
       const kStr = BigInt('0x' + kHex).toString()
 
       const fieldValues =
-        voteData.type.name === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION ? [selectedChoice] : selectedChoices
+        meta.type.name === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION ? [selectedChoice] : selectedChoices
 
       const inputs: BallotProofInputs = {
         address: wallet.accounts[0].address,
-        processID: id,
-        ballotMode: processData.ballotMode,
-        encryptionKey: [processData.encryptionKey.x, processData.encryptionKey.y],
+        processID: process.id,
+        ballotMode: process.ballotMode,
+        encryptionKey: [process.encryptionKey.x, process.encryptionKey.y],
         k: kStr,
         fieldValues,
         secret: '1234567890',
         weight: '1',
       }
-      console.info('✅ Ballot proof inputs:', inputs)
+      console.info('ℹ️ Ballot proof inputs:', inputs)
 
       const out = await sdk.proofInputs(inputs)
 
@@ -245,7 +186,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
         zkeyUrl: info.provingKeyUrl,
         vkeyUrl: info.verificationKeyUrl,
       })
-      console.info('✅ CircomProof SDK initialized', pg)
+      console.info('ℹ️ CircomProof SDK initialized', pg)
 
       const { proof, publicSignals } = await pg.generate(out.circomInputs)
       console.log('✅ Proof generated:', proof)
@@ -253,13 +194,6 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
 
       if (!ok) throw new Error(`Proof verification failed`)
 
-      console.info('ℹ️ Process census:', processData.census)
-
-      const censusProof = await api.getCensusProof(
-        processData.census.censusURI,
-        processData.census.censusRoot,
-        wallet.accounts[0].address
-      )
       const voteBallot: VoteBallot = {
         curveType: out.ballot.curveType,
         ciphertexts: out.ballot.ciphertexts,
@@ -273,7 +207,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
       const voteRequest: VoteRequest = {
         address: wallet.accounts[0].address,
         ballot: voteBallot,
-        processId: id,
+        processId: process.id,
         ballotProof: proof,
         ballotInputsHash: out.ballotInputHash,
         commitment: out.commitment,
@@ -299,10 +233,10 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
     // Clear selections after voting
     setSelectedChoice('')
     setSelectedChoices([])
-    // const votingMethod = getVotingMethod(voteData)
+    // const votingMethod = getVotingMethod(meta)
     // if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
     //   const resetVotes: QuadraticVote = {}
-    //   voteData.questions[0].choices.forEach((choice) => {
+    //   meta.questions[0].choices.forEach((choice) => {
     //     resetVotes[choice.value.toString()] = 0
     //   })
     //   setQuadraticVotes(resetVotes)
@@ -314,10 +248,10 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
     // Reset form to allow voting again
     setSelectedChoice('')
     setSelectedChoices([])
-    const votingMethod = getVotingMethod(voteData)
+    const votingMethod = getVotingMethod(meta)
     if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
       const resetVotes: QuadraticVote = {}
-      voteData.questions[0].choices.forEach((choice) => {
+      meta.questions[0].choices.forEach((choice) => {
         resetVotes[choice.value.toString()] = 0
       })
       setQuadraticVotes(resetVotes)
@@ -326,7 +260,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
 
   // Validation for different voting methods
   const isVoteValid = (): boolean => {
-    const votingMethod = getVotingMethod(voteData)
+    const votingMethod = getVotingMethod(meta)
     switch (votingMethod.type) {
       case ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION:
         return selectedChoice !== ''
@@ -359,7 +293,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
         (total, votes) => total + calculateQuadraticCost(votes),
         0
       )
-      const votingMethod = getVotingMethod(voteData)
+      const votingMethod = getVotingMethod(meta)
       const totalCredits = votingMethod.credits || 100
 
       if (totalCost <= totalCredits) {
@@ -371,8 +305,8 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
   }
 
   const getVoteSelectionSummary = () => {
-    const choices = voteData.questions[0].choices
-    const votingMethod = getVotingMethod(voteData)
+    const choices = meta.questions[0].choices
+    const votingMethod = getVotingMethod(meta)
     switch (votingMethod.type) {
       case ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION:
         return choices.find((choice) => choice.value.toString() === selectedChoice)?.title.default || ''
@@ -406,12 +340,13 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
       }
     })
 
-    return voteData.questions[0].choices.find((choice) => choice.value.toString() === winningChoiceId)
+    return meta.questions[0].choices.find((choice) => choice.value.toString() === winningChoiceId)
   }
 
   const winningChoice = getWinningChoice()
-  const votingMethod = getVotingMethod(voteData)
+  const votingMethod = getVotingMethod(meta)
 
+  console.log('proof:', censusProof, censusProofError)
   return (
     <div className='space-y-6'>
       {/* Vote Status */}
@@ -431,7 +366,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
             </div>
             <div className='flex items-center gap-2 text-davinci-black-alt/80'>
               <Clock className='w-4 h-4' />
-              <span className='text-sm font-medium font-mono'>{!voteEnded ? timeRemaining : 'Ended'}</span>
+              <span className='text-sm font-medium font-mono'>{!voteEnded ? <VotingTimeRemaining /> : 'Ended'}</span>
             </div>
           </div>
         </CardContent>
@@ -454,15 +389,12 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
               <h5 className='font-semibold text-davinci-black-alt mb-4'>Vote Summary</h5>
               <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                 <div className='text-center'>
-                  <p className='text-2xl font-bold text-davinci-black-alt'>{processData.voteCount}</p>
+                  <p className='text-2xl font-bold text-davinci-black-alt'>{process.voteCount}</p>
                   <p className='text-xs text-davinci-black-alt/60'>Total Votes</p>
                 </div>
                 <div className='text-center'>
                   <p className='text-2xl font-bold text-davinci-black-alt'>
-                    {((Number(processData.voteCount) / (Number(processData?.census.maxVotes) || 5000)) * 100).toFixed(
-                      1
-                    )}
-                    %
+                    {((Number(process.voteCount) / (Number(process?.census.maxVotes) || 5000)) * 100).toFixed(1)}%
                   </p>
                   <p className='text-xs text-davinci-black-alt/60'>Turnout</p>
                 </div>
@@ -479,14 +411,14 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
             <div className='space-y-6'>
               <div className='flex items-center justify-between'>
                 <h4 className='text-xl font-bold text-davinci-black-alt'>Detailed Results</h4>
-                <div className='text-sm text-davinci-black-alt/60'>Total: {processData.voteCount} votes</div>
+                <div className='text-sm text-davinci-black-alt/60'>Total: {process.voteCount} votes</div>
               </div>
 
               {/* Single Card with All Results */}
               <Card className='border-davinci-callout-border bg-davinci-paper-base/30'>
                 <CardContent className='p-6'>
                   <div className='space-y-6'>
-                    {voteData.questions[0].choices
+                    {meta.questions[0].choices
                       .map((choice) => ({
                         ...choice,
                         result: results[choice.value.toString()],
@@ -566,7 +498,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
                             </div>
 
                             {/* Separator between choices (except last one) */}
-                            {index < voteData.questions[0].choices.length - 1 && (
+                            {index < meta.questions[0].choices.length - 1 && (
                               <div className='border-t border-davinci-callout-border/30 pt-6'></div>
                             )}
                           </div>
@@ -590,24 +522,10 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className='pt-6 bg-davinci-text-base space-y-6'>
-            {/* Wallet Connected Status - only show when connected */}
-            {isConnected && (
-              <div className='bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border'>
-                <div className='flex items-center gap-3'>
-                  <Diamond className='w-5 h-5 text-davinci-black-alt' />
-                  <div>
-                    <p className='font-medium text-davinci-black-alt'>Wallet Connected</p>
-                    <p className='text-sm text-davinci-black-alt/80'>
-                      {wallet.accounts[0].address ? truncateAddress(wallet.accounts[0].address) : 'Unknown'} • Eligible
-                      to vote
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+            <WalletEligibilityStatus />
 
             {/* Vote Progress Tracker */}
-            {voteId && <VoteProgressTracker onVoteAgain={handleVoteAgain} processId={id} voteId={voteId} />}
+            {voteId && <VoteProgressTracker onVoteAgain={handleVoteAgain} processId={process.id} voteId={voteId} />}
 
             {/* Voting Method Instructions - always visible */}
             {votingMethod.type === ElectionResultsTypeNames.MULTIPLE_CHOICE && (
@@ -711,25 +629,25 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
 
               {/* Single Choice */}
               {votingMethod.type === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION && (
-                <RadioGroup value={selectedChoice} onValueChange={setSelectedChoice} disabled={!isConnected}>
+                <RadioGroup value={selectedChoice} onValueChange={setSelectedChoice} disabled={!isAbleToVote}>
                   <div className='space-y-3'>
-                    {voteData.questions[0].choices.map((choice) => (
+                    {meta.questions[0].choices.map((choice) => (
                       <div
                         key={choice.value}
                         className={`flex items-start space-x-3 p-4 rounded-lg border border-davinci-callout-border transition-colors ${
-                          !isConnected ? 'opacity-70 cursor-not-allowed' : 'hover:bg-davinci-soft-neutral/20'
+                          !isAbleToVote ? 'opacity-70 cursor-not-allowed' : 'hover:bg-davinci-soft-neutral/20'
                         }`}
                       >
                         <RadioGroupItem
                           value={choice.value.toString()}
                           id={choice.value.toString()}
                           className='border-davinci-callout-border mt-0.5'
-                          disabled={!isConnected}
+                          disabled={!isAbleToVote}
                         />
                         <Label
                           htmlFor={choice.value.toString()}
                           className={`flex-1 leading-relaxed ${
-                            !isConnected
+                            !isAbleToVote
                               ? 'text-davinci-black-alt/60 cursor-not-allowed'
                               : 'text-davinci-black-alt cursor-pointer'
                           }`}
@@ -760,7 +678,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
                     </span>
                   </div>
 
-                  {voteData.questions[0].choices.map((choice) => {
+                  {meta.questions[0].choices.map((choice) => {
                     const isSelected = selectedChoices.includes(choice.value.toString())
                     const canSelect = selectedChoices.length < (votingMethod.max || 2)
                     const isDisabled = !isConnected || (!isSelected && !canSelect)
@@ -803,7 +721,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
               {/* Quadratic Voting */}
               {votingMethod.type === ElectionResultsTypeNames.QUADRATIC && (
                 <div className='space-y-4'>
-                  {voteData.questions[0].choices.map((choice) => {
+                  {meta.questions[0].choices.map((choice) => {
                     const votes = quadraticVotes[choice.value.toString()] || 0
                     const cost = calculateQuadraticCost(votes)
 
@@ -898,7 +816,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
                   </p>
                 </div>
               </div>
-            ) : !isEligible ? (
+            ) : !isInCensus ? (
               <div className='text-center space-y-4'>
                 <div className='bg-red-50 p-6 rounded-lg border border-red-200'>
                   <div className='w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4'>
@@ -958,8 +876,9 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
               <div>
                 <h3 className='font-medium text-davinci-black-alt mb-2'>Encrypted Results</h3>
                 <p className='text-sm text-davinci-black-alt/80'>
-                  Vote results are encrypted and will only be revealed when the voting period ends ({timeRemaining}{' '}
-                  remaining). This ensures the integrity of the voting process and prevents vote manipulation.
+                  Vote results are encrypted and will only be revealed when the voting period ends (
+                  <VotingTimeRemaining /> remaining). This ensures the integrity of the voting process and prevents vote
+                  manipulation.
                 </p>
               </div>
             </div>
@@ -973,7 +892,7 @@ export function VoteDisplay({ voteData, processData, id }: VoteDisplayProps) {
         onClose={() => setShowVotingModal(false)}
         onConfirm={confirmVote}
         selectedChoice={getVoteSelectionSummary()}
-        voteQuestion={voteData.questions[0].title.default}
+        voteQuestion={meta.questions[0].title.default}
         isRevote={voteCount > 0}
         votingMethod={votingMethod.type}
       />
@@ -988,3 +907,34 @@ const hexStringToUint8Array = (hex: string) =>
       .match(/.{1,2}/g)!
       .map((byte) => parseInt(byte, 16))
   )
+
+export const WalletEligibilityStatus = () => {
+  const [{ wallet }] = useConnectWallet()
+  const address = wallet?.accounts?.[0]?.address ?? null
+  const isConnected = !!address
+
+  const { isInCensus, isCensusProofLoading } = useProcess()
+
+  if (!isConnected) return null
+
+  const bg = isInCensus ? 'bg-davinci-digital-highlight' : 'bg-yellow-100'
+
+  return (
+    <div className={`${bg} p-4 rounded-lg border border-davinci-callout-border`}>
+      <div className='flex items-center gap-3'>
+        <Diamond className='w-5 h-5 text-davinci-black-alt' />
+        <div>
+          <p className='font-medium text-davinci-black-alt'>Wallet Connected</p>
+          <p className='text-sm text-davinci-black-alt/80'>
+            {truncateAddress(address)} •{' '}
+            {isCensusProofLoading
+              ? 'Checking eligibility...'
+              : isInCensus
+                ? 'Eligible to vote'
+                : 'Not eligible to vote'}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}

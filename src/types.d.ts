@@ -5,3 +5,8 @@ type ProcessLoaderData = {
   process: GetProcessResponse
   meta: ElectionMetadata
 }
+
+type Process = {
+  process: GetProcessResponse
+  meta: ElectionMetadata
+}

@@ -9,6 +9,7 @@ import { ProcessStatus } from '@vocdoni/davinci-sdk/contracts'
 import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
 import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
 import type { GetProcessResponse } from '@vocdoni/davinci-sdk/sequencer'
+import { formatNanosecondsInterval } from '~lib/utils'
 
 interface ProcessData {
   voteCount: number
@@ -136,9 +137,7 @@ export function VoteParameters({ voteData, processData }: VoteParametersProps) {
           <Clock className='w-4 h-4 text-davinci-black-alt mt-0.5 flex-shrink-0' />
           <div className='min-w-0 flex-1'>
             <h4 className='font-medium text-davinci-black-alt text-sm'>Duration</h4>
-            <p className='text-xs text-davinci-black-alt/80'>
-              {Math.floor(processData.duration / 1000000000 / 60)} minutes
-            </p>
+            <p className='text-xs text-davinci-black-alt/80'>{formatNanosecondsInterval(processData.duration)}</p>
           </div>
         </div>
 
@@ -153,7 +152,7 @@ export function VoteParameters({ voteData, processData }: VoteParametersProps) {
               </p>
               <p className='text-xs text-davinci-black-alt/80'>
                 <span className='font-medium'>Ends:</span>{' '}
-                {formatDate(new Date(new Date(processData.startTime).getTime() + processData.duration / 1000000))}
+                {formatDate(new Date(new Date(processData.startTime).getTime() + processData.duration / 1_000_000))}
               </p>
             </div>
           </div>
