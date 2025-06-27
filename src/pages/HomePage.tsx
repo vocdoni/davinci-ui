@@ -10,12 +10,10 @@ export default function HomePage() {
         {/* Page Header */}
         <div className='text-center mb-12'>
           <h1 className='text-4xl font-bold text-davinci-black-alt mb-4 font-averia'>Create a Vote</h1>
-          <p className='text-lg text-davinci-black-alt/80 max-w-2xl mx-auto'>
-            Run a voting process powered by the DAVINCI protocol, offering the same verifiability and integrity as
-            onchain voting, along with anonymity, anti-coercion, and all the guarantees required for a fair and secure
-            election.{' '}
+          <p className='text-lg text-davinci-black-alt/80 max-w-4xl mx-auto'>
+            Launch a vote with the secure, anonymous, anti-coercion and verifiable DAVINCI protocol. <br />
             <Link href='https://davinci.vote/#comparison' target='_blank'>
-              Learn how DAVINCI compares to other voting systems
+              See how DAVINCI compares to other systems.
             </Link>
           </p>
         </div>

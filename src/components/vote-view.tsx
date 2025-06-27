@@ -56,7 +56,7 @@ const VoteView = ({ id, meta, process }: ProcessLoaderData) => {
 
           {/* Right Column - Info Cards */}
           <div className='lg:col-span-4 space-y-6'>
-            <TotalVotesCard voteData={meta} processData={process as GetProcessResponse} />
+            <TotalVotesCard />
             <ShareableLink voteId={id} voteData={meta} />
             <VoteParameters voteData={meta} processData={process as GetProcessResponse} />
             <NewsletterCard />

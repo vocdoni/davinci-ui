@@ -10,6 +10,7 @@ import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
 import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
 import type { GetProcessResponse } from '@vocdoni/davinci-sdk/sequencer'
 import { formatNanosecondsInterval } from '~lib/utils'
+import { useProcess } from './process-context'
 
 interface ProcessData {
   voteCount: number
@@ -169,20 +170,25 @@ export function VoteParameters({ voteData, processData }: VoteParametersProps) {
   )
 }
 
-interface TotalVotesCardProps {
-  voteData: ElectionMetadata
-  processData: GetProcessResponse
-}
-
-export function TotalVotesCard({ voteData, processData }: TotalVotesCardProps) {
-  const voteEnded = [ProcessStatus.ENDED, ProcessStatus.CANCELED, ProcessStatus.RESULTS].includes(processData.status)
+export const TotalVotesCard = () => {
+  const {
+    process: { process },
+  } = useProcess()
+  const voteEnded = [ProcessStatus.ENDED, ProcessStatus.CANCELED, ProcessStatus.RESULTS].includes(process.status)
 
   return (
     <Card className='border-davinci-callout-border mb-6'>
       <CardContent className='p-6'>
         <div className='text-center'>
-          <p className='text-3xl font-bold text-davinci-black-alt'>{processData.voteCount.toLocaleString()}</p>
-          <p className='text-sm text-davinci-black-alt/80'>{!voteEnded ? 'Votes Cast So Far' : 'Final Vote Count'}</p>
+          <p className='text-3xl font-bold text-davinci-black-alt'>{process.voteCount.toLocaleString()}</p>
+          <p className='text-sm text-davinci-black-alt/80 capitalize'>
+            {!voteEnded ? 'Votes cast so far' : 'Final vote count'}
+          </p>
+          <div className='mt-2 flex justify-center gap-2 text-sm text-davinci-black-alt/80'>
+            <p>{process.sequencerStats.settledStateTransitionCount.toLocaleString()} settled</p>
+            <span>•</span>
+            <p>{process.sequencerStats.pendingVotesCount.toLocaleString()} pending</p>
+          </div>
         </div>
       </CardContent>
     </Card>

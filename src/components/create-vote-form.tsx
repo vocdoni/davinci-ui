@@ -3,7 +3,6 @@ import {
   ProcessRegistryService,
   ProcessStatus,
   SmartContractService,
-  TxStatus,
   deployedAddresses,
 } from '@vocdoni/davinci-sdk/contracts'
 import {
@@ -62,6 +61,7 @@ export function CreateVoteForm() {
   const [isLaunching, setIsLaunching] = useState(false)
   const [launchSuccess, setLaunchSuccess] = useState(false)
   const [{ wallet }] = useConnectWallet()
+  const [error, setError] = useState<Error | null>(null)
   const [formData, setFormData] = useState<Purosesu>({
     question: '',
     choices: [
@@ -76,7 +76,7 @@ export function CreateVoteForm() {
     duration: '',
     durationUnit: 'minutes',
   })
-  const { data: snapshot, isLoading: isLoadingSnapshot } = useSnapshots()
+  const { data: snapshot, isLoading: isLoadingSnapshot, isError: isSnapshotError } = useSnapshots()
 
   const addChoice = () => {
     if (formData.choices.length < 8) {
@@ -111,6 +111,7 @@ export function CreateVoteForm() {
     if (!isFormValid() || !wallet) return
 
     setIsLaunching(true)
+    setError(null)
 
     try {
       // Initialize API service
@@ -242,6 +243,7 @@ export function CreateVoteForm() {
       }, 5000)
     } catch (error) {
       console.error('Failed to launch vote:', error)
+      setError(error as Error)
       setIsLaunching(false)
       // In a real app, you'd show an error message here
     }
@@ -585,7 +587,9 @@ export function CreateVoteForm() {
                     </Label>
                   </div>
                   {formData.censusType === 'ethereum-wallets' && (
-                    <div className='ml-6 bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border'>
+                    <div
+                      className={`${isSnapshotError || !snapshot ? 'bg-red-200' : 'bg-davinci-digital-highlight'} ml-6 p-4 rounded-lg border border-davinci-callout-border`}
+                    >
                       <div className='flex items-start gap-3'>
                         <Wallet className='w-5 h-5 text-davinci-black-alt mt-0.5' />
                         <div className='space-y-2'>
@@ -610,7 +614,9 @@ export function CreateVoteForm() {
                           ) : (
                             <div className='flex items-center gap-2 text-xs text-davinci-black-alt/70'>
                               <Calendar className='w-3 h-3' />
-                              <span>Error loading snapshot data</span>
+                              <span className='text-red-800 font-bold'>
+                                {isSnapshotError ? 'Error loading snapshot data' : 'No snapshot data available'}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -736,15 +742,12 @@ export function CreateVoteForm() {
                   Your vote will be deployed to the DAVINCI network and become immediately active.
                 </p>
               </div>
-              <LaunchVoteButton handleLaunch={handleLaunch} isLaunching={isLaunching} isFormValid={isFormValid} />
-
-              {isLaunching && (
-                <div className='bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border max-w-md mx-auto'>
-                  <p className='text-sm text-davinci-black-alt/80'>
-                    Deploying your vote to the DAVINCI network. This may take a few moments...
-                  </p>
+              {error && (
+                <div className='bg-red-100 p-4 rounded-lg border border-red-200 text-red-800'>
+                  <p className='text-sm'>Error launching vote: {error.message}</p>
                 </div>
               )}
+              <LaunchVoteButton handleLaunch={handleLaunch} isLaunching={isLaunching} isFormValid={isFormValid} />
             </div>
           </CardContent>
         </Card>
@@ -784,45 +787,14 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
           </>
         )}
       </Button>
-      <Button
-        className='bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base block mx-auto'
-        onClick={async () => {
-          if (!wallet) {
-            throw new Error('No wallet connected. Please connect a wallet to create an organization.')
-          }
-
-          try {
-            const provider = new BrowserProvider(wallet.provider)
-            const signer = await provider.getSigner()
-            const orgService = new OrganizationRegistryService(deployedAddresses.organizationRegistry.sepolia, signer)
-
-            const orgName = `automatically created org ${new Date().toDateString()}`
-            const orgMeta = ``
-
-            const txn = orgService.createOrganization(wallet.accounts[0].address, orgName, orgMeta, [
-              wallet.accounts[0].address,
-            ])
-
-            for await (const { status } of txn) {
-              if (status === TxStatus.Pending) {
-                console.log('Transaction is pending...')
-              } else if (status === TxStatus.Completed) {
-                console.log('Transaction was completed!')
-              } else if (status === TxStatus.Failed) {
-                console.error('Transaction failed', txn)
-              } else if (status === TxStatus.Reverted) {
-                console.error('Transaction was reverted', txn)
-              }
-            }
-          } catch (error) {
-            console.error('Failed to create organization service:', error)
-            return
-          }
-        }}
-      >
-        Create org (required rn to create a vote for the first time)
-      </Button>
-      <div className='ml-6 bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border text-blue-900 text-left'>
+      {isLaunching && (
+        <div className='bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border max-w-md mx-auto'>
+          <p className='text-sm text-davinci-black-alt/80'>
+            Deploying your vote to the DAVINCI network. This may take a few moments...
+          </p>
+        </div>
+      )}
+      <div className='ml-6 text-left text-davinci-black-alt/80 text-sm'>
         Creating a vote requires a tx on the Sepolia testnet. If you need ETH to run a vote, you can get some from{' '}
         <Link href='https://cloud.google.com/application/web3/faucet/ethereum/sepolia'>this faucet</Link>. The tx is
         only needed to create the vote, <span className='font-medium'>casting votes is gasless.</span>
