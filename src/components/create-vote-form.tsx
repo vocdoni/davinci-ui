@@ -27,6 +27,7 @@ import { Separator } from '~components/ui/separator'
 import { Textarea } from '~components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~components/ui/tooltip'
 import { useSnapshots } from '~hooks/use-snapshots'
+import { CustomAddressesManager } from './census-addresses'
 import ConnectWalletButton from './ui/connect-wallet-button'
 import { IndeterminateProgress } from './ui/indeterminate-progress'
 import { Link } from './ui/link'
@@ -54,6 +55,7 @@ type Purosesu = {
   censusType: string
   duration: string
   durationUnit: DurationUnit
+  customAddresses: string[]
 }
 
 export function CreateVoteForm() {
@@ -75,6 +77,7 @@ export function CreateVoteForm() {
     censusType: '',
     duration: '',
     durationUnit: 'minutes',
+    customAddresses: wallet?.accounts?.[0]?.address ? [wallet.accounts[0].address] : [],
   })
   const api = useVocdoniApi()
   const { data: snapshot, isLoading: isLoadingSnapshot, isError: isSnapshotError } = useSnapshots()
@@ -129,6 +132,28 @@ export function CreateVoteForm() {
           census.censusSize = snapshot.participantCount
           census.censusRoot = snapshot.censusRoot
           census.censusURI = `${import.meta.env.BIGQUERY_URL}/censuses/${census.censusRoot}`
+          break
+        }
+        case 'custom-addresses': {
+          if (formData.customAddresses.length === 0) {
+            throw new Error('Please add at least one address to the custom addresses list')
+          }
+
+          // Step 1: Create census
+          const censusId = await api.createCensus()
+
+          // Step 2: Add participants
+          const participants = formData.customAddresses.map((address) => ({
+            key: address,
+            weight: '1',
+          }))
+          await api.addParticipants(censusId, participants)
+          const censusRoot = await api.getCensusRoot(censusId)
+          const censusSize = await api.getCensusSize(censusId)
+
+          census.censusURI = censusId
+          census.censusRoot = censusRoot
+          census.censusSize = censusSize
           break
         }
         default: {
@@ -272,8 +297,10 @@ export function CreateVoteForm() {
     const hasVotingMethod = formData.votingMethod !== ''
     const hasCensusType = formData.censusType !== ''
     const hasDuration = formData.duration !== '' && Number.parseInt(formData.duration) > 0
+    const hasAddresses =
+      formData.censusType !== 'custom-addresses' || formData.customAddresses.filter(Boolean).length > 0
 
-    return hasQuestion && hasValidChoices && hasVotingMethod && hasCensusType && hasDuration
+    return hasQuestion && hasValidChoices && hasVotingMethod && hasCensusType && hasDuration && hasAddresses
   }
 
   const formatSnapshotDate = (date: string) => {
@@ -593,6 +620,27 @@ export function CreateVoteForm() {
                       Hardcoded Wallets 🫠
                     </Label>
                   </div>
+                  <div className='flex items-center space-x-2'>
+                    <RadioGroupItem
+                      value='custom-addresses'
+                      id='custom-addresses'
+                      className='border-davinci-callout-border'
+                    />
+                    <Label htmlFor='custom-addresses' className='text-davinci-black-alt'>
+                      Custom Addresses
+                    </Label>
+                  </div>
+                  {formData.censusType === 'custom-addresses' && (
+                    <div className='ml-6 bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border space-y-3'>
+                      <CustomAddressesManager
+                        addresses={formData.customAddresses}
+                        setAddresses={(newAddresses) =>
+                          setFormData((prev) => ({ ...prev, customAddresses: newAddresses }))
+                        }
+                      />
+                    </div>
+                  )}
+
                   <div className='flex items-center space-x-2'>
                     <RadioGroupItem
                       value='ethereum-wallets'
