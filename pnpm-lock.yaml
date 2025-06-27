@@ -155,6 +155,9 @@ importers:
       react-hook-form:
         specifier: ^7.54.1
         version: 7.57.0(react@18.3.1)
+      react-mailchimp-subscribe:
+        specifier: ^2.1.3
+        version: 2.1.3(react@18.3.1)
       react-resizable-panels:
         specifier: ^2.1.7
         version: 2.1.9(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -192,6 +195,9 @@ importers:
       '@types/react-dom':
         specifier: ^18
         version: 18.3.7(@types/react@18.3.23)
+      '@types/react-mailchimp-subscribe':
+        specifier: ^2.1.4
+        version: 2.1.4
       '@vitejs/plugin-react':
         specifier: ^4.3.3
         version: 4.5.2(vite@5.4.19(@types/node@22.15.31))
@@ -1878,6 +1884,9 @@ packages:
     peerDependencies:
       '@types/react': ^18.0.0
 
+  '@types/react-mailchimp-subscribe@2.1.4':
+    resolution: {integrity: sha512-RyI79t0t8j3wT8Upw2jcGFYx/d8r1HTIADg+GNMbY03u+GTvGCu1k6h76Uli7YAwqorzN9PBYEf+8RV2vIM/dg==}
+
   '@types/react@18.3.23':
     resolution: {integrity: sha512-/LDXMQh55EzZQ0uVAZmKKhfENivEvWz6E+EYzh+/MCjMhNsotd+ZHhBGIjFDTi6+fz0OhQQQLbTgdQIxxCsC0w==}
 
@@ -2304,6 +2313,14 @@ packages:
 
   dayjs@1.11.13:
     resolution: {integrity: sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg==}
+
+  debug@2.6.9:
+    resolution: {integrity: sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==}
+    peerDependencies:
+      supports-color: '*'
+    peerDependenciesMeta:
+      supports-color:
+        optional: true
 
   debug@4.4.1:
     resolution: {integrity: sha512-KcKCqiftBJcZr++7ykoDIEwSa3XWowTfNPo92BYxjXiyYEVrUQh2aLyhxBCwww+heortUFxEJYcRzosstTEBYQ==}
@@ -2754,6 +2771,9 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
+  jsonp@0.2.1:
+    resolution: {integrity: sha512-pfog5gdDxPdV4eP7Kg87M8/bHgshlZ5pybl+yKxAnCZ5O7lCIn7Ixydj03wOlnDQesky2BPyA91SQ+5Y/mNwzw==}
+
   jsonpath@1.1.1:
     resolution: {integrity: sha512-l6Cg7jRpixfbgoWgkrl77dgEj8RPvND0wMH6TwQmi9Qs4TFfS9u5cUFnbeKTwj5ga5Y3BTGGNI28k117LJ009w==}
 
@@ -2862,6 +2882,9 @@ packages:
   mri@1.2.0:
     resolution: {integrity: sha512-tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA==}
     engines: {node: '>=4'}
+
+  ms@2.0.0:
+    resolution: {integrity: sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==}
 
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
@@ -3115,6 +3138,11 @@ packages:
 
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
+
+  react-mailchimp-subscribe@2.1.3:
+    resolution: {integrity: sha512-ZRuPZMnX/9pHQLnAQavsgB5xIF+gNqjNCCq1vvTs23cn+93W2oOp17qjg3LpDBEt1HJi6IHXMwpKXn0taY8FHw==}
+    peerDependencies:
+      react: '>=15'
 
   react-refresh@0.17.0:
     resolution: {integrity: sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ==}
@@ -3395,6 +3423,9 @@ packages:
 
   tiny-invariant@1.3.3:
     resolution: {integrity: sha512-+FbBPE1o9QAYvviau/qC5SE3caw21q3xkvWKBtja5vgqOWIHHJ3ioaq1VPfn/Szqctz2bU/oYeKd9/z5BL+PVg==}
+
+  to-querystring@1.2.0:
+    resolution: {integrity: sha512-V4qvlRNOltdNxvWGuDS71sNMH6FtFNx3GP967WT8gb6xzi4thJTUfogIln9hvz1ZmWcm9hY35LklMexo0YVHdg==}
 
   to-regex-range@5.0.1:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
@@ -5548,6 +5579,10 @@ snapshots:
     dependencies:
       '@types/react': 18.3.23
 
+  '@types/react-mailchimp-subscribe@2.1.4':
+    dependencies:
+      '@types/react': 18.3.23
+
   '@types/react@18.3.23':
     dependencies:
       '@types/prop-types': 15.7.15
@@ -6510,6 +6545,10 @@ snapshots:
 
   dayjs@1.11.13: {}
 
+  debug@2.6.9:
+    dependencies:
+      ms: 2.0.0
+
   debug@4.4.1:
     dependencies:
       ms: 2.1.3
@@ -6984,6 +7023,12 @@ snapshots:
 
   json5@2.2.3: {}
 
+  jsonp@0.2.1:
+    dependencies:
+      debug: 2.6.9
+    transitivePeerDependencies:
+      - supports-color
+
   jsonpath@1.1.1:
     dependencies:
       esprima: 1.2.2
@@ -7092,6 +7137,8 @@ snapshots:
   minipass@7.1.2: {}
 
   mri@1.2.0: {}
+
+  ms@2.0.0: {}
 
   ms@2.1.3: {}
 
@@ -7348,6 +7395,15 @@ snapshots:
   react-is@16.13.1: {}
 
   react-is@18.3.1: {}
+
+  react-mailchimp-subscribe@2.1.3(react@18.3.1):
+    dependencies:
+      jsonp: 0.2.1
+      prop-types: 15.8.1
+      react: 18.3.1
+      to-querystring: 1.2.0
+    transitivePeerDependencies:
+      - supports-color
 
   react-refresh@0.17.0: {}
 
@@ -7677,6 +7733,8 @@ snapshots:
       globrex: 0.1.2
 
   tiny-invariant@1.3.3: {}
+
+  to-querystring@1.2.0: {}
 
   to-regex-range@5.0.1:
     dependencies:

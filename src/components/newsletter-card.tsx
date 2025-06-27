@@ -1,33 +1,41 @@
-'use client'
-
-import type React from 'react'
-
 import { CheckCircle, Mail } from 'lucide-react'
+import type React from 'react'
 import { useState } from 'react'
+import MailchimpSubscribe from 'react-mailchimp-subscribe'
+
 import { Button } from '~components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
 import { Input } from '~components/ui/input'
 
-export function NewsletterCard() {
-  const [email, setEmail] = useState('')
-  const [isSubmitted, setIsSubmitted] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+const MAILCHIMP_URL = import.meta.env.PUBLIC_MAILCHIMP_URL ?? ''
 
-  const handleSubmit = async (e: React.FormEvent) => {
+export function NewsletterCard() {
+  return (
+    <MailchimpSubscribe
+      url={MAILCHIMP_URL}
+      render={({ subscribe, status, message }) => <Form status={status} message={message} onValidated={subscribe} />}
+    />
+  )
+}
+
+function Form({
+  status,
+  message,
+  onValidated,
+}: {
+  status: string | null
+  message: string | Error | null
+  onValidated: (formData: { EMAIL: string }) => void
+}) {
+  const [email, setEmail] = useState('')
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!email.trim()) return
-
-    setIsLoading(true)
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    setIsSubmitted(true)
-    setIsLoading(false)
-    setEmail('')
+    onValidated({ EMAIL: email })
   }
 
-  if (isSubmitted) {
+  if (status === 'success') {
     return (
       <Card className='border-davinci-callout-border bg-davinci-digital-highlight/50'>
         <CardContent className='p-6 text-center'>
@@ -44,7 +52,10 @@ export function NewsletterCard() {
             <Button
               variant='outline'
               size='sm'
-              onClick={() => setIsSubmitted(false)}
+              onClick={() => {
+                setEmail('')
+                window.location.reload()
+              }}
               className='border-davinci-callout-border text-davinci-black-alt hover:bg-davinci-soft-neutral/20'
             >
               Subscribe Another Email
@@ -80,9 +91,9 @@ export function NewsletterCard() {
           <Button
             type='submit'
             className='w-full bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base'
-            disabled={isLoading}
+            disabled={status === 'sending'}
           >
-            {isLoading ? (
+            {status === 'sending' ? (
               <>
                 <div className='w-4 h-4 border-2 border-davinci-text-base/30 border-t-davinci-text-base rounded-full animate-spin mr-2' />
                 Subscribing...
@@ -95,6 +106,10 @@ export function NewsletterCard() {
             )}
           </Button>
         </form>
+
+        {status === 'error' && (
+          <p className='text-sm text-red-600' dangerouslySetInnerHTML={{ __html: String(message) }} />
+        )}
 
         <p className='text-xs text-davinci-black-alt/60'>We respect your privacy. Unsubscribe at any time.</p>
       </CardContent>
