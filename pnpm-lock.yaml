@@ -106,7 +106,7 @@ importers:
         version: 2.4.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@vocdoni/davinci-sdk':
         specifier: github:vocdoni/davinci-sdk#f/ts-bundling
-        version: https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/1fb45ecd22b2e06db377d4a92e819d9e9a118631
+        version: https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/db6a167b4c91b918f6e478c19ddc3fb96bb76975
       '@web3-onboard/core':
         specifier: ^2.24.1
         version: 2.24.1(typescript@5.8.3)(zod@3.25.61)
@@ -1906,11 +1906,11 @@ packages:
     peerDependencies:
       vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0-beta.0
 
-  '@vocdoni/davinci-contracts@0.0.5':
-    resolution: {integrity: sha512-8uVE78hJUEQpmY5QIe2M4voDXbonfgOlv2Iqng3ko5jkpGmXBpyoa7RzEpjDAAdLPyTAknfgIC/C/bgtKya6FA==}
+  '@vocdoni/davinci-contracts@0.0.10':
+    resolution: {integrity: sha512-Srv7oVNhp7+Fxy1BOKM4loDd4a8rRyDVBO7ib8Fh3OsJ2kvdqsJdJFFegz9qhz90cOLEqJq47fKETD4MQwwRQQ==}
 
-  '@vocdoni/davinci-sdk@https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/1fb45ecd22b2e06db377d4a92e819d9e9a118631':
-    resolution: {tarball: https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/1fb45ecd22b2e06db377d4a92e819d9e9a118631}
+  '@vocdoni/davinci-sdk@https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/db6a167b4c91b918f6e478c19ddc3fb96bb76975':
+    resolution: {tarball: https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/db6a167b4c91b918f6e478c19ddc3fb96bb76975}
     version: 0.0.3-beta2
 
   '@walletconnect/core@2.21.0':
@@ -5607,12 +5607,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vocdoni/davinci-contracts@0.0.5': {}
+  '@vocdoni/davinci-contracts@0.0.10': {}
 
-  '@vocdoni/davinci-sdk@https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/1fb45ecd22b2e06db377d4a92e819d9e9a118631':
+  '@vocdoni/davinci-sdk@https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/db6a167b4c91b918f6e478c19ddc3fb96bb76975':
     dependencies:
       '@ethereumjs/common': 4.4.0
-      '@vocdoni/davinci-contracts': 0.0.5
+      '@vocdoni/davinci-contracts': 0.0.10
       axios: 1.10.0
       ethers: 6.14.3
       snarkjs: 0.7.5

@@ -14,6 +14,10 @@ type Process = {
 interface ProcessContextValue {
   process: Process
   censusProof: CensusProof | null
+  hasVoted: boolean | null
+  isHasVotedLoading: boolean
+  isHasVotedError: boolean
+  hasVotedError: Error | null
   isAbleToVote?: boolean
   isInCensus: boolean | null
   isCensusProofLoading: boolean
@@ -55,6 +59,22 @@ export const ProcessProvider: FC<ProcessProviderProps> = ({ children, process })
     throwOnError: false,
   })
 
+  const {
+    data: hasVoted,
+    isLoading: isHasVotedLoading,
+    isError: isHasVotedError,
+    error: hasVotedError,
+  } = useQuery({
+    enabled: !!address && !!process.process.id,
+    queryKey: ['has-voted', process.process.id, address],
+    queryFn: async () => {
+      return await api.hasAddressVoted(process.process.id, address!)
+    },
+    retry: false,
+    staleTime: 1000 * 60 * 5,
+    throwOnError: false,
+  })
+
   const isInCensus = address ? (isCensusProofLoading ? null : !isCensusProofError) : null
 
   const value = useMemo<ProcessContextValue>(
@@ -66,6 +86,10 @@ export const ProcessProvider: FC<ProcessProviderProps> = ({ children, process })
       censusProofError,
       isCensusProofLoading,
       isCensusProofError,
+      hasVoted: address ? (isHasVotedLoading ? null : Boolean(hasVoted)) : null,
+      isHasVotedLoading,
+      isHasVotedError,
+      hasVotedError,
     }),
     [process, censusProof, isInCensus, isCensusProofLoading, isCensusProofError]
   )

@@ -167,7 +167,6 @@ export function VoteDisplay() {
         encryptionKey: [process.encryptionKey.x, process.encryptionKey.y],
         k: kStr,
         fieldValues,
-        secret: '1234567890',
         weight: '1',
       }
       console.info('ℹ️ Ballot proof inputs:', inputs)
@@ -197,27 +196,26 @@ export function VoteDisplay() {
       const provider = new BrowserProvider(wallet.provider)
       const signer = await provider.getSigner()
       console.info('ℹ️ census proof:', censusProof)
-      console.info('ℹ️ voteid:', out.voteID)
-      const signature = await signer.signMessage(hexStringToUint8Array(out.voteID))
+      console.info('ℹ️ voteid:', out.voteId)
+      const signature = await signer.signMessage(hexStringToUint8Array(out.voteId))
 
       const voteRequest: VoteRequest = {
         address: wallet.accounts[0].address,
         ballot: voteBallot,
-        processId: process.id,
+        ballotInputsHash: out.ballotInputsHash,
         ballotProof: proof,
-        ballotInputsHash: out.ballotInputHash,
-        commitment: out.commitment,
-        nullifier: out.nullifier,
         censusProof,
+        processId: process.id,
         signature,
+        voteId: out.voteId,
       }
 
-      const submittedVoteId = await api.submitVote(voteRequest)
+      await api.submitVote(voteRequest)
 
       // Track the vote
-      trackVote(submittedVoteId)
+      trackVote(out.voteId)
 
-      console.info('✅ Vote submitted successfully:', submittedVoteId)
+      console.info('✅ Vote submitted successfully:', out.voteId)
 
       // refetch process info
       await processQuery.refetch()

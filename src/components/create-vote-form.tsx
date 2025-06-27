@@ -1,5 +1,4 @@
 import {
-  OrganizationRegistryService,
   ProcessRegistryService,
   ProcessStatus,
   SmartContractService,
@@ -12,6 +11,7 @@ import {
   type ElectionResultsType,
   type ProtocolVersion,
 } from '@vocdoni/davinci-sdk/core'
+import { createProcessSignatureMessage } from '@vocdoni/davinci-sdk/sequencer'
 import { useConnectWallet } from '@web3-onboard/react'
 import { BrowserProvider } from 'ethers'
 import { Calendar, CheckCircle, Clock, HelpCircle, Plus, Rocket, Users, Wallet, X } from 'lucide-react'
@@ -186,32 +186,45 @@ export function CreateVoteForm() {
       }
       const metadataHash = await api.pushMetadata(metadata)
       const metadataUrl = api.getMetadataUrl(metadataHash)
-      console.info('Metadata URL:', metadataUrl)
+      console.info('ℹ️ Metadata URL:', metadataUrl)
 
-      // Step 8: Create process via API
       const provider = new BrowserProvider(wallet.provider)
       const signer = await provider.getSigner()
-      const nonce = await provider.getTransactionCount(wallet.accounts[0].address)
-      const signature = await signer.signMessage(`${11155111}${nonce}`) // 11155111 is Sepolia chain ID
+      const registry = new ProcessRegistryService(deployedAddresses.processRegistry.sepolia, signer)
+      const pid = await registry.getNextProcessId(await signer.getAddress())
+      console.info('ℹ️ Process ID:', pid)
+
+      const message = await createProcessSignatureMessage(pid)
+      const signature = await signer.signMessage(message)
 
       const ballotMode = generateBallotMode(metadata, formData)
-      console.info('Ballot mode:', ballotMode)
+      console.info('ℹ️ Ballot mode:', ballotMode)
 
       const { processId, encryptionPubKey, stateRoot } = await api.createProcess({
+        processId: pid,
         censusRoot: census.censusRoot,
         ballotMode,
-        nonce,
-        chainId: 11155111,
         signature,
       })
+      console.info('✅ Process created with ID:', processId, stateRoot)
 
-      // Step 9: Check admin rights
-      const orgService = new OrganizationRegistryService(deployedAddresses.organizationRegistry.sepolia, signer)
-      const isAdmin = await orgService.isAdministrator(wallet.accounts[0].address, wallet.accounts[0].address)
-      if (!isAdmin) throw new Error('Caller is not an organization admin')
+      console.info('ℹ️ Creating new process with data:', [
+        ProcessStatus.READY,
+        Math.floor(Date.now() / 1000) + 60,
+        Number.parseInt(formData.duration) * (formData.durationUnit === 'hours' ? 3600 : 60),
+        ballotMode,
+        {
+          censusOrigin: 1,
+          maxVotes: census.censusSize.toString(),
+          censusRoot: census.censusRoot,
+          censusURI: census.censusURI,
+        },
+        metadataUrl,
+        { x: encryptionPubKey[0], y: encryptionPubKey[1] },
+        BigInt(stateRoot),
+      ])
 
       // Step 10: Submit newProcess on-chain
-      const registry = new ProcessRegistryService(deployedAddresses.processRegistry.sepolia, signer)
       await SmartContractService.executeTx(
         registry.newProcess(
           ProcessStatus.READY,
@@ -225,8 +238,6 @@ export function CreateVoteForm() {
             censusURI: census.censusURI,
           },
           metadataUrl,
-          wallet.accounts[0].address,
-          processId,
           { x: encryptionPubKey[0], y: encryptionPubKey[1] },
           BigInt(stateRoot)
         )
@@ -237,11 +248,13 @@ export function CreateVoteForm() {
 
       // Wait to navigate
       while (true) {
-        const process = await api.getProcess(processId)
-        if (process.isAcceptingVotes) {
-          navigate(`/vote/${processId}`)
-          break
-        }
+        try {
+          const process = await api.getProcess(processId)
+          if (process.isAcceptingVotes) {
+            navigate(`/vote/${processId}`)
+            break
+          }
+        } catch (e) {}
 
         await new Promise((r) => setTimeout(r, 2500))
       }
@@ -813,12 +826,12 @@ const generateBallotMode = (election: ElectionMetadata, form: Purosesu): BallotM
     case ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION:
       return {
         maxCount: 1,
-        maxValue: election.questions[0].choices.reduce((p, n) => (p > n.value ? p : n.value), 0).toString(),
+        maxValue: election.questions[0].choices.length.toString(),
         minValue: '0',
         forceUniqueness: false,
         costFromWeight: false,
         costExponent: 1,
-        maxTotalCost: '0',
+        maxTotalCost: election.questions[0].choices.length.toString(),
         minTotalCost: '0',
       }
     case ElectionResultsTypeNames.MULTIPLE_CHOICE:
