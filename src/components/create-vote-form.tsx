@@ -12,7 +12,6 @@ import {
   type ElectionResultsType,
   type ProtocolVersion,
 } from '@vocdoni/davinci-sdk/core'
-import { VocdoniApiService } from '@vocdoni/davinci-sdk/sequencer'
 import { useConnectWallet } from '@web3-onboard/react'
 import { BrowserProvider } from 'ethers'
 import { Calendar, CheckCircle, Clock, HelpCircle, Plus, Rocket, Users, Wallet, X } from 'lucide-react'
@@ -31,6 +30,7 @@ import { useSnapshots } from '~hooks/use-snapshots'
 import ConnectWalletButton from './ui/connect-wallet-button'
 import { IndeterminateProgress } from './ui/indeterminate-progress'
 import { Link } from './ui/link'
+import { useVocdoniApi } from './vocdoni-api-context'
 
 interface Choice {
   id: string
@@ -76,6 +76,7 @@ export function CreateVoteForm() {
     duration: '',
     durationUnit: 'minutes',
   })
+  const api = useVocdoniApi()
   const { data: snapshot, isLoading: isLoadingSnapshot, isError: isSnapshotError } = useSnapshots()
 
   const addChoice = () => {
@@ -114,9 +115,6 @@ export function CreateVoteForm() {
     setError(null)
 
     try {
-      // Initialize API service
-      const api = new VocdoniApiService(import.meta.env.SEQUENCER_URL)
-
       const census = {
         censusURI: '',
         censusRoot: '',
@@ -235,12 +233,18 @@ export function CreateVoteForm() {
       )
 
       setLaunchSuccess(true)
-      console.log('Vote launched successfully (?) with process ID:', processId)
+      console.log('Vote launched successfully with process ID:', processId)
 
-      // Wait a moment to show success state, then navigate
-      setTimeout(() => {
-        navigate(`/vote/${processId}`)
-      }, 5000)
+      // Wait to navigate
+      while (true) {
+        const process = await api.getProcess(processId)
+        if (process.isAcceptingVotes) {
+          navigate(`/vote/${processId}`)
+          break
+        }
+
+        await new Promise((r) => setTimeout(r, 2500))
+      }
     } catch (error) {
       console.error('Failed to launch vote:', error)
       setError(error as Error)
