@@ -27,13 +27,13 @@ export const web3Onboard = init({
   },
   accountCenter: {
     mobile: {
-      enabled: true,
-      minimal: true,
+      enabled: false,
+      minimal: false,
       position: 'topRight',
     },
     desktop: {
-      enabled: true,
-      minimal: true,
+      enabled: false,
+      minimal: false,
       position: 'topRight',
     },
   },
