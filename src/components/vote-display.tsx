@@ -149,7 +149,7 @@ export function VoteDisplay() {
         meta.type.name === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION
           ? getBinaryArray([selectedChoice])
           : meta.type.name === ElectionResultsTypeNames.QUADRATIC
-            ? getBinaryArray(Object.values(quadraticVotes).map((v) => v.toString()))
+            ? padTo(Object.values(quadraticVotes))
             : getBinaryArray(selectedChoices)
 
       const inputs: BallotProofInputs = {
@@ -928,3 +928,9 @@ export function getBinaryArray(positions: string[]): string[] {
   })
   return result
 }
+
+const padTo = (arr: number[] | string[], length: number = 8): string[] =>
+  arr
+    .concat(Array(8 - arr.length).fill(0))
+    .slice(0, 8)
+    .map((v) => v.toString())

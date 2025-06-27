@@ -7,6 +7,7 @@ import { VoteDisplay } from '~components/vote-display'
 import { TotalVotesCard, VoteParameters } from '~components/vote-parameters'
 import { truncateAddress } from '~lib/web3-utils'
 import type { ProcessLoaderData } from '~src/types'
+import VoteActions from './vote-actions'
 
 const VoteView = ({ id, meta, process }: ProcessLoaderData) => {
   const [copiedText, copyToClipboard] = useCopyToClipboard()
@@ -58,6 +59,7 @@ const VoteView = ({ id, meta, process }: ProcessLoaderData) => {
           <div className='lg:col-span-4 space-y-6'>
             <TotalVotesCard />
             <ShareableLink voteId={id} voteData={meta} />
+            <VoteActions />
             <VoteParameters voteData={meta} processData={process as GetProcessResponse} />
             <NewsletterCard />
           </div>

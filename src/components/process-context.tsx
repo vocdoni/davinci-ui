@@ -19,6 +19,7 @@ interface ProcessContextValue {
   isHasVotedError: boolean
   hasVotedError: Error | null
   isAbleToVote?: boolean
+  isCreator: boolean
   isInCensus: boolean | null
   isCensusProofLoading: boolean
   isCensusProofError: boolean
@@ -80,16 +81,17 @@ export const ProcessProvider: FC<ProcessProviderProps> = ({ children, process })
   const value = useMemo<ProcessContextValue>(
     () => ({
       process,
-      isAbleToVote: Boolean(isInCensus) && process.process.isAcceptingVotes,
-      isInCensus,
       censusProof: censusProof ?? null,
       censusProofError,
-      isCensusProofLoading,
-      isCensusProofError,
       hasVoted: address ? (isHasVotedLoading ? null : Boolean(hasVoted)) : null,
-      isHasVotedLoading,
-      isHasVotedError,
       hasVotedError,
+      isAbleToVote: Boolean(isInCensus) && process.process.isAcceptingVotes,
+      isCensusProofError,
+      isCensusProofLoading,
+      isCreator: process.process.organizationId === wallet?.accounts?.[0]?.address,
+      isHasVotedError,
+      isHasVotedLoading,
+      isInCensus,
     }),
     [process, censusProof, isInCensus, isCensusProofLoading, isCensusProofError]
   )
