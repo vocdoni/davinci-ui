@@ -77,6 +77,7 @@ export function VoteDisplay() {
   const [quadraticVotes, setQuadraticVotes] = useState<QuadraticVote>({})
   const [showVotingModal, setShowVotingModal] = useState(false)
   const [isVoting, setIsVoting] = useState(false)
+  const [error, setError] = useState<Error | null>(null)
   const { voteId, trackVote, resetVote } = usePersistedVote(process.id)
   const isConnected = !!wallet
   const voteEnded = process.status === ProcessStatus.ENDED || process.status === ProcessStatus.RESULTS
@@ -121,6 +122,7 @@ export function VoteDisplay() {
 
     setShowVotingModal(false)
     setIsVoting(true)
+    setError(null)
 
     try {
       if (!censusProof) {
@@ -211,6 +213,7 @@ export function VoteDisplay() {
       // refetch process info
       await processQuery.refetch()
     } catch (error) {
+      setError(error as Error)
       console.error('Error during voting process:', error)
 
       return
@@ -804,6 +807,11 @@ export function VoteDisplay() {
                   <img src='/images/davinci-icon.png' alt='' className='w-4 h-4 mr-2' />
                   {hasVoted ? 'Update Vote' : 'Vote'}
                 </Button>
+                {error && (
+                  <div className='bg-red-100 p-4 rounded-lg border border-red-200 text-red-800'>
+                    <p className='text-sm'>Error launching vote: {error.message}</p>
+                  </div>
+                )}
 
                 {/* Validation Messages */}
                 {votingMethod.type === ElectionResultsTypeNames.MULTIPLE_CHOICE &&
