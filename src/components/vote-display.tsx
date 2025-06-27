@@ -373,7 +373,7 @@ export function VoteDisplay() {
                 </div>
                 <div className='text-center'>
                   <p className='text-2xl font-bold text-davinci-black-alt'>
-                    {Array.from(process.result).filter((r) => Number(r) > 0).length}
+                    {Array.from(process.result || []).filter((r) => Number(r) > 0).length}
                   </p>
                   <p className='text-xs text-davinci-black-alt/60'>Choices with Votes</p>
                 </div>

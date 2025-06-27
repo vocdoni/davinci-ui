@@ -828,7 +828,7 @@ const generateBallotMode = (election: ElectionMetadata, form: Purosesu): BallotM
     case ElectionResultsTypeNames.QUADRATIC:
       return {
         maxCount: election.questions[0].choices.length,
-        maxValue: '0',
+        maxValue: '16',
         minValue: '0',
         forceUniqueness: false,
         costFromWeight: false,
