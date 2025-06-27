@@ -187,7 +187,7 @@ export const TotalVotesCard = () => {
           <div className='mt-2 flex justify-center gap-2 text-sm text-davinci-black-alt/80'>
             <p>{process.sequencerStats.settledStateTransitionCount.toLocaleString()} settled</p>
             <span>•</span>
-            <p>{process.sequencerStats.pendingVotesCount.toLocaleString()} pending</p>
+            <p>{process.sequencerStats.verifiedVotesCount.toLocaleString()} pending</p>
           </div>
         </div>
       </CardContent>
