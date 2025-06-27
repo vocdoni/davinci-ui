@@ -64,7 +64,7 @@ export default function ParticipatePage() {
               <div className='flex justify-start'>
                 <Button
                   className='bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base'
-                  onClick={() => window.open('https://github.com/vocdoni/davinci-sdk', '_blank')}
+                  onClick={() => window.open('https://github.com/vocdoni/davinci-node#-run-a-worker-node', '_blank')}
                 >
                   <Github className='w-4 h-4 mr-2' />
                   View on GitHub
@@ -108,7 +108,7 @@ export default function ParticipatePage() {
               <div className='flex justify-start'>
                 <Button
                   className='bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base'
-                  onClick={() => window.open('https://vocdoni.io', '_blank')}
+                  onClick={() => window.open('https://davinci.deform.cc/waitlist/', '_blank')}
                 >
                   <ExternalLink className='w-4 h-4 mr-2' />
                   Learn More About Rewards
