@@ -68,13 +68,13 @@ export function VoteDisplay() {
     isInCensus,
     isAbleToVote,
     isCensusProofLoading,
+    hasVoted,
     process: { meta, process },
   } = useProcess()
   const processQuery = useProcessQuery(process.id)
   const [selectedChoice, setSelectedChoice] = useState('')
   const [selectedChoices, setSelectedChoices] = useState<string[]>([])
   const [quadraticVotes, setQuadraticVotes] = useState<QuadraticVote>({})
-  const [voteCount, setVoteCount] = useState(0)
   const [showVotingModal, setShowVotingModal] = useState(false)
   const [isVoting, setIsVoting] = useState(false)
   const { voteId, trackVote, resetVote } = usePersistedVote(process.id)
@@ -119,7 +119,6 @@ export function VoteDisplay() {
       throw new Error('Wallet not connected')
     }
 
-    setVoteCount((prev) => prev + 1)
     setShowVotingModal(false)
     setIsVoting(true)
 
@@ -595,7 +594,7 @@ export function VoteDisplay() {
             {/* Vote Choices - always visible */}
             <div className='space-y-4'>
               <Label className='text-davinci-black-alt font-medium'>
-                {voteCount > 0 ? 'Change your vote:' : 'Select your choice:'}
+                {hasVoted ? 'Change your vote:' : 'Select your choice:'}
               </Label>
 
               {/* Single Choice */}
@@ -803,7 +802,7 @@ export function VoteDisplay() {
                   loading={isVoting}
                 >
                   <img src='/images/davinci-icon.png' alt='' className='w-4 h-4 mr-2' />
-                  {voteCount > 0 ? 'Update Vote' : 'Vote'}
+                  {hasVoted ? 'Update Vote' : 'Vote'}
                 </Button>
 
                 {/* Validation Messages */}
@@ -859,7 +858,7 @@ export function VoteDisplay() {
         onConfirm={confirmVote}
         selectedChoice={getVoteSelectionSummary()}
         voteQuestion={meta.questions[0].title.default}
-        isRevote={voteCount > 0}
+        isRevote={Boolean(hasVoted)}
         votingMethod={votingMethod.type}
       />
     </div>
