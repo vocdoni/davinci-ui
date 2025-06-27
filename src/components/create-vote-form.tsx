@@ -134,7 +134,7 @@ export function CreateVoteForm() {
           census.censusURI = `${import.meta.env.BIGQUERY_URL}/censuses/${census.censusRoot}`
           break
         }
-        case 'custom-addresses': {
+        default: {
           if (formData.customAddresses.length === 0) {
             throw new Error('Please add at least one address to the custom addresses list')
           }
@@ -155,29 +155,6 @@ export function CreateVoteForm() {
           census.censusRoot = censusRoot
           census.censusSize = censusSize
           break
-        }
-        default: {
-          // Step 3: Create census
-          const censusId = await api.createCensus()
-
-          // Step 4: Add participants
-          const participants = [
-            {
-              key: '0x8349DE968A70B79D09886DA1690CC259b67CbCbC',
-              weight: '1',
-            },
-            {
-              key: '0xf3B06b503652a5E075D423F97056DFde0C4b066F',
-              weight: '1',
-            },
-          ]
-          await api.addParticipants(censusId, participants)
-          const censusRoot = await api.getCensusRoot(censusId)
-          const censusSize = await api.getCensusSize(censusId)
-
-          census.censusURI = censusId
-          census.censusRoot = censusRoot
-          census.censusSize = censusSize
         }
       }
 
@@ -610,16 +587,6 @@ export function CreateVoteForm() {
                 onValueChange={(value) => setFormData({ ...formData, censusType: value })}
               >
                 <div className='space-y-2'>
-                  <div className='flex items-center space-x-2'>
-                    <RadioGroupItem
-                      value='hardcoded-wallets'
-                      id='hardcoded-wallets'
-                      className='border-davinci-callout-border'
-                    />
-                    <Label htmlFor='hardcoded-wallets' className='text-davinci-black-alt'>
-                      Hardcoded Wallets 🫠
-                    </Label>
-                  </div>
                   <div className='flex items-center space-x-2'>
                     <RadioGroupItem
                       value='custom-addresses'
