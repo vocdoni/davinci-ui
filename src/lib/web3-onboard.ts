@@ -19,7 +19,7 @@ export const web3Onboard = init({
   ],
   appMetadata: {
     name: 'DAVINCI',
-    icon: '/images/davinci-icon.png',
+    icon: '/images/davinci-icon-small.png',
     description: 'DAVINCI Voting Platform',
   },
   connect: {
