@@ -148,7 +148,9 @@ export function VoteDisplay() {
       const fieldValues =
         meta.type.name === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION
           ? getBinaryArray([selectedChoice])
-          : getBinaryArray(selectedChoices)
+          : meta.type.name === ElectionResultsTypeNames.QUADRATIC
+            ? getBinaryArray(Object.values(quadraticVotes).map((v) => v.toString()))
+            : getBinaryArray(selectedChoices)
 
       const inputs: BallotProofInputs = {
         address: wallet.accounts[0].address,
