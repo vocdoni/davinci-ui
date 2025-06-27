@@ -853,9 +853,8 @@ export function VoteDisplay() {
               <div>
                 <h3 className='font-medium text-davinci-black-alt mb-2'>Encrypted Results</h3>
                 <p className='text-sm text-davinci-black-alt/80'>
-                  Vote results are encrypted and will only be revealed when the voting period ends (
-                  <VotingTimeRemaining /> remaining). This ensures the integrity of the voting process and prevents vote
-                  manipulation.
+                  Votes are encrypted and remain hidden until the voting period ends (<VotingTimeRemaining />{' '}
+                  remaining). This ensures fairness by preventing biases like the bandwagon effect.
                 </p>
               </div>
             </div>

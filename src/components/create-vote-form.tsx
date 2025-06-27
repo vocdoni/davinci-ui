@@ -31,6 +31,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~compo
 import { useSnapshots } from '~hooks/use-snapshots'
 import ConnectWalletButton from './ui/connect-wallet-button'
 import { IndeterminateProgress } from './ui/indeterminate-progress'
+import { Link } from './ui/link'
 
 interface Choice {
   id: string
@@ -821,6 +822,11 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
       >
         Create org (required rn to create a vote for the first time)
       </Button>
+      <div className='ml-6 bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border text-blue-900 text-left'>
+        Creating a vote requires a tx on the Sepolia testnet. If you need ETH to run a vote, you can get some from{' '}
+        <Link href='https://cloud.google.com/application/web3/faucet/ethereum/sepolia'>this faucet</Link>. The tx is
+        only needed to create the vote, <span className='font-medium'>casting votes is gasless.</span>
+      </div>
     </>
   )
 }

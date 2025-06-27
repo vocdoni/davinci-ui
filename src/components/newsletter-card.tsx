@@ -65,7 +65,7 @@ export function NewsletterCard() {
       </CardHeader>
       <CardContent className='space-y-4'>
         <p className='text-sm text-davinci-black-alt/80'>
-          Get the latest updates on DAVINCI protocol developments, new features, and voting opportunities.
+          Get the latest updates on DAVINCI protocol developments, new features, and other ecosystem opportunities.
         </p>
 
         <form onSubmit={handleSubmit} className='space-y-3'>

@@ -26,9 +26,10 @@ export function DavinciInfoCard() {
             <div className='flex items-start gap-3'>
               <Shield className='h-4 w-4 text-davinci-black-alt mt-0.5 flex-shrink-0' />
               <div>
-                <h3 className='font-medium text-davinci-black-alt text-sm'>Secure & Anonymous</h3>
+                <h3 className='font-medium text-davinci-black-alt text-sm'>Secure, Anti-coercion & Anonymous</h3>
                 <p className='text-xs text-davinci-black-alt/80'>
-                  DAVINCI ensures your votes remain private while maintaining verifiable results.
+                  DAVINCI ensures your votes remain anonymous while maintaining verifiable results and removing the
+                  possibility of vote buying.
                 </p>
               </div>
             </div>

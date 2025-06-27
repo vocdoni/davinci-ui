@@ -1,6 +1,7 @@
 import { CreateVoteForm } from '~components/create-vote-form'
 import { DavinciInfoCard } from '~components/davinci-info-card'
 import { NewsletterCard } from '~components/newsletter-card'
+import { Link } from '~components/ui/link'
 
 export default function HomePage() {
   return (
@@ -10,8 +11,12 @@ export default function HomePage() {
         <div className='text-center mb-12'>
           <h1 className='text-4xl font-bold text-davinci-black-alt mb-4 font-averia'>Create a Vote</h1>
           <p className='text-lg text-davinci-black-alt/80 max-w-2xl mx-auto'>
-            Launch a decentralized voting process using the DAVINCI protocol. Configure your vote parameters and let the
-            community decide.
+            Run a voting process powered by the DAVINCI protocol, offering the same verifiability and integrity as
+            onchain voting, along with anonymity, anti-coercion, and all the guarantees required for a fair and secure
+            election.{' '}
+            <Link href='https://davinci.vote/#comparison' target='_blank'>
+              Learn how DAVINCI compares to other voting systems
+            </Link>
           </p>
         </div>
 
