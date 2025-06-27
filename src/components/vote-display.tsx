@@ -4,6 +4,7 @@ import {
   ProcessStatus,
   VocdoniApiService,
   type BallotProofInputs,
+  type GetProcessResponse,
   type VoteBallot,
   type VoteRequest,
 } from '@vocdoni/davinci-sdk'
@@ -37,14 +38,14 @@ interface VotingMethod {
   credits?: number
 }
 
-function getVotingMethod(meta: ElectionMetadata): VotingMethod {
+function getVotingMethod(process: GetProcessResponse, meta: ElectionMetadata): VotingMethod {
   const { type } = meta
   switch (type.name) {
     case ElectionResultsTypeNames.MULTIPLE_CHOICE:
       return {
         type: type.name,
-        min: type.properties.numChoices?.min || 1,
-        max: type.properties.numChoices?.max || 2,
+        min: Number(process.ballotMode.minTotalCost) || 1,
+        max: Number(process.ballotMode.maxTotalCost) || 2,
       }
     case ElectionResultsTypeNames.QUADRATIC:
       return {
@@ -89,7 +90,7 @@ export function VoteDisplay() {
 
   // Initialize quadratic votes
   useEffect(() => {
-    const votingMethod = getVotingMethod(meta)
+    const votingMethod = getVotingMethod(process, meta)
     if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
       const initialVotes: QuadraticVote = {}
       meta.questions[0].choices.forEach((choice) => {
@@ -111,7 +112,7 @@ export function VoteDisplay() {
 
   // Get remaining credits
   const getRemainingCredits = (): number => {
-    const votingMethod = getVotingMethod(meta)
+    const votingMethod = getVotingMethod(process, meta)
     return (votingMethod.credits || 100) - getTotalCreditsUsed()
   }
 
@@ -153,12 +154,8 @@ export function VoteDisplay() {
 
       const fieldValues =
         meta.type.name === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION
-          ? (() => {
-              const result = Array(8).fill('0')
-              result[Number(selectedChoice)] = '1'
-              return result
-            })()
-          : selectedChoices
+          ? getBinaryArray([selectedChoice])
+          : getBinaryArray(selectedChoices)
 
       const inputs: BallotProofInputs = {
         address: wallet.accounts[0].address,
@@ -230,7 +227,7 @@ export function VoteDisplay() {
     // Clear selections after voting
     setSelectedChoice('')
     setSelectedChoices([])
-    const votingMethod = getVotingMethod(meta)
+    const votingMethod = getVotingMethod(process, meta)
     if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
       const resetVotes: QuadraticVote = {}
       meta.questions[0].choices.forEach((choice) => {
@@ -245,7 +242,7 @@ export function VoteDisplay() {
     // Reset form to allow voting again
     setSelectedChoice('')
     setSelectedChoices([])
-    const votingMethod = getVotingMethod(meta)
+    const votingMethod = getVotingMethod(process, meta)
     if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
       const resetVotes: QuadraticVote = {}
       meta.questions[0].choices.forEach((choice) => {
@@ -257,7 +254,7 @@ export function VoteDisplay() {
 
   // Validation for different voting methods
   const isVoteValid = (): boolean => {
-    const votingMethod = getVotingMethod(meta)
+    const votingMethod = getVotingMethod(process, meta)
     switch (votingMethod.type) {
       case ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION:
         return selectedChoice !== ''
@@ -290,7 +287,7 @@ export function VoteDisplay() {
         (total, votes) => total + calculateQuadraticCost(votes),
         0
       )
-      const votingMethod = getVotingMethod(meta)
+      const votingMethod = getVotingMethod(process, meta)
       const totalCredits = votingMethod.credits || 100
 
       if (totalCost <= totalCredits) {
@@ -303,7 +300,7 @@ export function VoteDisplay() {
 
   const getVoteSelectionSummary = () => {
     const choices = meta.questions[0].choices
-    const votingMethod = getVotingMethod(meta)
+    const votingMethod = getVotingMethod(process, meta)
     switch (votingMethod.type) {
       case ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION:
         return choices.find((choice) => choice.value.toString() === selectedChoice)?.title.default || ''
@@ -324,7 +321,7 @@ export function VoteDisplay() {
     }
   }
 
-  const votingMethod = getVotingMethod(meta)
+  const votingMethod = getVotingMethod(process, meta)
 
   return (
     <div className='space-y-6'>
@@ -924,4 +921,15 @@ export const WalletEligibilityStatus = () => {
       </div>
     </div>
   )
+}
+
+export function getBinaryArray(positions: string[]): string[] {
+  const result = Array(8).fill('0')
+  positions.forEach((posStr) => {
+    const pos = parseInt(posStr, 10)
+    if (!isNaN(pos) && pos >= 0 && pos < 8) {
+      result[pos] = '1'
+    }
+  })
+  return result
 }

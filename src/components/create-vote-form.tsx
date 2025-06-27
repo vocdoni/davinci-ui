@@ -529,7 +529,7 @@ export function CreateVoteForm() {
                       id='credits'
                       type='number'
                       min='1'
-                      max='1000'
+                      max='256'
                       value={formData.quadraticCredits}
                       onChange={(e) =>
                         setFormData({
@@ -837,7 +837,7 @@ const generateBallotMode = (election: ElectionMetadata, form: Purosesu): BallotM
     case ElectionResultsTypeNames.MULTIPLE_CHOICE:
       return {
         maxCount: election.questions[0].choices.length,
-        maxValue: '1',
+        maxValue: '16',
         minValue: '0',
         forceUniqueness: false,
         costFromWeight: false,
