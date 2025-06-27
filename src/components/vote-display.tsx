@@ -394,7 +394,7 @@ export function VoteDisplay() {
                     {meta.questions[0].choices
                       .map((choice) => ({
                         ...choice,
-                        result: process.result[choice.value],
+                        result: process.result[choice.value] || 0,
                       }))
                       .sort((a, b) => (Number(b.result) || 0) - (Number(a.result) || 0))
                       .map((choice, index) => {
