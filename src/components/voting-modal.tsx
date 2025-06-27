@@ -100,6 +100,10 @@ export function VotingModal({
               voting period ends. Only your final vote will count.
             </p>
           </div>
+          <p className='text-xs text-davinci-black-alt/70'>
+            <strong>Heads up:</strong> To complete your vote, you will need to sign a gasless (free) transaction. No
+            crypto or fees are required.
+          </p>
         </div>
 
         <DialogFooter className='gap-2'>
