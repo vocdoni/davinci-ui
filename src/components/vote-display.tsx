@@ -909,7 +909,7 @@ export const WalletEligibilityStatus = () => {
           </p>
           {timeLeft < 5 * 60 * 1000 && timeLeft > 0 && (
             <p className='text-sm text-red-600 mt-2'>
-              ⚠️ Voting ends in less than 5 minutes! Please cast your vote soon.
+              ⚠️ Voting ends in less than 5 minutes! Please cast your vote soon though it might not be validated anyway.
             </p>
           )}
         </div>
