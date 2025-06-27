@@ -19,6 +19,8 @@ const AppError = () => {
 
   const isProcessNotFound = is404 && isCodedError(error) && error.code === 40007
 
+  console.error('ℹ️ error for geeks:', error)
+
   const errorMessage =
     error instanceof Error
       ? error.message
