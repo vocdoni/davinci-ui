@@ -50,17 +50,10 @@ function getVotingMethod(process: GetProcessResponse, meta: ElectionMetadata): V
     case ElectionResultsTypeNames.QUADRATIC:
       return {
         type: type.name,
-        credits: (type.properties as any).maxBudget || 100,
+        credits: Number(process.ballotMode.maxTotalCost) || 100,
       }
     default:
       return { type: ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION }
-  }
-}
-
-interface VoteResults {
-  [choiceId: string]: {
-    votes: number
-    percentage: number
   }
 }
 

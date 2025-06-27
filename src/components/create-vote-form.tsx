@@ -656,41 +656,6 @@ export function CreateVoteForm() {
                     </div>
                   )}
                 </div>
-
-                <div className='space-y-2'>
-                  <div className='flex items-center space-x-2'>
-                    <RadioGroupItem
-                      value='holonym-passport'
-                      id='holonym-passport'
-                      className='border-davinci-callout-border'
-                      disabled
-                    />
-                    <Label htmlFor='holonym-passport' className='text-davinci-black-alt'>
-                      Holonym Passport
-                    </Label>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <HelpCircle className='w-4 h-4 text-davinci-black-alt/60' />
-                      </TooltipTrigger>
-                      <TooltipContent className='bg-davinci-paper-base text-davinci-black-alt border-davinci-callout-border'>
-                        <p>Wallets verified through Holonym's identity system</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                  {formData.censusType === 'holonym-passport' && (
-                    <div className='ml-6 bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border'>
-                      <div className='flex items-start gap-3'>
-                        <Users className='w-5 h-5 text-davinci-black-alt mt-0.5' />
-                        <div>
-                          <p className='text-sm font-medium text-davinci-black-alt'>Holonym Passport Requirements</p>
-                          <p className='text-sm text-davinci-black-alt/80'>
-                            Only wallets with verified Holonym Passport credentials can participate in this vote.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
               </RadioGroup>
             </div>
 
