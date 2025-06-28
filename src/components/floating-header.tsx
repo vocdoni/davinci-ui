@@ -62,6 +62,12 @@ export function FloatingHeader() {
     { value: 'implement', label: 'Implement DAVINCI', href: '/implement' },
     { value: 'participate', label: 'Participate', href: '/participate' },
     {
+      value: 'explorer',
+      label: 'Explorer',
+      href: 'https://sequencer1.davinci.vote/app',
+      external: true,
+    },
+    {
       value: 'about',
       label: 'About',
       href: 'https://davinci.vote',

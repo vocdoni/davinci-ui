@@ -72,7 +72,7 @@
   },
   "devDependencies": {
     "@types/node": "^22",
-    "@types/react": "^18",
+    "@types/react": "^18.3.23",
     "@types/react-dom": "^18",
     "@types/react-mailchimp-subscribe": "^2.1.4",
     "@vitejs/plugin-react": "^4.3.3",
