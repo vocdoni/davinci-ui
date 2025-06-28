@@ -1,4 +1,3 @@
-import { useConnectWallet } from '@web3-onboard/react'
 import { ExternalLink, Menu } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -20,7 +19,6 @@ export function FloatingHeader() {
   const navigate = useNavigate()
   const pathname = location.pathname || '/'
   const [activeLink, setActiveLink] = useState('create-vote')
-  const [{ connecting, wallet }, connect, disconnect] = useConnectWallet()
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
 
@@ -87,14 +85,6 @@ export function FloatingHeader() {
       window.open(href, '_blank', 'noopener,noreferrer')
     } else {
       navigate(href)
-    }
-  }
-
-  const handleConnectWallet = async () => {
-    if (wallet) {
-      await disconnect(wallet)
-    } else {
-      await connect()
     }
   }
 
