@@ -184,10 +184,15 @@ export const TotalVotesCard = () => {
           <p className='text-sm text-davinci-black-alt/80 capitalize'>
             {!voteEnded ? 'Votes cast so far' : 'Final vote count'}
           </p>
-          <div className='mt-2 flex justify-center gap-2 text-sm text-davinci-black-alt/80'>
-            <p>{process.sequencerStats.settledStateTransitionCount.toLocaleString()} settled</p>
-            <span>•</span>
-            <p>{process.sequencerStats.verifiedVotesCount.toLocaleString()} pending</p>
+          <div className='border mt-4 p-2'>
+            <p className='text-xs uppercase tracking-wide text-davinci-black-alt/60'>Sequencer stats</p>
+            <div className='mt-1 flex justify-center gap-2 text-sm text-davinci-black-alt/80'>
+              <p>{process.sequencerStats.verifiedVotesCount.toString()} verified</p>
+              <span>•</span>
+              <p>{process.sequencerStats.pendingVotesCount.toString()} pending</p>
+              <span>•</span>
+              <p>{process.sequencerStats.settledStateTransitionCount.toString()} transitions</p>
+            </div>
           </div>
         </div>
       </CardContent>
