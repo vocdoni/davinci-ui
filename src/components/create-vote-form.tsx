@@ -256,7 +256,7 @@ export function CreateVoteForm() {
             navigate(`/vote/${processId}`)
             break
           }
-        } catch (e) {}
+        } catch (e) { }
 
         await new Promise((r) => setTimeout(r, 2500))
       }
@@ -330,7 +330,7 @@ export function CreateVoteForm() {
               1. Question and Choices
             </CardTitle>
             <CardDescription className='text-davinci-black-alt/70'>
-              Define your voting question and provide up to 6 choices for voters
+              Define your voting question and provide up to 8 choices for voters
             </CardDescription>
           </CardHeader>
           <CardContent className='space-y-6 pt-6 bg-davinci-text-base'>
@@ -350,7 +350,7 @@ export function CreateVoteForm() {
 
             <div className='space-y-4'>
               <div className='flex items-center justify-between'>
-                <Label className='text-davinci-black-alt'>Choices ({formData.choices.length}/6)</Label>
+                <Label className='text-davinci-black-alt'>Choices ({formData.choices.length}/8)</Label>
                 <Button
                   type='button'
                   variant='outline'
