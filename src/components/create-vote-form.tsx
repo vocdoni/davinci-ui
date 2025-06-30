@@ -486,7 +486,7 @@ export function CreateVoteForm() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className='bg-davinci-paper-base border-davinci-callout-border'>
-                          {Array.from({ length: Math.min(formData.choices.length, 6) }, (_, i) => (
+                          {Array.from({ length: Math.min(formData.choices.length, 8) }, (_, i) => (
                             <SelectItem key={i + 1} value={(i + 1).toString()}>
                               {i + 1}
                             </SelectItem>
@@ -506,7 +506,7 @@ export function CreateVoteForm() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className='bg-davinci-paper-base border-davinci-callout-border'>
-                          {Array.from({ length: Math.min(formData.choices.length, 6) }, (_, i) => (
+                          {Array.from({ length: Math.min(formData.choices.length, 8) }, (_, i) => (
                             <SelectItem key={i + 1} value={(i + 1).toString()}>
                               {i + 1}
                             </SelectItem>
