@@ -1,6 +1,7 @@
-import { CheckCircle, Code, Github } from 'lucide-react'
+import { Code, Github } from 'lucide-react'
 import { Button } from '~components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
+import { Link } from '~components/ui/link'
 
 export default function ImplementPage() {
   return (
@@ -25,34 +26,48 @@ export default function ImplementPage() {
             </CardHeader>
             <CardContent className='space-y-6 pt-6 bg-davinci-text-base'>
               <p className='text-davinci-black-alt/80'>
-                The DAVINCI SDK provides the tools you need to build voting functionalities into your applications.
+                We're making it super easy to plug DAVINCI into any app or service. Our goal is to keep things simple
+                and developer-friendly, and our SDK is designed to help you get up and running with minimal hassle.
               </p>
 
               <p className='text-davinci-black-alt/80'>
-                To start using the DAVINCI SDK, you'll typically need to install it via your preferred package manager
-                (e.g., npm, yarn). The SDK allows you to create, manage, and interact with votes on the Vocdoni network.
+                While the stable release of the SDK is still in progress, you don’t have to wait to get started. We’ve
+                already made two fully functional examples available for you to explore:
               </p>
 
-              {/* Code Example */}
-              <div className='bg-davinci-black-alt rounded-lg p-4 overflow-x-auto'>
-                <pre className='text-davinci-text-base text-sm'>
-                  <code>{`// Example: Basic SDK usage (conceptual)
-import { DavinciSDK } from '@vocdoni/davinci-sdk';
-
-async function createNewVote() {
-  const sdk = new DavinciSDK({ /* configuration */ });
-  const voteParams = { /* vote parameters */ };
-  const voteId = await sdk.createVote(voteParams);
-  console.log('Vote created with ID:', voteId);
-}
-
-createNewVote();`}</code>
-                </pre>
-              </div>
+              <ul className='list-disc pl-6 text-davinci-black-alt/80'>
+                <li>
+                  <Link href='https://github.com/vocdoni/davinci-sdk/tree/main/examples/script' target='_blank'>
+                    Script Example
+                  </Link>
+                  : A streamlined example that allows to execute the entire process of a DAVINCI vote, from setting up
+                  and running a vote, to casting ballots and retrieving the final results.
+                </li>
+                <li>
+                  <Link href='https://github.com/vocdoni/davinci-sdk/tree/main/examples/ui' target='_blank'>
+                    UI Example
+                  </Link>
+                  : A visual interface that walks you through the entire process, from setting up a vote to casting a
+                  ballot using DAVINCI.
+                </li>
+              </ul>
 
               <p className='text-davinci-black-alt/80'>
-                For detailed installation instructions, API reference, and usage examples, please refer to our official
-                GitHub repository.
+                Both are opensourced and ready to analyze, and designed to help you understand DAVINCI and start
+                building on top of it.
+              </p>
+
+              <p className='text-davinci-black-alt/80'>
+                Want a quick look in action?{' '}
+                <Link href='https://vocdoni.github.io/davinci-sdk/' target='_blank'>
+                  Try our live demo deployed on Sepolia
+                </Link>
+                .
+              </p>
+
+              <p>
+                For the latest updates, technical details, and to show your support, check out our DAVINCI SDK
+                repository and give it a ⭐️.
               </p>
 
               <div className='flex justify-start'>
@@ -63,55 +78,6 @@ createNewVote();`}</code>
                   <Github className='w-4 h-4 mr-2' />
                   DAVINCI SDK on GitHub
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Key Features Section */}
-          <Card className='border-davinci-callout-border'>
-            <CardHeader className='bg-davinci-paper-base'>
-              <CardTitle className='flex items-center gap-2 text-davinci-black-alt'>
-                <CheckCircle className='w-5 h-5' />
-                Key Features
-              </CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-4 pt-6 bg-davinci-text-base'>
-              <div className='space-y-4'>
-                <div className='flex items-start gap-3'>
-                  <div className='w-2 h-2 bg-davinci-black-alt rounded-full mt-2 flex-shrink-0'></div>
-                  <p className='text-davinci-black-alt/80'>
-                    <strong className='text-davinci-black-alt'>Create various types of votes</strong> (single choice,
-                    multi-choice, quadratic).
-                  </p>
-                </div>
-
-                <div className='flex items-start gap-3'>
-                  <div className='w-2 h-2 bg-davinci-black-alt rounded-full mt-2 flex-shrink-0'></div>
-                  <p className='text-davinci-black-alt/80'>
-                    <strong className='text-davinci-black-alt'>Define census mechanisms</strong> for voter eligibility.
-                  </p>
-                </div>
-
-                <div className='flex items-start gap-3'>
-                  <div className='w-2 h-2 bg-davinci-black-alt rounded-full mt-2 flex-shrink-0'></div>
-                  <p className='text-davinci-black-alt/80'>
-                    <strong className='text-davinci-black-alt'>Securely cast and tally votes.</strong>
-                  </p>
-                </div>
-
-                <div className='flex items-start gap-3'>
-                  <div className='w-2 h-2 bg-davinci-black-alt rounded-full mt-2 flex-shrink-0'></div>
-                  <p className='text-davinci-black-alt/80'>
-                    <strong className='text-davinci-black-alt'>Query vote results</strong> and participation data.
-                  </p>
-                </div>
-
-                <div className='flex items-start gap-3'>
-                  <div className='w-2 h-2 bg-davinci-black-alt rounded-full mt-2 flex-shrink-0'></div>
-                  <p className='text-davinci-black-alt/80'>
-                    <strong className='text-davinci-black-alt'>Extensible architecture</strong> for custom integrations.
-                  </p>
-                </div>
               </div>
             </CardContent>
           </Card>
