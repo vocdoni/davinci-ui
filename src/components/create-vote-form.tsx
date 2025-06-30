@@ -256,7 +256,7 @@ export function CreateVoteForm() {
             navigate(`/vote/${processId}`)
             break
           }
-        } catch (e) { }
+        } catch (e) {}
 
         await new Promise((r) => setTimeout(r, 2500))
       }
@@ -828,7 +828,7 @@ const generateBallotMode = (election: ElectionMetadata, form: Purosesu): BallotM
     case ElectionResultsTypeNames.QUADRATIC:
       return {
         maxCount: election.questions[0].choices.length,
-        maxValue: '16',
+        maxValue: (Math.floor(Math.sqrt(Number(form.quadraticCredits))) + 1).toString(),
         minValue: '0',
         forceUniqueness: false,
         costFromWeight: false,
