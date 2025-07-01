@@ -319,6 +319,7 @@ export function VoteDisplay() {
   }
 
   const votingMethod = getVotingMethod(process, meta)
+  const results = process.result || []
 
   return (
     <div className='space-y-6'>
@@ -373,7 +374,7 @@ export function VoteDisplay() {
                 </div>
                 <div className='text-center'>
                   <p className='text-2xl font-bold text-davinci-black-alt'>
-                    {Array.from(process.result || []).filter((r) => Number(r) > 0).length}
+                    {Array.from(results).filter((r) => Number(r) > 0).length}
                   </p>
                   <p className='text-xs text-davinci-black-alt/60'>Choices with Votes</p>
                 </div>
@@ -394,14 +395,14 @@ export function VoteDisplay() {
                     {meta.questions[0].choices
                       .map((choice) => ({
                         ...choice,
-                        result: process.result[choice.value] || 0,
+                        result: results[choice.value] || 0,
                       }))
                       .sort((a, b) => (Number(b.result) || 0) - (Number(a.result) || 0))
                       .map((choice, index) => {
-                        const result = process.result[choice.value] || '0'
+                        const result = results[choice.value] || '0'
                         const percentage =
                           votingMethod.type === ElectionResultsTypeNames.QUADRATIC
-                            ? (Number(result) / process.result.reduce((acc, val) => acc + (Number(val) || 0), 0)) * 100
+                            ? (Number(result) / results.reduce((acc, val) => acc + (Number(val) || 0), 0)) * 100
                             : (Number(result) / Number(process.voteCount)) * 100 || 0
                         const votes = result || 0
 
