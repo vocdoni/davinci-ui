@@ -817,7 +817,7 @@ const generateBallotMode = (election: ElectionMetadata, form: Purosesu): BallotM
     case ElectionResultsTypeNames.MULTIPLE_CHOICE:
       return {
         maxCount: election.questions[0].choices.length,
-        maxValue: '16',
+        maxValue: '1',
         minValue: '0',
         forceUniqueness: false,
         costFromWeight: false,
