@@ -3,6 +3,7 @@ import type { Config } from 'tailwindcss'
 export default {
   darkMode: ['class'],
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  safelist: ['bg-blue-200', 'bg-green-200', 'bg-yellow-200'],
   theme: {
     extend: {
       fontFamily: {
