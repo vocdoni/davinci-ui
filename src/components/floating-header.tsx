@@ -1,6 +1,6 @@
 import { ExternalLink, Menu } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useMatch, useNavigate } from 'react-router-dom'
 import { Button } from '~components/ui/button'
 import { Card } from '~components/ui/card'
 import { Sheet, SheetContent, SheetTrigger } from '~components/ui/sheet'
@@ -15,32 +15,16 @@ interface NavigationItem {
 }
 
 export function FloatingHeader() {
-  const location = useLocation()
   const navigate = useNavigate()
-  const pathname = location.pathname || '/'
-  const [activeLink, setActiveLink] = useState('create-vote')
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
-
-  // Update active link based on current pathname
-  useEffect(() => {
-    if (pathname === '/') {
-      setActiveLink('create-vote')
-    } else if (pathname === '/implement') {
-      setActiveLink('implement')
-    } else if (pathname === '/participate') {
-      setActiveLink('participate')
-    }
-  }, [pathname])
 
   useEffect(() => {
     const controlNavbar = () => {
       if (typeof window !== 'undefined') {
         if (window.scrollY > lastScrollY && window.scrollY > 100) {
-          // Scrolling down and past 100px
           setIsVisible(false)
         } else {
-          // Scrolling up
           setIsVisible(true)
         }
         setLastScrollY(window.scrollY)
@@ -57,11 +41,12 @@ export function FloatingHeader() {
 
   const navigationItems: NavigationItem[] = [
     { value: 'create-vote', label: 'Create a Vote', href: '/' },
-    { value: 'implement', label: 'Implement DAVINCI', href: '/implement' },
+    { value: 'explore', label: 'Explore', href: '/explore' },
+    { value: 'implement', label: 'SDK', href: '/implement' },
     { value: 'participate', label: 'Participate', href: '/participate' },
     {
-      value: 'explorer',
-      label: 'Explorer',
+      value: 'sequencer',
+      label: 'Sequencer',
       href: 'https://sequencer1.davinci.vote/app',
       external: true,
     },
@@ -79,13 +64,17 @@ export function FloatingHeader() {
     },
   ]
 
-  const handleLinkClick = (value: string, href: string, external?: boolean) => {
-    setActiveLink(value)
+  const handleLinkClick = (href: string, external?: boolean) => {
     if (external) {
       window.open(href, '_blank', 'noopener,noreferrer')
     } else {
       navigate(href)
     }
+  }
+
+  const isActiveLink = (href: string) => {
+    const match = useMatch({ path: href, end: href === '/' })
+    return Boolean(match)
   }
 
   return (
@@ -96,20 +85,18 @@ export function FloatingHeader() {
     >
       <Card className='bg-davinci-paper-base/95 backdrop-blur-md border border-davinci-callout-border/50 shadow-lg'>
         <div className='flex items-center justify-between p-4'>
-          {/* Logo */}
           <Link to='/' className='flex items-center space-x-3'>
             <img src='/images/davinci-logo.png' alt='DAVINCI' className='h-8 w-auto' />
           </Link>
 
-          {/* Desktop Navigation Links */}
           <div className='hidden lg:block'>
             <nav className='flex items-center space-x-1'>
               {navigationItems.map((item) => (
                 <button
                   key={item.value}
-                  onClick={() => handleLinkClick(item.value, item.href, item.external)}
+                  onClick={() => handleLinkClick(item.href, item.external)}
                   className={`px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 flex items-center gap-1 ${
-                    activeLink === item.value
+                    isActiveLink(item.href)
                       ? 'bg-davinci-soft-neutral text-davinci-black-alt'
                       : 'text-davinci-black-alt hover:text-davinci-black-alt hover:bg-davinci-soft-neutral/50'
                   }`}
@@ -122,7 +109,6 @@ export function FloatingHeader() {
             </nav>
           </div>
 
-          {/* Mobile Navigation */}
           <div className='lg:hidden'>
             <Sheet>
               <SheetTrigger asChild>
@@ -135,9 +121,9 @@ export function FloatingHeader() {
                   {navigationItems.map((item) => (
                     <button
                       key={item.value}
-                      onClick={() => handleLinkClick(item.value, item.href, item.external)}
+                      onClick={() => handleLinkClick(item.href, item.external)}
                       className={`flex items-center justify-start gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-                        activeLink === item.value
+                        isActiveLink(item.href)
                           ? 'bg-davinci-soft-neutral text-davinci-black-alt'
                           : 'text-davinci-black-alt hover:text-davinci-black-alt hover:bg-davinci-soft-neutral/50'
                       }`}
@@ -152,7 +138,6 @@ export function FloatingHeader() {
             </Sheet>
           </div>
 
-          {/* Connect Wallet Button */}
           <div className='w-40 flex justify-end'>
             <ConnectWalletButton />
           </div>
