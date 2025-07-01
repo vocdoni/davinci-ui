@@ -1,5 +1,6 @@
 import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk'
 import { BarChart2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { NewsletterCard } from '~components/newsletter-card'
 import { useProcessList, useProcessQuery } from '~hooks/use-process-query'
 import { Badge } from '~ui/badge'
@@ -49,7 +50,9 @@ function ProcessRow({ id }: { id: string }) {
   return (
     <TableRow key={id}>
       <TableCell className='font-medium text-davinci-black-alt'>
-        <div className='max-w-[200px] truncate'>{data.meta?.title.default || 'Untitled Process'}</div>{' '}
+        <Link to={`/vote/${id}`} className='flex items-center gap-2 hover:underline'>
+          <span className='max-w-[200px] truncate'>{data.meta?.title.default || 'Untitled Process'}</span>
+        </Link>
       </TableCell>
       <TableCell className='text-davinci-black-alt/80'>
         <div className='font-mono text-sm'>
