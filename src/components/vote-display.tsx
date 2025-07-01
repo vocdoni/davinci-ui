@@ -399,7 +399,10 @@ export function VoteDisplay() {
                       .sort((a, b) => (Number(b.result) || 0) - (Number(a.result) || 0))
                       .map((choice, index) => {
                         const result = process.result[choice.value] || '0'
-                        const percentage = (Number(result) / Number(process.voteCount)) * 100 || 0
+                        const percentage =
+                          votingMethod.type === ElectionResultsTypeNames.QUADRATIC
+                            ? (Number(result) / process.result.reduce((acc, val) => acc + (Number(val) || 0), 0)) * 100
+                            : (Number(result) / Number(process.voteCount)) * 100 || 0
                         const votes = result || 0
 
                         // Color scheme based on ranking
