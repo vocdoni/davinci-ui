@@ -3,6 +3,7 @@ import { Suspense, lazy } from 'react'
 import { RouterProvider as ReactRouterProvider, createBrowserRouter } from 'react-router-dom'
 import { useVocdoniApi } from '~components/vocdoni-api-context'
 import { getProcessQuery } from '~hooks/use-process-query'
+import ExplorePage from '~pages/Explore'
 import AppError from './AppError'
 import { Layout } from './Layout'
 
@@ -79,6 +80,14 @@ export const RouterProvider = () => {
           element: (
             <Suspense fallback={<Loading />}>
               <ParticipatePage />
+            </Suspense>
+          ),
+        },
+        {
+          path: 'explore',
+          element: (
+            <Suspense fallback={<Loading />}>
+              <ExplorePage />
             </Suspense>
           ),
         },
