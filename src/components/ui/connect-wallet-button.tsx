@@ -1,21 +1,33 @@
 import { useAppKit, useAppKitAccount, useAppKitState, useDisconnect } from '@reown/appkit/react'
 import { Loader2, Wallet } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { truncateAddress } from '~lib/web3-utils'
 import { Button, type ButtonProps } from './button'
 
 const ConnectWalletButton = (props: ButtonProps) => {
   const { open } = useAppKit()
   const { address, isConnected } = useAppKitAccount()
-  const { loading } = useAppKitState()
+  const { open: isModalOpen } = useAppKitState()
   const { disconnect } = useDisconnect()
+  const [isConnecting, setIsConnecting] = useState(false)
+
+  // Reset connecting state when modal closes without connection
+  useEffect(() => {
+    if (!isModalOpen && !isConnected) {
+      setIsConnecting(false)
+    }
+  }, [isModalOpen, isConnected])
 
   const handleConnectWallet = async () => {
     if (isConnected) {
       await disconnect()
     } else {
+      setIsConnecting(true)
       open()
     }
   }
+
+  const loading = isConnecting && !isConnected
 
   return (
     <Button
