@@ -4,7 +4,7 @@ import walletConnectModule from '@web3-onboard/walletconnect'
 
 const injected = injectedModule()
 const walletConnect = walletConnectModule({
-  projectId: 'f9218b6e0683d202d047f1c60de2d681',
+  projectId: import.meta.env.WALLETCONNECT_PROJECT_ID,
 })
 
 export const web3Onboard = init({

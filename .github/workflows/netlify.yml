@@ -35,6 +35,7 @@ jobs:
         run: pnpm build
         env:
           BIGQUERY_URL: https://c3.davinci.vote
+          WALLETCONNECT_PROJECT_ID: f9218b6e0683d202d047f1c60de2d681
 
       - name: Deploy to Netlify
         uses: nwtgck/actions-netlify@v2.0
