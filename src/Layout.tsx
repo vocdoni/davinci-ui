@@ -1,27 +1,26 @@
-import { useSetChain } from '@web3-onboard/react'
+import { sepolia } from '@reown/appkit/networks'
+import { useAppKitNetwork } from '@reown/appkit/react'
 import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { FloatingHeader } from '~components/floating-header'
 import { Footer } from '~components/footer'
 
 export function Layout() {
-  const [{ chains, connectedChain }, setChain] = useSetChain()
+  const { caipNetwork, switchNetwork } = useAppKitNetwork()
 
-  // Switch to configured chain if not connected
+  // Switch to configured chain if not connected to Sepolia
   useEffect(() => {
-    if (!connectedChain || !chains.length) return
+    if (!caipNetwork) return
 
-    const configuredChain = chains.find((chain) => chain.id === connectedChain.id)
-
-    if (!configuredChain) {
-      setChain({
-        chainId: chains[0].id,
-        chainNamespace: chains[0].namespace,
-      }).catch((error) => {
+    // Check if we're on Sepolia (chain ID 11155111)
+    if (caipNetwork.id !== sepolia.id) {
+      try {
+        switchNetwork(sepolia)
+      } catch (error) {
         console.error('Failed to switch chain:', error)
-      })
+      }
     }
-  }, [connectedChain, chains])
+  }, [caipNetwork, switchNetwork])
 
   return (
     <div className='min-h-screen bg-davinci-paper-base/30 flex flex-col font-work-sans'>

@@ -1,3 +1,4 @@
+import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react'
 import {
   BallotProof,
   CircomProof,
@@ -10,7 +11,6 @@ import {
 } from '@vocdoni/davinci-sdk'
 import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
 import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
-import { useConnectWallet } from '@web3-onboard/react'
 import { BrowserProvider } from 'ethers'
 import { BarChart3, CheckCircle, Clock, Diamond, Lock, Minus, Plus, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -62,7 +62,8 @@ interface QuadraticVote {
 }
 
 export function VoteDisplay() {
-  const [{ wallet }] = useConnectWallet()
+  const { address, isConnected } = useAppKitAccount()
+  const { walletProvider } = useAppKitProvider('eip155')
   const {
     censusProof,
     isInCensus,
@@ -79,7 +80,6 @@ export function VoteDisplay() {
   const [isVoting, setIsVoting] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   const { voteId, trackVote, resetVote } = usePersistedVote(process.id)
-  const isConnected = !!wallet
   const voteEnded = process.status === ProcessStatus.ENDED || process.status === ProcessStatus.RESULTS
 
   // Initialize quadratic votes
@@ -116,8 +116,12 @@ export function VoteDisplay() {
   }
 
   const confirmVote = async () => {
-    if (!wallet) {
+    if (!isConnected || !address) {
       throw new Error('Wallet not connected')
+    }
+
+    if (!walletProvider) {
+      throw new Error('Wallet provider not available')
     }
 
     setShowVotingModal(false)
@@ -154,7 +158,7 @@ export function VoteDisplay() {
             : getBinaryArray(selectedChoices)
 
       const inputs: BallotProofInputs = {
-        address: wallet.accounts[0].address,
+        address: address,
         processID: process.id,
         ballotMode: process.ballotMode,
         encryptionKey: [process.encryptionKey.x, process.encryptionKey.y],
@@ -186,14 +190,14 @@ export function VoteDisplay() {
         ciphertexts: out.ballot.ciphertexts,
       }
 
-      const provider = new BrowserProvider(wallet.provider)
+      const provider = new BrowserProvider(walletProvider)
       const signer = await provider.getSigner()
       console.info('ℹ️ census proof:', censusProof)
       console.info('ℹ️ voteid:', out.voteId)
       const signature = await signer.signMessage(hexStringToUint8Array(out.voteId))
 
       const voteRequest: VoteRequest = {
-        address: wallet.accounts[0].address,
+        address: address,
         ballot: voteBallot,
         ballotInputsHash: out.ballotInputsHash,
         ballotProof: proof,
@@ -886,9 +890,7 @@ const hexStringToUint8Array = (hex: string) =>
   )
 
 export const WalletEligibilityStatus = () => {
-  const [{ wallet }] = useConnectWallet()
-  const address = wallet?.accounts?.[0]?.address ?? null
-  const isConnected = !!address
+  const { address, isConnected } = useAppKitAccount()
 
   const {
     isInCensus,
@@ -911,7 +913,7 @@ export const WalletEligibilityStatus = () => {
         <div>
           <p className='font-medium text-davinci-black-alt'>Wallet Connected</p>
           <p className='text-sm text-davinci-black-alt/80'>
-            {truncateAddress(address)} •{' '}
+            {address && truncateAddress(address)} •{' '}
             {isCensusProofLoading
               ? 'Checking eligibility...'
               : isInCensus

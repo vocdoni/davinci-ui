@@ -1,7 +1,7 @@
 // ProcessContext.tsx
+import { useAppKitAccount } from '@reown/appkit/react'
 import { useQuery } from '@tanstack/react-query'
 import type { CensusProof, ElectionMetadata, GetProcessResponse } from '@vocdoni/davinci-sdk'
-import { useConnectWallet } from '@web3-onboard/react'
 import { createContext, useContext, useMemo, type FC, type PropsWithChildren } from 'react'
 import { up } from 'up-fetch'
 import { useVocdoniApi } from './vocdoni-api-context'
@@ -34,9 +34,7 @@ const upfetch = up(fetch)
 
 export const ProcessProvider: FC<ProcessProviderProps> = ({ children, process }) => {
   const api = useVocdoniApi()
-  const [{ wallet }] = useConnectWallet()
-
-  const address = wallet?.accounts?.[0]?.address ?? null
+  const { address, isConnected } = useAppKitAccount()
   const censusRoot = process.process.census.censusRoot
 
   const {
@@ -88,7 +86,7 @@ export const ProcessProvider: FC<ProcessProviderProps> = ({ children, process })
       isAbleToVote: Boolean(isInCensus) && process.process.isAcceptingVotes,
       isCensusProofError,
       isCensusProofLoading,
-      isCreator: process.process.organizationId === wallet?.accounts?.[0]?.address,
+      isCreator: process.process.organizationId === address,
       isHasVotedError,
       isHasVotedLoading,
       isInCensus,

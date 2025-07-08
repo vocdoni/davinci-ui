@@ -1,6 +1,6 @@
+import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react'
 import { deployedAddresses, ProcessRegistryService, ProcessStatus } from '@vocdoni/davinci-sdk'
-import { useConnectWallet } from '@web3-onboard/react'
-import { BrowserProvider } from 'ethers'
+import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { Cog, StopCircle } from 'lucide-react'
 import { useState } from 'react'
 import { useProcess } from './process-context'
@@ -12,15 +12,18 @@ const VoteActions = () => {
     isCreator,
     process: { process },
   } = useProcess()
-  const [{ wallet }] = useConnectWallet()
+  const { address, isConnected } = useAppKitAccount()
+  const { walletProvider } = useAppKitProvider('eip155')
   const [isLoading, setIsLoading] = useState(false)
 
-  if (!wallet || !isCreator || ![ProcessStatus.PAUSED, ProcessStatus.READY].includes(process.status)) return null
+  if (!isConnected || !isCreator || ![ProcessStatus.PAUSED, ProcessStatus.READY].includes(process.status)) return null
 
   const handleEndProcess = async () => {
+    if (!walletProvider) return
+
     setIsLoading(true)
     try {
-      const provider = new BrowserProvider(wallet.provider)
+      const provider = new BrowserProvider(walletProvider as Eip1193Provider)
       const signer = await provider.getSigner()
       const registry = new ProcessRegistryService(deployedAddresses.processRegistry.sepolia, signer)
       await registry.endProcess(process.id)

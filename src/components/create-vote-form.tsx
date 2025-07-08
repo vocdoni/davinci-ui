@@ -1,3 +1,4 @@
+import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react'
 import {
   ProcessRegistryService,
   ProcessStatus,
@@ -12,7 +13,6 @@ import {
   type ProtocolVersion,
 } from '@vocdoni/davinci-sdk/core'
 import { createProcessSignatureMessage } from '@vocdoni/davinci-sdk/sequencer'
-import { useConnectWallet } from '@web3-onboard/react'
 import { BrowserProvider } from 'ethers'
 import { Calendar, CheckCircle, Clock, HelpCircle, Plus, Rocket, Users, Wallet, X } from 'lucide-react'
 import { useState } from 'react'
@@ -62,7 +62,8 @@ export function CreateVoteForm() {
   const navigate = useNavigate()
   const [isLaunching, setIsLaunching] = useState(false)
   const [launchSuccess, setLaunchSuccess] = useState(false)
-  const [{ wallet }] = useConnectWallet()
+  const { address, isConnected } = useAppKitAccount()
+  const { walletProvider } = useAppKitProvider('eip155')
   const [error, setError] = useState<Error | null>(null)
   const [formData, setFormData] = useState<Purosesu>({
     question: '',
@@ -77,7 +78,7 @@ export function CreateVoteForm() {
     censusType: '',
     duration: '',
     durationUnit: 'minutes',
-    customAddresses: wallet?.accounts?.[0]?.address ? [wallet.accounts[0].address] : [],
+    customAddresses: address ? [address] : [],
   })
   const api = useVocdoniApi()
   const { data: snapshot, isLoading: isLoadingSnapshot, isError: isSnapshotError } = useSnapshots()
@@ -112,7 +113,7 @@ export function CreateVoteForm() {
   }
 
   const handleLaunch = async () => {
-    if (!isFormValid() || !wallet) return
+    if (!isFormValid() || !isConnected || !walletProvider) return
 
     setIsLaunching(true)
     setError(null)
@@ -190,7 +191,7 @@ export function CreateVoteForm() {
       const metadataUrl = api.getMetadataUrl(metadataHash)
       console.info('ℹ️ Metadata URL:', metadataUrl)
 
-      const provider = new BrowserProvider(wallet.provider)
+      const provider = new BrowserProvider(walletProvider)
       const signer = await provider.getSigner()
       const registry = new ProcessRegistryService(deployedAddresses.processRegistry.sepolia, signer)
       const pid = await registry.getNextProcessId(await signer.getAddress())
@@ -760,8 +761,8 @@ type LaunchVoteButtonProps = {
 }
 
 const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVoteButtonProps) => {
-  const [{ wallet }] = useConnectWallet()
-  if (!wallet) {
+  const { isConnected } = useAppKitAccount()
+  if (!isConnected) {
     return <ConnectWalletButton />
   }
 
