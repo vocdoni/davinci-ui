@@ -1,5 +1,5 @@
 import { EthersAdapter } from '@reown/appkit-adapter-ethers'
-import { mainnet, sepolia } from '@reown/appkit/networks'
+import { sepolia } from '@reown/appkit/networks'
 import { createAppKit } from '@reown/appkit/react'
 
 // 1. Get projectId from environment
@@ -9,7 +9,7 @@ const projectId = import.meta.env.WALLETCONNECT_PROJECT_ID
 const metadata = {
   name: 'DAVINCI',
   description: 'DAVINCI Voting Platform',
-  url: 'https://app.davinci.vote',
+  url: 'https://davinci.vote', // origin must match your domain & subdomain
   icons: ['/images/davinci-icon-small.png'],
 }
 
@@ -19,7 +19,7 @@ const ethersAdapter = new EthersAdapter()
 // 4. Create modal
 createAppKit({
   adapters: [ethersAdapter],
-  networks: [sepolia, mainnet],
+  networks: [sepolia],
   projectId,
   metadata,
   features: {
@@ -27,5 +27,4 @@ createAppKit({
     socials: [],
     email: false,
   },
-  defaultNetwork: sepolia,
 })
