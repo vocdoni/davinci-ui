@@ -891,7 +891,7 @@ const generateBallotMode = (election: ElectionMetadata, form: Purosesu): BallotM
         maxValue: (Math.floor(Math.sqrt(Number(form.quadraticCredits))) + 1).toString(),
         minValue: '0',
         forceUniqueness: false,
-        costFromWeight: true,
+        costFromWeight: false,
         costExponent: 2,
         maxTotalCost: form.quadraticCredits,
         minTotalCost: '0',
