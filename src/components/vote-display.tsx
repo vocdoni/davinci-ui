@@ -11,7 +11,7 @@ import {
 } from '@vocdoni/davinci-sdk'
 import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
 import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
-import { BrowserProvider } from 'ethers'
+import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { BarChart3, CheckCircle, Clock, Diamond, Lock, Minus, Plus, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Badge } from '~components/ui/badge'
@@ -164,7 +164,7 @@ export function VoteDisplay() {
         encryptionKey: [process.encryptionKey.x, process.encryptionKey.y],
         k: kStr,
         fieldValues,
-        weight: '1',
+        weight: censusProof.weight,
       }
       console.info('ℹ️ Ballot proof inputs:', inputs)
 
@@ -190,7 +190,7 @@ export function VoteDisplay() {
         ciphertexts: out.ballot.ciphertexts,
       }
 
-      const provider = new BrowserProvider(walletProvider)
+      const provider = new BrowserProvider(walletProvider as Eip1193Provider)
       const signer = await provider.getSigner()
       console.info('ℹ️ census proof:', censusProof)
       console.info('ℹ️ voteid:', out.voteId)

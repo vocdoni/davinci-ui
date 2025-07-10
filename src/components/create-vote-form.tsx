@@ -860,15 +860,16 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
 }
 
 const generateBallotMode = (election: ElectionMetadata, form: Purosesu): BallotMode => {
+  const maxValue = Math.pow(2, 16).toString()
   switch (election.type.name) {
     default:
     case ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION:
       return {
         maxCount: 1,
-        maxValue: election.questions[0].choices.length.toString(),
+        maxValue,
         minValue: '0',
         forceUniqueness: false,
-        costFromWeight: false,
+        costFromWeight: true,
         costExponent: 1,
         maxTotalCost: election.questions[0].choices.length.toString(),
         minTotalCost: '0',
@@ -876,10 +877,10 @@ const generateBallotMode = (election: ElectionMetadata, form: Purosesu): BallotM
     case ElectionResultsTypeNames.MULTIPLE_CHOICE:
       return {
         maxCount: election.questions[0].choices.length,
-        maxValue: '1',
+        maxValue,
         minValue: '0',
         forceUniqueness: false,
-        costFromWeight: false,
+        costFromWeight: true,
         costExponent: 1,
         maxTotalCost: form.multipleChoiceMax,
         minTotalCost: form.multipleChoiceMin,
@@ -890,7 +891,7 @@ const generateBallotMode = (election: ElectionMetadata, form: Purosesu): BallotM
         maxValue: (Math.floor(Math.sqrt(Number(form.quadraticCredits))) + 1).toString(),
         minValue: '0',
         forceUniqueness: false,
-        costFromWeight: false,
+        costFromWeight: true,
         costExponent: 2,
         maxTotalCost: form.quadraticCredits,
         minTotalCost: '0',
