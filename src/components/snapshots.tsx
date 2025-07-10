@@ -85,7 +85,10 @@ export function Snapshots({ snapshots, isLoading, isError, selectedCensusRoot, o
 
                         return (
                           <SelectItem key={queryName} value={latestSnapshot.censusRoot}>
-                            {latestSnapshot.displayName}
+                            <div className='flex flex-row items-center gap-2'>
+                              <img width='20px' src={latestSnapshot.displayAvatar} />{' '}
+                              <span>{latestSnapshot.displayName}</span>
+                            </div>
                           </SelectItem>
                         )
                       })}

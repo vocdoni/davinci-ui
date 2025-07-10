@@ -9,6 +9,7 @@ export type Snapshot = {
   participantCount: number
   minBalance: number
   displayName: string
+  displayAvatar: string
   queryName: string
   createdAt: string // ISO date string
 }

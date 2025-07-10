@@ -615,7 +615,7 @@ export function CreateVoteForm() {
                       className='border-davinci-callout-border'
                     />
                     <Label htmlFor='ethereum-wallets' className='text-davinci-black-alt'>
-                      Ethereum Wallets
+                      Prebuilt censuses
                     </Label>
                   </div>
                   {formData.censusType === 'ethereum-wallets' && (
