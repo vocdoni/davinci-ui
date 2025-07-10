@@ -47,6 +47,7 @@
     "@reown/appkit-adapter-ethers": "^1.7.13",
     "@tanstack/react-query": "^5.81.2",
     "@uidotdev/usehooks": "^2.4.1",
+    "@vocdoni/davinci-contracts": "0.0.14",
     "@vocdoni/davinci-sdk": "github:vocdoni/davinci-sdk#f/ts-bundling",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -85,5 +86,8 @@
     "vite": "^5.4.10",
     "vite-tsconfig-paths": "^5.1.2"
   },
-  "packageManager": "pnpm@10.12.1"
+  "packageManager": "pnpm@10.12.1",
+  "resolutions": {
+    "@vocdoni/davinci-contracts": "0.0.14"
+  }
 }

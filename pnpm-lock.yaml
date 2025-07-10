@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@vocdoni/davinci-contracts': 0.0.14
+
 importers:
 
   .:
@@ -119,6 +122,9 @@ importers:
       '@uidotdev/usehooks':
         specifier: ^2.4.1
         version: 2.4.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@vocdoni/davinci-contracts':
+        specifier: 0.0.14
+        version: 0.0.14
       '@vocdoni/davinci-sdk':
         specifier: github:vocdoni/davinci-sdk#f/ts-bundling
         version: https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/d8376a152a21fc878e5c6d0714ee12243b921e60
@@ -1771,8 +1777,8 @@ packages:
     peerDependencies:
       vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0-beta.0
 
-  '@vocdoni/davinci-contracts@0.0.12':
-    resolution: {integrity: sha512-NB060CKjgaqTdtx5AaFs8+3WG/GgpGXhM+wpC679XwPI65t9BOhI+eQAbtne2TKWYYyU4fPQ+cIXR6KvKAp/mg==}
+  '@vocdoni/davinci-contracts@0.0.14':
+    resolution: {integrity: sha512-kfB7j/pqZWuqN1fOkmsjoBq6/om46SgO659dJp6NcLBsYoqhLQsX/Or3kgMIyZU8Fam8bZLes0R2W7RZnuND8w==}
 
   '@vocdoni/davinci-sdk@https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/d8376a152a21fc878e5c6d0714ee12243b921e60':
     resolution: {tarball: https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/d8376a152a21fc878e5c6d0714ee12243b921e60}
@@ -5221,12 +5227,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vocdoni/davinci-contracts@0.0.12': {}
+  '@vocdoni/davinci-contracts@0.0.14': {}
 
   '@vocdoni/davinci-sdk@https://codeload.github.com/vocdoni/davinci-sdk/tar.gz/d8376a152a21fc878e5c6d0714ee12243b921e60':
     dependencies:
       '@ethereumjs/common': 4.4.0
-      '@vocdoni/davinci-contracts': 0.0.12
+      '@vocdoni/davinci-contracts': 0.0.14
       axios: 1.10.0
       ethers: 6.14.3
       snarkjs: 0.7.5
