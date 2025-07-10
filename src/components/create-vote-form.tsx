@@ -1,9 +1,26 @@
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react'
 import {
+  deployedAddresses,
   ProcessRegistryService,
   ProcessStatus,
   SmartContractService,
-  deployedAddresses,
 } from '@vocdoni/davinci-sdk/contracts'
 import {
   ElectionResultsTypeNames,
@@ -14,7 +31,7 @@ import {
 } from '@vocdoni/davinci-sdk/core'
 import { createProcessSignatureMessage } from '@vocdoni/davinci-sdk/sequencer'
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
-import { CheckCircle, Clock, HelpCircle, Plus, Rocket, Users, X } from 'lucide-react'
+import { CheckCircle, Clock, GripVertical, HelpCircle, Plus, Rocket, Users, X } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '~components/ui/button'
@@ -57,6 +74,56 @@ type Purosesu = {
   durationUnit: DurationUnit
   customAddresses: string[]
   selectedCensusRoot?: string
+}
+
+// Sortable Choice Item Component
+interface SortableChoiceItemProps {
+  choice: Choice
+  index: number
+  onUpdate: (id: string, text: string) => void
+  onRemove: (id: string) => void
+  canRemove: boolean
+}
+
+function SortableChoiceItem({ choice, index, onUpdate, onRemove, canRemove }: SortableChoiceItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: choice.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} className='flex gap-2 items-center'>
+      <div
+        {...attributes}
+        {...listeners}
+        className='flex items-center justify-center w-8 h-8 cursor-grab active:cursor-grabbing text-davinci-black-alt/60 hover:text-davinci-black-alt hover:bg-davinci-soft-neutral/20 rounded border border-davinci-callout-border'
+      >
+        <GripVertical className='w-4 h-4' />
+      </div>
+      <div className='flex-1'>
+        <Input
+          placeholder={`Choice ${index + 1}`}
+          value={choice.text}
+          onChange={(e) => onUpdate(choice.id, e.target.value)}
+          className='border-davinci-callout-border'
+        />
+      </div>
+      {canRemove && (
+        <Button
+          type='button'
+          variant='outline'
+          size='icon'
+          onClick={() => onRemove(choice.id)}
+          className='border-davinci-callout-border hover:bg-davinci-soft-neutral/20'
+        >
+          <X className='w-4 h-4' />
+        </Button>
+      )}
+    </div>
+  )
 }
 
 export function CreateVoteForm() {
@@ -111,6 +178,30 @@ export function CreateVoteForm() {
       ...formData,
       choices: formData.choices.map((choice) => (choice.id === id ? { ...choice, text } : choice)),
     })
+  }
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  // Handle drag end
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = formData.choices.findIndex((choice) => choice.id === active.id)
+      const newIndex = formData.choices.findIndex((choice) => choice.id === over.id)
+
+      const newChoices = arrayMove(formData.choices, oldIndex, newIndex)
+      setFormData({
+        ...formData,
+        choices: newChoices,
+      })
+    }
   }
 
   const handleLaunch = async () => {
@@ -364,31 +455,25 @@ export function CreateVoteForm() {
                 </Button>
               </div>
 
-              <div className='space-y-3'>
-                {formData.choices.map((choice, index) => (
-                  <div key={choice.id} className='flex gap-2'>
-                    <div className='flex-1'>
-                      <Input
-                        placeholder={`Choice ${index + 1}`}
-                        value={choice.text}
-                        onChange={(e) => updateChoice(choice.id, e.target.value)}
-                        className='border-davinci-callout-border'
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext
+                  items={formData.choices.map((choice) => choice.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className='space-y-3'>
+                    {formData.choices.map((choice, index) => (
+                      <SortableChoiceItem
+                        key={choice.id}
+                        choice={choice}
+                        index={index}
+                        onUpdate={updateChoice}
+                        onRemove={removeChoice}
+                        canRemove={formData.choices.length > 2}
                       />
-                    </div>
-                    {formData.choices.length > 2 && (
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='icon'
-                        onClick={() => removeChoice(choice.id)}
-                        className='border-davinci-callout-border hover:bg-davinci-soft-neutral/20'
-                      >
-                        <X className='w-4 h-4' />
-                      </Button>
-                    )}
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
             </div>
 
             <Separator className='bg-davinci-callout-border' />
