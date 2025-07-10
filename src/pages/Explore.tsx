@@ -1,8 +1,10 @@
 import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk'
 import { BarChart2 } from 'lucide-react'
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { NewsletterCard } from '~components/newsletter-card'
 import { useProcessList, useProcessQuery } from '~hooks/use-process-query'
+import { useSortedProcesses, type ProcessSortData } from '~hooks/use-sorted-processes'
 import { Badge } from '~ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '~ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~ui/table'
@@ -20,8 +22,19 @@ const typesColors = {
   [ElectionResultsTypeNames.QUADRATIC]: 'yellow-200',
 } as Record<ElectionResultsTypeNames, string>
 
-function ProcessRow({ id }: { id: string }) {
+function ProcessRow({ id, onDataLoaded }: { id: string; onDataLoaded?: (id: string, data: ProcessSortData) => void }) {
   const { data, isLoading } = useProcessQuery(id)
+
+  useEffect(() => {
+    if (data && onDataLoaded) {
+      onDataLoaded(id, {
+        createdAt: data.process.startTime ? new Date(data.process.startTime).getTime() : Date.now(),
+        voteCount: Number(data.process.voteCount) || 0,
+        title: data.meta?.title.default || 'Untitled Process',
+        organizationId: data.process.organizationId,
+      })
+    }
+  }, [data, id, onDataLoaded])
 
   if (isLoading) {
     return (
@@ -73,6 +86,7 @@ function ProcessRow({ id }: { id: string }) {
 
 export default function ExplorePage() {
   const { data: processIds, isLoading } = useProcessList()
+  const { sortedIds, registerProcessData } = useSortedProcesses(processIds || [], 'createdAt')
 
   return (
     <div className='px-4'>
@@ -115,7 +129,9 @@ export default function ExplorePage() {
                                 </TableCell>
                               </TableRow>
                             )}
-                            {processIds?.map((id) => <ProcessRow key={id} id={id} />)}
+                            {sortedIds.map((id) => (
+                              <ProcessRow key={id} id={id} onDataLoaded={registerProcessData} />
+                            ))}
                           </TableBody>
                         </Table>
                       </div>
