@@ -13,8 +13,8 @@ import {
   type ProtocolVersion,
 } from '@vocdoni/davinci-sdk/core'
 import { createProcessSignatureMessage } from '@vocdoni/davinci-sdk/sequencer'
-import { BrowserProvider } from 'ethers'
-import { Calendar, CheckCircle, Clock, HelpCircle, Plus, Rocket, Users, Wallet, X } from 'lucide-react'
+import { BrowserProvider, type Eip1193Provider } from 'ethers'
+import { CheckCircle, Clock, HelpCircle, Plus, Rocket, Users, X } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '~components/ui/button'
@@ -28,8 +28,8 @@ import { Textarea } from '~components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~components/ui/tooltip'
 import { useSnapshots } from '~hooks/use-snapshots'
 import { CustomAddressesManager } from './census-addresses'
+import { Snapshots } from './snapshots'
 import ConnectWalletButton from './ui/connect-wallet-button'
-import { IndeterminateProgress } from './ui/indeterminate-progress'
 import { Link } from './ui/link'
 import { useVocdoniApi } from './vocdoni-api-context'
 
@@ -56,6 +56,7 @@ type Purosesu = {
   duration: string
   durationUnit: DurationUnit
   customAddresses: string[]
+  selectedCensusRoot?: string
 }
 
 export function CreateVoteForm() {
@@ -81,7 +82,7 @@ export function CreateVoteForm() {
     customAddresses: address ? [address] : [],
   })
   const api = useVocdoniApi()
-  const { data: snapshot, isLoading: isLoadingSnapshot, isError: isSnapshotError } = useSnapshots()
+  const { data: snapshots, isLoading: isLoadingSnapshot, isError: isSnapshotError } = useSnapshots()
 
   const addChoice = () => {
     if (formData.choices.length < 8) {
@@ -126,13 +127,22 @@ export function CreateVoteForm() {
       }
       switch (formData.censusType) {
         case 'ethereum-wallets': {
-          if (!snapshot) {
+          if (!snapshots || snapshots.length === 0) {
             throw new Error('No snapshot data available')
           }
 
-          census.censusSize = snapshot.participantCount
-          census.censusRoot = snapshot.censusRoot
-          census.censusURI = `${import.meta.env.BIGQUERY_URL}/censuses/${census.censusRoot}`
+          // Find the selected snapshot by censusRoot, or use the first one if none selected
+          const selectedSnapshot = formData.selectedCensusRoot
+            ? snapshots.find((s) => s.censusRoot === formData.selectedCensusRoot)
+            : snapshots[0]
+
+          if (!selectedSnapshot) {
+            throw new Error('Selected snapshot not found')
+          }
+
+          census.censusSize = selectedSnapshot.participantCount
+          census.censusRoot = selectedSnapshot.censusRoot
+          census.censusURI = `${import.meta.env.BIGQUERY_URL}/censuses/${selectedSnapshot.censusRoot}`
           break
         }
         default: {
@@ -191,7 +201,7 @@ export function CreateVoteForm() {
       const metadataUrl = api.getMetadataUrl(metadataHash)
       console.info('ℹ️ Metadata URL:', metadataUrl)
 
-      const provider = new BrowserProvider(walletProvider)
+      const provider = new BrowserProvider(walletProvider as Eip1193Provider)
       const signer = await provider.getSigner()
       const registry = new ProcessRegistryService(deployedAddresses.processRegistry.sepolia, signer)
       const pid = await registry.getNextProcessId(await signer.getAddress())
@@ -279,17 +289,6 @@ export function CreateVoteForm() {
       formData.censusType !== 'custom-addresses' || formData.customAddresses.filter(Boolean).length > 0
 
     return hasQuestion && hasValidChoices && hasVotingMethod && hasCensusType && hasDuration && hasAddresses
-  }
-
-  const formatSnapshotDate = (date: string) => {
-    return new Date(date).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZoneName: 'short',
-    })
   }
 
   // Show success state
@@ -620,41 +619,15 @@ export function CreateVoteForm() {
                     </Label>
                   </div>
                   {formData.censusType === 'ethereum-wallets' && (
-                    <div
-                      className={`${isSnapshotError || !snapshot ? 'bg-red-200' : 'bg-davinci-digital-highlight'} ml-6 p-4 rounded-lg border border-davinci-callout-border`}
-                    >
-                      <div className='flex items-start gap-3'>
-                        <Wallet className='w-5 h-5 text-davinci-black-alt mt-0.5' />
-                        <div className='space-y-2'>
-                          <p className='text-sm font-medium text-davinci-black-alt'>Ethereum Wallet Requirements</p>
-                          <p className='text-sm text-davinci-black-alt/80'>
-                            Only wallets with some <strong>activity in the last 90 days</strong> can participate in this
-                            vote.
-                          </p>
-                          {isLoadingSnapshot ? (
-                            <div className='space-y-2'>
-                              <IndeterminateProgress className='h-1' />
-                              <div className='flex items-center gap-2 text-xs text-davinci-black-alt/70'>
-                                <Calendar className='w-3 h-3' />
-                                <span>Loading latest snapshot...</span>
-                              </div>
-                            </div>
-                          ) : snapshot ? (
-                            <div className='flex items-center gap-2 text-xs text-davinci-black-alt/70'>
-                              <Calendar className='w-3 h-3' />
-                              <span>Snapshot taken: {formatSnapshotDate(snapshot.snapshotDate)}</span>
-                            </div>
-                          ) : (
-                            <div className='flex items-center gap-2 text-xs text-davinci-black-alt/70'>
-                              <Calendar className='w-3 h-3' />
-                              <span className='text-red-800 font-bold'>
-                                {isSnapshotError ? 'Error loading snapshot data' : 'No snapshot data available'}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                    <Snapshots
+                      snapshots={snapshots || []}
+                      isLoading={isLoadingSnapshot}
+                      isError={isSnapshotError}
+                      selectedCensusRoot={formData.selectedCensusRoot}
+                      onSnapshotSelect={(censusRoot) =>
+                        setFormData((prev) => ({ ...prev, selectedCensusRoot: censusRoot }))
+                      }
+                    />
                   )}
                 </div>
               </RadioGroup>

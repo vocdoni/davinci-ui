@@ -8,6 +8,7 @@ export type Snapshot = {
   censusRoot: string
   participantCount: number
   minBalance: number
+  displayName: string
   queryName: string
   createdAt: string // ISO date string
 }
@@ -26,7 +27,7 @@ export function useSnapshots() {
     queryKey: ['snapshots'],
     queryFn: async () => {
       const response = await upfetch<SnapshotsResponse>(`${import.meta.env.BIGQUERY_URL}/snapshots`)
-      return response.snapshots[0] || null
+      return response.snapshots || []
     },
   })
 }
