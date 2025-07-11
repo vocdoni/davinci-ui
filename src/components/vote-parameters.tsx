@@ -26,7 +26,6 @@ interface VoteParametersProps {
 }
 
 export function VoteParameters({ voteData, processData }: VoteParametersProps) {
-  const [currentTotalVotes, setCurrentTotalVotes] = useState(processData.voteCount)
   const [voteEnded, setVoteEnded] = useState(false)
 
   // Update vote count and status
@@ -44,17 +43,6 @@ export function VoteParameters({ voteData, processData }: VoteParametersProps) {
 
     return () => clearInterval(interval)
   }, [processData.status])
-
-  // Simulate vote count increases while voting is active
-  useEffect(() => {
-    if (!voteEnded && processData.isAcceptingVotes) {
-      const interval = setInterval(() => {
-        setCurrentTotalVotes((prev) => prev + Math.floor(Math.random() * 3))
-      }, 5000) // Update every 5 seconds
-
-      return () => clearInterval(interval)
-    }
-  }, [voteEnded, processData.isAcceptingVotes])
 
   const formatDate = (date: Date) => {
     return date.toLocaleString('en-US', {
