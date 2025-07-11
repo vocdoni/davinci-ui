@@ -152,10 +152,10 @@ export function VoteDisplay() {
 
       const fieldValues =
         meta.type.name === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION
-          ? getBinaryArray([selectedChoice])
+          ? getBinaryArray([selectedChoice], censusProof.weight)
           : meta.type.name === ElectionResultsTypeNames.QUADRATIC
             ? padTo(Object.values(quadraticVotes))
-            : getBinaryArray(selectedChoices)
+            : getBinaryArray(selectedChoices, censusProof.weight)
 
       const inputs: BallotProofInputs = {
         address: address,
@@ -931,12 +931,12 @@ export const WalletEligibilityStatus = () => {
   )
 }
 
-export function getBinaryArray(positions: string[]): string[] {
+export function getBinaryArray(positions: string[], value = '1'): string[] {
   const result = Array(8).fill('0')
   positions.forEach((posStr) => {
     const pos = parseInt(posStr, 10)
     if (!isNaN(pos) && pos >= 0 && pos < 8) {
-      result[pos] = '1'
+      result[pos] = value
     }
   })
   return result
