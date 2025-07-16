@@ -9,6 +9,7 @@
       "~pages/*": ["pages/*"],
       "~router": ["router.tsx"],
       "~ui/*": ["components/ui/*"],
+      "~utils/*": ["utils/*"],
       "~src/*": ["./*"]
     }
   }

@@ -1,0 +1,30 @@
+{
+  "accountAssociation": {
+    "header": "PLACEHOLDER_HEADER",
+    "payload": "PLACEHOLDER_PAYLOAD",
+    "signature": "PLACEHOLDER_SIGNATURE"
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "DAVINCI",
+    "iconUrl": "https://farcapp.netlify.app/icons/ic_launcher_google_play.png",
+    "homeUrl": "https://farcapp.netlify.app",
+    "imageUrl": "https://farcapp.netlify.app/icons/ic_launcher_google_play.png",
+    "buttonTitle": "Create Vote",
+    "splashImageUrl": "https://farcapp.netlify.app/icons/ic_launcher_google_play.png",
+    "splashBackgroundColor": "#F5F1E8",
+    "description": "Decentralized voting platform powered by DAVINCI protocol",
+    "subtitle": "Anonymous, verifiable & anti-coercion voting",
+    "primaryCategory": "governance",
+    "tags": [
+      "voting",
+      "governance",
+      "decentralized",
+      "anonymous",
+      "verifiable"
+    ],
+    "requiredChains": [
+      "eip155:11155111"
+    ]
+  }
+}

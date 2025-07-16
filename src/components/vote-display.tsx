@@ -1,4 +1,3 @@
-import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react'
 import {
   BallotProof,
   CircomProof,
@@ -25,9 +24,11 @@ import { VoteProgressTracker } from '~components/vote-progress-tracker'
 import { VotingModal } from '~components/voting-modal'
 import { usePersistedVote } from '~hooks/use-persisted-vote'
 import { useProcessQuery } from '~hooks/use-process-query'
+import { useUnifiedProvider } from '~hooks/use-unified-provider'
+import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 import { truncateAddress } from '~lib/web3-utils'
 import { useProcess } from './process-context'
-import ConnectWalletButton from './ui/connect-wallet-button'
+import ConnectWalletButtonMiniApp from './ui/connect-wallet-button-miniapp'
 import { Spinner } from './ui/spinner'
 import VotingTimeRemaining from './voting-time-remaining'
 
@@ -62,8 +63,8 @@ interface QuadraticVote {
 }
 
 export function VoteDisplay() {
-  const { address, isConnected } = useAppKitAccount()
-  const { walletProvider } = useAppKitProvider('eip155')
+  const { address, isConnected } = useUnifiedWallet()
+  const { getProvider } = useUnifiedProvider()
   const {
     censusProof,
     isInCensus,
@@ -120,6 +121,7 @@ export function VoteDisplay() {
       throw new Error('Wallet not connected')
     }
 
+    const walletProvider = await getProvider()
     if (!walletProvider) {
       throw new Error('Wallet provider not available')
     }
@@ -180,7 +182,7 @@ export function VoteDisplay() {
       console.info('ℹ️ CircomProof SDK initialized', pg)
 
       const { proof, publicSignals } = await pg.generate(out.circomInputs)
-      console.log('✅ Proof generated:', proof)
+      console.info('✅ Proof generated:', proof)
       const ok = await pg.verify(proof, publicSignals)
 
       if (!ok) throw new Error(`Proof verification failed`)
@@ -190,6 +192,7 @@ export function VoteDisplay() {
         ciphertexts: out.ballot.ciphertexts,
       }
 
+      // Use the unified provider (automatically handles Farcaster vs regular wallet)
       const provider = new BrowserProvider(walletProvider as Eip1193Provider)
       const signer = await provider.getSigner()
       console.info('ℹ️ census proof:', censusProof)
@@ -774,7 +777,7 @@ export function VoteDisplay() {
             {/* Dynamic Action Button */}
             {!isConnected ? (
               <div className='space-y-4'>
-                <ConnectWalletButton className='w-full' />
+                <ConnectWalletButtonMiniApp className='w-full' />
                 <div className='bg-davinci-digital-highlight p-3 rounded-lg border border-davinci-callout-border'>
                   <p className='text-xs text-davinci-black-alt/80 text-center'>
                     Connect your wallet to verify eligibility and cast your vote. Your selections will be saved.
@@ -890,7 +893,7 @@ const hexStringToUint8Array = (hex: string) =>
   )
 
 export const WalletEligibilityStatus = () => {
-  const { address, isConnected } = useAppKitAccount()
+  const { address, isConnected } = useUnifiedWallet()
 
   const {
     isInCensus,

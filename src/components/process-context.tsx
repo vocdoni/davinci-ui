@@ -1,9 +1,9 @@
 // ProcessContext.tsx
-import { useAppKitAccount } from '@reown/appkit/react'
 import { useQuery } from '@tanstack/react-query'
 import type { CensusProof, ElectionMetadata, GetProcessResponse } from '@vocdoni/davinci-sdk'
 import { createContext, useContext, useMemo, type FC, type PropsWithChildren } from 'react'
 import { up } from 'up-fetch'
+import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 import { useVocdoniApi } from './vocdoni-api-context'
 
 type Process = {
@@ -34,7 +34,7 @@ const upfetch = up(fetch)
 
 export const ProcessProvider: FC<ProcessProviderProps> = ({ children, process }) => {
   const api = useVocdoniApi()
-  const { address, isConnected } = useAppKitAccount()
+  const { address } = useUnifiedWallet()
   const censusRoot = process.process.census.censusRoot
 
   const {
