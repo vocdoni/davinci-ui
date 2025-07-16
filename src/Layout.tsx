@@ -1,7 +1,7 @@
 import { sepolia } from '@reown/appkit/networks'
 import { useAppKitNetwork } from '@reown/appkit/react'
 import { useEffect } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, ScrollRestoration } from 'react-router-dom'
 import { FloatingHeader } from '~components/floating-header'
 import { Footer } from '~components/footer'
 
@@ -25,6 +25,7 @@ export function Layout() {
   return (
     <div className='min-h-screen bg-davinci-paper-base/30 flex flex-col font-work-sans'>
       <FloatingHeader />
+      <ScrollRestoration />
       <main className='flex-1 pt-32 pb-16'>
         <Outlet />
       </main>

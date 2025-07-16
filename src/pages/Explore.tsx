@@ -30,7 +30,7 @@ function ProcessRow({ id, onDataLoaded }: { id: string; onDataLoaded?: (id: stri
       onDataLoaded(id, {
         createdAt: data.process.startTime ? new Date(data.process.startTime).getTime() : Date.now(),
         voteCount: Number(data.process.voteCount) || 0,
-        title: data.meta?.title.default || 'Untitled Process',
+        title: data.meta?.title?.default || 'Untitled Process',
         organizationId: data.process.organizationId,
       })
     }
@@ -64,7 +64,7 @@ function ProcessRow({ id, onDataLoaded }: { id: string; onDataLoaded?: (id: stri
     <TableRow key={id}>
       <TableCell className='font-medium text-davinci-black-alt'>
         <Link to={`/vote/${id}`} className='flex items-center gap-2 hover:underline'>
-          <span className='max-w-[200px] truncate'>{data.meta?.title.default || 'Untitled Process'}</span>
+          <span className='max-w-[200px] truncate'>{data.meta?.title?.default || 'Untitled Process'}</span>
         </Link>
       </TableCell>
       <TableCell className='text-davinci-black-alt/80'>
@@ -74,9 +74,9 @@ function ProcessRow({ id, onDataLoaded }: { id: string; onDataLoaded?: (id: stri
       </TableCell>
       <TableCell className='text-center'>
         <Badge
-          className={`bg-${typesColors[data.meta?.type.name] || 'davinci-soft-neutral'} text-davinci-black-alt whitespace-nowrap`}
+          className={`bg-${typesColors[data.meta?.type?.name] || 'davinci-soft-neutral'} text-davinci-black-alt whitespace-nowrap`}
         >
-          {typesNames[data.meta?.type.name] || 'Unknown'}
+          {typesNames[data.meta?.type?.name] || 'Unknown'}
         </Badge>
       </TableCell>
       <TableCell className='text-right text-davinci-black-alt'>{data.process.voteCount ?? 0}</TableCell>
