@@ -63,7 +63,17 @@ export function VoteParameters({ voteData, processData }: VoteParametersProps) {
   }
 
   const getCensusTypeLabel = () => {
-    return 'Ethereum Wallets'
+    const isRemote = processData.census.censusURI.startsWith('http')
+    switch (isRemote) {
+      case true: {
+        if (voteData?.meta?.census) {
+          return voteData.meta.census.name
+        }
+        return 'Prebuilt census'
+      }
+      default:
+        return 'Ethereum Wallets'
+    }
   }
 
   return (
