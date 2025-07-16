@@ -46,7 +46,7 @@ import { Separator } from '~components/ui/separator'
 import { Textarea } from '~components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~components/ui/tooltip'
 import { useMiniApp } from '~contexts/MiniAppContext'
-import { useSnapshots } from '~hooks/use-snapshots'
+import { useSnapshots, type Snapshot } from '~hooks/use-snapshots'
 import { useUnifiedProvider } from '~hooks/use-unified-provider'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 import { CustomAddressesManager } from './census-addresses'
@@ -252,6 +252,14 @@ export function CreateVoteForm() {
     console.info('ℹ️ form data:', data)
 
     try {
+      let selectedSnapshot: Snapshot | undefined
+      if (snapshots?.length) {
+        // Find the selected snapshot by censusRoot, or use the first one if none selected
+        selectedSnapshot = formData.selectedCensusRoot
+          ? snapshots.find((s) => s.censusRoot === formData.selectedCensusRoot)
+          : snapshots[0]
+      }
+
       const census = {
         censusURI: '',
         censusRoot: '',
@@ -262,11 +270,6 @@ export function CreateVoteForm() {
           if (!snapshots || snapshots.length === 0) {
             throw new Error('No snapshot data available')
           }
-
-          // Find the selected snapshot by censusRoot, or use the first one if none selected
-          const selectedSnapshot = data.selectedCensusRoot
-            ? snapshots.find((s) => s.censusRoot === data.selectedCensusRoot)
-            : snapshots[0]
 
           if (!selectedSnapshot) {
             throw new Error('Selected snapshot not found')
@@ -323,12 +326,23 @@ export function CreateVoteForm() {
           },
         ],
         version: '1.2' as ProtocolVersion,
-        meta: {},
         type: {
           name: data.votingMethod as ElectionResultsTypeNames,
           properties: {} as Record<string, never>,
         } as ElectionResultsType,
       }
+
+      if (formData.censusType === 'ethereum-wallets' && selectedSnapshot) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(metadata.meta as any) = {
+          census: {
+            type: 'bigquery',
+            name: selectedSnapshot.displayName,
+            query: selectedSnapshot.queryName,
+          },
+        }
+      }
+
       const metadataHash = await api.pushMetadata(metadata)
       const metadataUrl = api.getMetadataUrl(metadataHash)
       console.info('ℹ️ Metadata URL:', metadataUrl)
