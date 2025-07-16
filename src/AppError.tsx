@@ -1,6 +1,7 @@
 import { AlertCircle } from 'lucide-react'
 import { isRouteErrorResponse, useNavigate, useRouteError } from 'react-router-dom'
 import { Button } from '~components/ui/button'
+import { useNetworkStatus } from '~hooks/use-network-status'
 
 type CodedError = Error & { code?: number }
 
@@ -10,6 +11,7 @@ const isCodedError = (err: unknown): err is CodedError =>
 const AppError = () => {
   const error = useRouteError()
   const navigate = useNavigate()
+  const isOnline = useNetworkStatus()
 
   const is404 =
     !error ||
@@ -30,6 +32,10 @@ const AppError = () => {
           ? error.statusText
           : null
 
+  const handleRetry = () => {
+    window.location.reload()
+  }
+
   return (
     <div className='max-w-2xl mx-auto mt-20 bg-card dark:bg-zinc-900 rounded-xl border p-10 text-center'>
       <div className='mx-auto mb-6 w-20 h-20 flex items-center justify-center rounded-full bg-muted'>
@@ -37,15 +43,23 @@ const AppError = () => {
       </div>
 
       <h1 className='text-2xl font-semibold mb-2 font-averia'>
-        {isProcessNotFound ? 'Voting Process Not Found' : is404 ? 'Page Not Found' : 'An Error Occurred'}
+        {!isOnline
+          ? 'No Internet Connection'
+          : isProcessNotFound
+            ? 'Voting Process Not Found'
+            : is404
+              ? 'Page Not Found'
+              : 'An Error Occurred'}
       </h1>
 
       <p className='text-muted-foreground mb-6'>
-        {isProcessNotFound
-          ? "The voting process you're looking for could not be located. This might happen if the link is incorrect or there is an error."
-          : is404
-            ? 'The page you are looking for does not exist.'
-            : 'An unexpected error occurred.'}
+        {!isOnline
+          ? 'Please check your internet connection and try again.'
+          : isProcessNotFound
+            ? "The voting process you're looking for could not be located. This might happen if the link is incorrect or there is an error."
+            : is404
+              ? 'The page you are looking for does not exist.'
+              : 'An unexpected error occurred.'}
       </p>
 
       {errorMessage && !is404 && (
@@ -66,6 +80,11 @@ const AppError = () => {
       )}
 
       <div className='flex justify-center gap-3'>
+        {!isOnline && (
+          <Button onClick={handleRetry} className='gap-2'>
+            Try Again
+          </Button>
+        )}
         <Button variant='outline' onClick={() => window.history.back()}>
           Go Back
         </Button>

@@ -9,6 +9,7 @@
 
 # production
 /dist
+/dev-dist
 
 # debug
 npm-debug.log*

@@ -1,5 +1,6 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
+import { VitePWA } from 'vite-plugin-pwa'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 // https://vitejs.dev/config/
@@ -8,7 +9,101 @@ const viteconfig = defineConfig(({ mode }) => {
   process.env = { ...process.env, ...loadEnv(mode, process.cwd(), '') }
 
   return {
-    plugins: [react(), tsconfigPaths()],
+    plugins: [
+      react(),
+      tsconfigPaths(),
+      VitePWA({
+        registerType: 'autoUpdate',
+        devOptions: {
+          enabled: true,
+        },
+        includeAssets: ['favicon.ico', 'light/apple-touch-icon.png', 'dark/apple-touch-icon.png'],
+        manifest: {
+          name: 'DAVINCI Voting App',
+          short_name: 'DAVINCI',
+          description: 'Decentralized voting platform powered by DAVINCI protocol',
+          theme_color: '#F5F1E8',
+          background_color: '#F5F1E8',
+          display: 'standalone',
+          orientation: 'portrait-primary',
+          start_url: '/',
+          scope: '/',
+          icons: [
+            {
+              src: 'icons/ic_launcher_mdpi.png',
+              sizes: '48x48',
+              type: 'image/png',
+            },
+            {
+              src: 'icons/ic_launcher_hdpi.png',
+              sizes: '72x72',
+              type: 'image/png',
+            },
+            {
+              src: 'icons/ic_launcher_xhdpi.png',
+              sizes: '96x96',
+              type: 'image/png',
+            },
+            {
+              src: 'icons/ic_launcher_xxhdpi.png',
+              sizes: '144x144',
+              type: 'image/png',
+            },
+            {
+              src: 'icons/ic_launcher_xxxhdpi.png',
+              sizes: '192x192',
+              type: 'image/png',
+            },
+            {
+              src: 'icons/ic_launcher_google_play.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'any',
+            },
+            {
+              src: 'icons/ic_launcher_google_play.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable',
+            },
+          ],
+        },
+        workbox: {
+          clientsClaim: true,
+          skipWaiting: true,
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/sequencer1\.davinci\.vote\/.*/,
+              handler: 'NetworkOnly',
+            },
+            {
+              urlPattern: /^https:\/\/c3\.davinci\.vote\/.*/,
+              handler: 'NetworkOnly',
+            },
+            {
+              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-stylesheets',
+              },
+            },
+            {
+              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-webfonts',
+                expiration: {
+                  maxEntries: 30,
+                  maxAgeSeconds: 60 * 60 * 24 * 365,
+                },
+              },
+            },
+          ],
+        },
+      }),
+    ],
     define: {
       'import.meta.env.SEQUENCER_URL': JSON.stringify(process.env.SEQUENCER_URL || 'https://sequencer1.davinci.vote'),
       'import.meta.env.BIGQUERY_URL': JSON.stringify(process.env.BIGQUERY_URL || 'https://c3.davinci.vote'),
