@@ -15,7 +15,6 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react'
 import {
   deployedAddresses,
   ProcessRegistryService,
@@ -44,9 +43,11 @@ import { Separator } from '~components/ui/separator'
 import { Textarea } from '~components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~components/ui/tooltip'
 import { useSnapshots } from '~hooks/use-snapshots'
+import { useUnifiedProvider } from '~hooks/use-unified-provider'
+import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 import { CustomAddressesManager } from './census-addresses'
 import { Snapshots } from './snapshots'
-import ConnectWalletButton from './ui/connect-wallet-button'
+import ConnectWalletButtonMiniApp from './ui/connect-wallet-button-miniapp'
 import { Link } from './ui/link'
 import { useVocdoniApi } from './vocdoni-api-context'
 
@@ -130,8 +131,8 @@ export function CreateVoteForm() {
   const navigate = useNavigate()
   const [isLaunching, setIsLaunching] = useState(false)
   const [launchSuccess, setLaunchSuccess] = useState(false)
-  const { address, isConnected } = useAppKitAccount()
-  const { walletProvider } = useAppKitProvider('eip155')
+  const { address, isConnected } = useUnifiedWallet()
+  const { getProvider } = useUnifiedProvider()
   const [error, setError] = useState<Error | null>(null)
   const [formData, setFormData] = useState<Purosesu>({
     question: '',
@@ -205,7 +206,7 @@ export function CreateVoteForm() {
   }
 
   const handleLaunch = async () => {
-    if (!isFormValid() || !isConnected || !walletProvider) return
+    if (!isFormValid() || !isConnected) return
 
     setIsLaunching(true)
     setError(null)
@@ -292,6 +293,8 @@ export function CreateVoteForm() {
       const metadataUrl = api.getMetadataUrl(metadataHash)
       console.info('ℹ️ Metadata URL:', metadataUrl)
 
+      // Use the unified provider (automatically handles Farcaster vs regular wallet)
+      const walletProvider = await getProvider()
       const provider = new BrowserProvider(walletProvider as Eip1193Provider)
       const signer = await provider.getSigner()
       const registry = new ProcessRegistryService(deployedAddresses.processRegistry.sepolia, signer)
@@ -819,9 +822,10 @@ type LaunchVoteButtonProps = {
 }
 
 const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVoteButtonProps) => {
-  const { isConnected } = useAppKitAccount()
+  const { isConnected } = useUnifiedWallet()
+
   if (!isConnected) {
-    return <ConnectWalletButton />
+    return <ConnectWalletButtonMiniApp />
   }
 
   return (

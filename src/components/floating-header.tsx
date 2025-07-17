@@ -4,7 +4,7 @@ import { Link, useMatch, useNavigate } from 'react-router-dom'
 import { Button } from '~components/ui/button'
 import { Card } from '~components/ui/card'
 import { Sheet, SheetContent, SheetTrigger } from '~components/ui/sheet'
-import ConnectWalletButton from './ui/connect-wallet-button'
+import ConnectWalletButtonMiniApp from './ui/connect-wallet-button-miniapp'
 
 interface NavigationItem {
   value: string
@@ -139,7 +139,7 @@ export function FloatingHeader() {
           </div>
 
           <div className='w-40 flex justify-end'>
-            <ConnectWalletButton />
+            <ConnectWalletButtonMiniApp />
           </div>
         </div>
       </Card>
