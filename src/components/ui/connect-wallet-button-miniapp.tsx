@@ -1,5 +1,5 @@
 import { useAppKit, useAppKitAccount, useAppKitState, useDisconnect } from '@reown/appkit/react'
-import { Loader2, User, Wallet } from 'lucide-react'
+import { Loader2, Shield, User, Wallet } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useMiniApp } from '~contexts/MiniAppContext'
 import { truncateAddress } from '~lib/web3-utils'
@@ -15,7 +15,13 @@ const ConnectWalletButtonMiniApp = (props: ButtonProps) => {
   const [farcasterAddress, setFarcasterAddress] = useState<string | null>(null)
 
   // Use the MiniApp context
-  const { isMiniApp, user: farcasterUser, connectFarcasterWallet, isFarcasterWalletConnected } = useMiniApp()
+  const {
+    isMiniApp,
+    user: farcasterUser,
+    connectFarcasterWallet,
+    isFarcasterWalletConnected,
+    isExternalWallet,
+  } = useMiniApp()
 
   // Check Farcaster wallet connection status
   useEffect(() => {
@@ -49,7 +55,7 @@ const ConnectWalletButtonMiniApp = (props: ButtonProps) => {
   }, [isModalOpen, isConnected, farcasterConnected])
 
   const handleConnectWallet = async () => {
-    // If already connected to either wallet, disconnect
+    // If already connected, disconnect
     if (isConnected || farcasterConnected) {
       if (farcasterConnected) {
         // For Farcaster wallet, we just reset the state
@@ -64,7 +70,7 @@ const ConnectWalletButtonMiniApp = (props: ButtonProps) => {
 
     setIsConnecting(true)
 
-    // If in mini app, try Farcaster wallet first
+    // If in mini app, use Farcaster wallet (handles both embedded and external)
     if (isMiniApp) {
       try {
         const result = await connectFarcasterWallet()
@@ -75,12 +81,18 @@ const ConnectWalletButtonMiniApp = (props: ButtonProps) => {
           return
         }
       } catch (error) {
-        console.warn('Farcaster wallet connection failed, falling back to regular wallet:', error)
+        console.error('Farcaster wallet connection failed:', error)
+        setIsConnecting(false)
+        return
       }
     }
 
-    // Fall back to regular wallet connection
-    open()
+    // Use AppKit when not in miniapp
+    if (!isMiniApp) {
+      open()
+    } else {
+      setIsConnecting(false)
+    }
   }
 
   const loading = isConnecting && !isConnected && !farcasterConnected
@@ -90,45 +102,62 @@ const ConnectWalletButtonMiniApp = (props: ButtonProps) => {
   // Show Farcaster user info if available and connected via Farcaster
   const showFarcasterInfo = farcasterConnected && farcasterUser
 
+  // Determine button text based on connection state
+  const getButtonText = () => {
+    if (connected && displayAddress) {
+      if (farcasterConnected) {
+        // In miniapp, all providers are limited proxies, but we can still show the wallet type
+        const icon =
+          isMiniApp && isExternalWallet ? <Shield className='w-4 h-4 mr-2' /> : <User className='w-4 h-4 mr-2' />
+        const walletType = isMiniApp && isExternalWallet ? 'External wallet (limited proxy)' : 'Embedded wallet'
+
+        return {
+          icon,
+          text: showFarcasterInfo
+            ? farcasterUser.displayName || `@${farcasterUser.username}` || truncateAddress(displayAddress)
+            : truncateAddress(displayAddress),
+          shortText: farcasterUser.username ? `@${farcasterUser.username}` : truncateAddress(displayAddress, 4, 4),
+          tooltip: `Connected with ${walletType} via Farcaster. Limited to signing operations only.`,
+        }
+      } else if (isConnected) {
+        return {
+          icon: <Wallet className='w-4 h-4 mr-2' />,
+          text: truncateAddress(displayAddress),
+          shortText: truncateAddress(displayAddress, 4, 4),
+          tooltip: 'Connected with external wallet. Click to disconnect.',
+        }
+      }
+    }
+
+    if (loading) {
+      return {
+        icon: <Loader2 className='w-4 h-4 mr-2 animate-spin' />,
+        text: 'Connecting...',
+        shortText: '...',
+        tooltip: 'Connecting to wallet...',
+      }
+    }
+
+    return {
+      icon: <Wallet className='w-4 h-4 mr-2' />,
+      text: isMiniApp ? 'Connect' : 'Connect Wallet',
+      shortText: 'Connect',
+      tooltip: 'Connect your wallet to continue',
+    }
+  }
+
+  const buttonContent = getButtonText()
+
   return (
     <Button
       onClick={handleConnectWallet}
       {...props}
       className={`bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base whitespace-nowrap ${props.className}`}
+      title={buttonContent.tooltip}
     >
-      {connected && displayAddress ? (
-        <>
-          {showFarcasterInfo ? (
-            <>
-              <User className='w-4 h-4 mr-2' />
-              <span className='hidden sm:inline'>
-                {farcasterUser.displayName || `@${farcasterUser.username}` || truncateAddress(displayAddress)}
-              </span>
-              <span className='sm:hidden'>
-                {farcasterUser.username ? `@${farcasterUser.username}` : truncateAddress(displayAddress, 4, 4)}
-              </span>
-            </>
-          ) : (
-            <>
-              <Wallet className='w-4 h-4 mr-2' />
-              <span className='hidden sm:inline'>{truncateAddress(displayAddress)}</span>
-              <span className='sm:hidden'>{truncateAddress(displayAddress, 4, 4)}</span>
-            </>
-          )}
-        </>
-      ) : loading ? (
-        <>
-          <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-          <span className='hidden sm:inline'>Connecting...</span>
-          <span className='sm:hidden'>...</span>
-        </>
-      ) : (
-        <>
-          <Wallet className='w-4 h-4 mr-2' />
-          <span className='hidden sm:inline'>{isMiniApp ? 'Connect' : 'Connect Wallet'}</span>
-          <span className='sm:hidden'>Connect</span>
-        </>
-      )}
+      {buttonContent.icon}
+      <span className='hidden sm:inline'>{buttonContent.text}</span>
+      <span className='sm:hidden'>{buttonContent.shortText}</span>
     </Button>
   )
 }

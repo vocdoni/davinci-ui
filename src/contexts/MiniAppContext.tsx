@@ -1,4 +1,5 @@
 import { sdk } from '@farcaster/miniapp-sdk'
+import type { Provider } from 'ethers'
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
 export interface FarcasterUser {
@@ -37,6 +38,12 @@ interface MiniAppContextType {
   connectFarcasterWallet: () => Promise<WalletConnection | null>
   isFarcasterWalletConnected: () => Promise<boolean>
 
+  // Wallet capabilities
+  walletCapabilities: string[]
+  supportedChains: string[]
+  canPerformSmartContractCalls: boolean
+  isExternalWallet: boolean
+
   // Utility functions
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getFarcasterEthereumProvider: () => Promise<any>
@@ -50,6 +57,151 @@ export const MiniAppProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isInitialized, setIsInitialized] = useState(false)
   const [user, setUser] = useState<FarcasterUser | null>(null)
   const [location, setLocation] = useState<MiniAppLocationContext | null>(null)
+  const [walletCapabilities, setWalletCapabilities] = useState<string[]>([])
+  const [supportedChains, setSupportedChains] = useState<string[]>([])
+  const [canPerformSmartContractCalls, setCanPerformSmartContractCalls] = useState(false)
+  const [isExternalWallet, setIsExternalWallet] = useState(false)
+
+  // Set up wallet polling for account and chain changes (since Farcaster events might not work reliably)
+  useEffect(() => {
+    if (!isMiniApp || !isInitialized) return
+
+    let provider: Provider | null = null
+    let pollInterval: NodeJS.Timeout
+    let lastAccounts: string[] = []
+    let lastChainId: string = ''
+
+    const setupAccountPolling = async () => {
+      try {
+        console.log('🔍 Setting up Farcaster wallet polling...')
+        provider = await sdk.wallet.getEthereumProvider()
+        if (!provider) {
+          console.log('❌ No Farcaster provider available for polling')
+          return
+        }
+
+        console.log('✅ Farcaster provider obtained, setting up polling', provider)
+
+        // Get initial state
+        try {
+          const initialAccounts = await provider.request({ method: 'eth_accounts' })
+          const initialChainId = await provider.request({ method: 'eth_chainId' })
+          lastAccounts = initialAccounts || []
+          lastChainId = initialChainId || ''
+          console.log('📊 Initial state:', { accounts: lastAccounts, chainId: lastChainId })
+        } catch (error) {
+          console.error('Error getting initial wallet state:', error)
+        }
+
+        // Poll for changes every 2 seconds
+        pollInterval = setInterval(async () => {
+          try {
+            const currentAccounts = await provider.request({ method: 'eth_accounts' })
+            const currentChainId = await provider.request({ method: 'eth_chainId' })
+
+            // Check for account changes
+            const accountsChanged = JSON.stringify(currentAccounts) !== JSON.stringify(lastAccounts)
+            if (accountsChanged) {
+              console.log('🔄 Detected account change via polling:', {
+                from: lastAccounts,
+                to: currentAccounts,
+              })
+              lastAccounts = currentAccounts || []
+              handleAccountChange(currentAccounts || [])
+            }
+
+            // Check for chain changes
+            if (currentChainId !== lastChainId) {
+              console.log('🔄 Detected chain change via polling:', {
+                from: lastChainId,
+                to: currentChainId,
+              })
+              lastChainId = currentChainId
+              handleChainChange(currentChainId)
+            }
+          } catch (error) {
+            console.error('Error polling wallet state:', error)
+          }
+        }, 2000) // Poll every 2 seconds
+
+        // Handler functions
+        const handleAccountChange = async (accounts: string[]) => {
+          console.log('🔄 Processing account change:', accounts)
+          try {
+            const capabilities = await sdk.getCapabilities()
+            const chains = await sdk.getChains()
+
+            setWalletCapabilities(capabilities)
+            setSupportedChains(chains)
+
+            // Re-test wallet capabilities
+            const hasEthereumProvider = capabilities.includes('wallet.getEthereumProvider')
+            const supportsSepoliaChain = chains.includes('eip155:11155111')
+
+            let canPerformSmartContracts = false
+            let isExternal = false
+
+            if (hasEthereumProvider && supportsSepoliaChain && accounts.length > 0) {
+              try {
+                await provider.request({
+                  method: 'eth_call',
+                  params: [
+                    {
+                      to: '0x0000000000000000000000000000000000000000',
+                      data: '0x',
+                    },
+                    'latest',
+                  ],
+                })
+
+                canPerformSmartContracts = true
+                isExternal = true
+                console.log('✅ Account change: eth_call test successful - external wallet detected')
+              } catch (error) {
+                console.log('⚠️ Account change: eth_call test failed - likely embedded wallet:', error)
+                canPerformSmartContracts = false
+                isExternal = false
+              }
+            }
+
+            setCanPerformSmartContractCalls(canPerformSmartContracts)
+            setIsExternalWallet(isExternal)
+
+            console.log('✅ Account change: Updated wallet capabilities:', {
+              canPerformSmartContracts,
+              isExternal,
+              accounts,
+            })
+          } catch (error) {
+            console.error('❌ Error rechecking capabilities after account change:', error)
+          }
+        }
+
+        const handleChainChange = async (chainId: string) => {
+          console.log('🔄 Processing chain change:', chainId)
+          try {
+            const chains = await sdk.getChains()
+            setSupportedChains(chains)
+            console.log('✅ Chain change: Updated supported chains:', chains)
+          } catch (error) {
+            console.error('❌ Error rechecking chains after chain change:', error)
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error setting up Farcaster wallet polling:', error)
+      }
+    }
+
+    setupAccountPolling()
+
+    // Cleanup function
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval)
+        console.log('🧹 Farcaster wallet polling cleaned up')
+      }
+    }
+  }, [isMiniApp, isInitialized])
 
   // Initialize mini app detection and context
   useEffect(() => {
@@ -89,6 +241,67 @@ export const MiniAppProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
         if (context.location) {
           setLocation(context.location)
+        }
+
+        // Get wallet capabilities and supported chains
+        try {
+          const capabilities = await sdk.getCapabilities()
+          const chains = await sdk.getChains()
+
+          console.log('Wallet capabilities:', capabilities)
+          console.log('Supported chains:', chains)
+
+          setWalletCapabilities(capabilities)
+          setSupportedChains(chains)
+
+          // Check if wallet supports smart contract calls by testing eth_call
+          const hasEthereumProvider = capabilities.includes('wallet.getEthereumProvider')
+          const supportsSepoliaChain = chains.includes('eip155:11155111') // Sepolia testnet
+
+          let canPerformSmartContracts = false
+          let isExternal = false
+
+          if (hasEthereumProvider && supportsSepoliaChain) {
+            try {
+              // Test if the wallet can perform eth_call by trying to get the provider
+              const provider = await sdk.wallet.getEthereumProvider()
+              if (provider) {
+                // Try to perform a simple eth_call to test capabilities
+                // This is a simple call that should work on any provider
+                await provider.request({
+                  method: 'eth_call',
+                  params: [
+                    {
+                      to: '0x0000000000000000000000000000000000000000',
+                      data: '0x',
+                    },
+                    'latest',
+                  ],
+                })
+
+                // If eth_call works, it's likely an external wallet
+                canPerformSmartContracts = true
+                isExternal = true
+                console.log('eth_call test successful - external wallet detected')
+              }
+            } catch (error) {
+              console.log('eth_call test failed - likely embedded wallet (Warpcast):', error)
+              // eth_call failed, likely embedded wallet (Warpcast)
+              canPerformSmartContracts = false
+              isExternal = false
+            }
+          }
+
+          setCanPerformSmartContractCalls(canPerformSmartContracts)
+          setIsExternalWallet(isExternal)
+
+          console.log('Can perform smart contract calls:', canPerformSmartContracts)
+          console.log('Is external wallet:', isExternal)
+        } catch (error) {
+          console.error('Error fetching wallet capabilities:', error)
+          // Default to false if we can't determine capabilities
+          setCanPerformSmartContractCalls(false)
+          setIsExternalWallet(false)
         }
 
         // Call ready to hide splash screen
@@ -180,6 +393,12 @@ export const MiniAppProvider: React.FC<{ children: React.ReactNode }> = ({ child
     isInitialized,
     user,
     location,
+
+    // Wallet capabilities
+    walletCapabilities,
+    supportedChains,
+    canPerformSmartContractCalls,
+    isExternalWallet,
 
     // Functions
     connectFarcasterWallet,

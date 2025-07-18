@@ -25,24 +25,31 @@ export const useUnifiedProvider = (): UnifiedProviderState => {
   // Unified wallet state
   const { isFarcasterConnected } = useUnifiedWallet()
 
-  // Determine if we should use Farcaster provider
+  // In miniapp context, always use Farcaster provider (which handles both embedded and external wallets)
   const isUsingFarcasterProvider = isMiniApp && isFarcasterConnected
 
   // Get the appropriate provider based on connection state
   const getProvider = async () => {
-    if (isUsingFarcasterProvider) {
+    // In miniapp context, always use Farcaster provider
+    // This handles both embedded (Warpcast) and external wallets selected through Farcaster client
+    if (isMiniApp && isFarcasterConnected) {
       try {
         const farcasterProvider = await getFarcasterEthereumProvider()
         if (farcasterProvider) {
           return farcasterProvider
         }
-        console.warn('Farcaster provider not available, falling back to wallet provider')
+        console.warn('Farcaster provider not available')
       } catch (error) {
-        console.error('Error getting Farcaster provider, falling back to wallet provider:', error)
+        console.error('Error getting Farcaster provider:', error)
       }
     }
 
-    return walletProvider
+    // Use AppKit provider for PWA usage (outside miniapp or when AppKit is connected)
+    if (walletProvider) {
+      return walletProvider
+    }
+
+    return null
   }
 
   // Direct access to Farcaster provider

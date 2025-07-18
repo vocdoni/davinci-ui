@@ -15,6 +15,8 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { sepolia } from '@reown/appkit/networks'
+import { useAppKitNetwork } from '@reown/appkit/react'
 import {
   deployedAddresses,
   ProcessRegistryService,
@@ -31,7 +33,7 @@ import {
 import { createProcessSignatureMessage } from '@vocdoni/davinci-sdk/sequencer'
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { CheckCircle, Clock, GripVertical, HelpCircle, Plus, Rocket, Users, X } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '~components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~components/ui/card'
@@ -42,6 +44,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~
 import { Separator } from '~components/ui/separator'
 import { Textarea } from '~components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~components/ui/tooltip'
+import { useMiniApp } from '~contexts/MiniAppContext'
 import { useSnapshots } from '~hooks/use-snapshots'
 import { useUnifiedProvider } from '~hooks/use-unified-provider'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
@@ -293,12 +296,17 @@ export function CreateVoteForm() {
       const metadataUrl = api.getMetadataUrl(metadataHash)
       console.info('ℹ️ Metadata URL:', metadataUrl)
 
-      // Use the unified provider (automatically handles Farcaster vs regular wallet)
+      // Use provider for process creation (check wallet capabilities)
       const walletProvider = await getProvider()
+      if (!walletProvider) {
+        throw new Error('Wallet provider not available.')
+      }
       const provider = new BrowserProvider(walletProvider as Eip1193Provider)
+      console.info('ℹ️ Browser provider initialized:', provider)
       const signer = await provider.getSigner()
       const registry = new ProcessRegistryService(deployedAddresses.processRegistry.sepolia, signer)
-      const pid = await registry.getNextProcessId(await signer.getAddress())
+      const address = await signer.getAddress()
+      const pid = await registry.getNextProcessId(address)
       console.info('ℹ️ Process ID:', pid)
 
       const message = await createProcessSignatureMessage(pid)
@@ -351,7 +359,7 @@ export function CreateVoteForm() {
       )
 
       setLaunchSuccess(true)
-      console.log('Vote launched successfully with process ID:', processId)
+      console.info('ℹ️ Vote launched successfully with process ID:', processId)
 
       // Wait to navigate
       while (true) {
@@ -824,9 +832,126 @@ type LaunchVoteButtonProps = {
 
 const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVoteButtonProps) => {
   const { isConnected } = useUnifiedWallet()
+  const { isMiniApp, isExternalWallet, supportedChains, getFarcasterEthereumProvider } = useMiniApp()
+  const { caipNetwork, switchNetwork } = useAppKitNetwork()
+
+  // All hooks must be at the top before any conditional returns
+  const [actualChainId, setActualChainId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (isMiniApp) {
+      // Get actual chain ID from Farcaster provider
+      const getActualChain = async () => {
+        try {
+          const provider = await getFarcasterEthereumProvider()
+          if (provider) {
+            const chainId = await provider.request({ method: 'eth_chainId' })
+            setActualChainId(chainId)
+            console.log('🔍 Actual Farcaster provider chain ID:', chainId)
+          }
+        } catch (error) {
+          console.error('Error getting actual chain ID from Farcaster provider:', error)
+        }
+      }
+      getActualChain()
+    }
+  }, [isMiniApp, getFarcasterEthereumProvider])
 
   if (!isConnected) {
     return <ConnectWalletButtonMiniApp />
+  }
+
+  // PRIORITY 1: Check wallet type first (embedded wallets can't switch chains anyway)
+  // If in miniapp with embedded wallet (Warpcast), process creation is not available
+  if (isMiniApp && !isExternalWallet) {
+    return (
+      <div className='space-y-4'>
+        <div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
+          <p className='text-sm text-blue-800'>
+            <strong>Process creation not available with embedded wallet:</strong> The Warpcast embedded wallet uses a
+            limited provider that doesn't support the smart contract interactions required for creating votes. Please
+            connect an external wallet to create votes.
+          </p>
+        </div>
+        <div className='space-y-3'>
+          <ConnectWalletButtonMiniApp />
+          <div className='text-sm text-gray-600'>
+            <p className='font-medium mb-1'>Why this happens:</p>
+            <ul className='space-y-1 text-xs'>
+              <li>• Embedded wallets use proxy providers for security</li>
+              <li>• These proxies only support signing, not contract calls</li>
+              <li>• Process creation requires reading from smart contracts</li>
+              <li>• External wallets should work normally</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // PRIORITY 2: Check chain compatibility (only for external wallets)
+  // Convert hex chain ID to decimal for comparison
+  const actualChainIdDecimal = actualChainId ? parseInt(actualChainId, 16) : null
+  const isOnSepoliaActually = actualChainIdDecimal === sepolia.id
+
+  console.log('🔍 Chain validation debug:', {
+    caipNetwork,
+    sepoliaId: sepolia.id,
+    appKitChainId: caipNetwork?.id,
+    actualChainId,
+    actualChainIdDecimal,
+    isOnSepoliaActually,
+    isMiniApp,
+    supportedChains,
+    isExternalWallet,
+  })
+
+  // For miniapp users with external wallets: check actual Farcaster provider chain
+  if (isMiniApp && isExternalWallet && actualChainId && !isOnSepoliaActually) {
+    const chainName =
+      actualChainIdDecimal === 8453
+        ? 'Base'
+        : actualChainIdDecimal === 1
+          ? 'Ethereum Mainnet'
+          : actualChainIdDecimal === 84532
+            ? 'Base Sepolia'
+            : `Chain ${actualChainIdDecimal}`
+
+    return (
+      <div className='space-y-4'>
+        <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-4'>
+          <p className='text-sm text-yellow-800'>
+            <strong>Wrong Network:</strong> Please switch to Sepolia testnet in your wallet to create votes. Current
+            network: {chainName}
+          </p>
+        </div>
+        <div className='text-sm text-gray-600'>
+          <p>
+            You're currently on {chainName}. DAVINCI requires Sepolia testnet (Chain ID: 11155111) for creating votes.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // For non-miniapp (PWA) users: check AppKit network (this should rarely trigger due to auto-switching)
+  if (!isMiniApp && caipNetwork?.id !== sepolia.id && caipNetwork) {
+    return (
+      <div className='space-y-4'>
+        <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-4'>
+          <p className='text-sm text-yellow-800'>
+            <strong>Wrong Network:</strong> Please switch to Sepolia testnet to create votes. Current network:{' '}
+            {caipNetwork.name}
+          </p>
+        </div>
+        <Button
+          onClick={() => switchNetwork(sepolia)}
+          className='w-full bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base'
+        >
+          Switch to Sepolia Testnet
+        </Button>
+      </div>
+    )
   }
 
   return (
