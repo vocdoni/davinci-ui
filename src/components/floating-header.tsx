@@ -1,6 +1,6 @@
 import { ExternalLink, Menu } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useMatch, useNavigate } from 'react-router-dom'
+import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '~components/ui/button'
 import { Card } from '~components/ui/card'
 import { Sheet, SheetContent, SheetTrigger } from '~components/ui/sheet'
@@ -16,6 +16,7 @@ interface NavigationItem {
 
 export function FloatingHeader() {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
 
@@ -73,7 +74,7 @@ export function FloatingHeader() {
   }
 
   const isActiveLink = (href: string) => {
-    const match = useMatch({ path: href, end: href === '/' })
+    const match = matchPath({ path: href, end: href === '/' }, pathname)
     return Boolean(match)
   }
 

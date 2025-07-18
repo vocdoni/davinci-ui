@@ -93,7 +93,7 @@ export function VoteDisplay() {
       })
       setQuadraticVotes(initialVotes)
     }
-  }, [meta.questions, meta.type.name])
+  }, [meta.questions, meta.type.name, meta, process])
 
   // Calculate quadratic cost
   const calculateQuadraticCost = (votes: number): number => {
@@ -947,6 +947,6 @@ export function getBinaryArray(positions: string[], value = '1'): string[] {
 
 const padTo = (arr: number[] | string[], length: number = 8): string[] =>
   arr
-    .concat(Array(8 - arr.length).fill(0))
-    .slice(0, 8)
+    .concat(Array(length - arr.length).fill(0))
+    .slice(0, length)
     .map((v) => v.toString())

@@ -40,7 +40,7 @@ export const useProcessQuery = (id: string) => {
     }, 10_000)
 
     return () => clearInterval(interval)
-  }, [isAcceptingVotes, query.refetch])
+  }, [isAcceptingVotes, query])
 
   return query
 }

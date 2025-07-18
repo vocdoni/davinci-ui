@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useAppKitProvider } from '@reown/appkit/react'
 import { useMiniApp } from '~contexts/MiniAppContext'
 import { useUnifiedWallet } from './use-unified-wallet'

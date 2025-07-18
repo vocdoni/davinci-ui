@@ -15,11 +15,13 @@ export interface FarcasterUser {
 
 export interface MiniAppLocationContext {
   type: 'cast_embed' | 'cast_share' | 'notification' | 'launcher' | 'channel' | 'open_miniapp'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any
 }
 
 export interface WalletConnection {
   address: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   provider: any
 }
 
@@ -36,6 +38,7 @@ interface MiniAppContextType {
   isFarcasterWalletConnected: () => Promise<boolean>
 
   // Utility functions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getFarcasterEthereumProvider: () => Promise<any>
 }
 
@@ -78,6 +81,7 @@ export const MiniAppProvider: React.FC<{ children: React.ReactNode }> = ({ child
             username: context.user.username,
             displayName: context.user.displayName,
             pfpUrl: context.user.pfpUrl,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             bio: (context.user as any).bio, // bio might not be in the type definition
             location: context.user.location,
           })

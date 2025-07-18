@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { AppErrorBoundary } from '~components/app-error-boundary'
 import { InstallPrompt } from '~components/install-prompt'
 import { OfflineIndicator } from '~components/offline-indicator'
 import { VocdoniApiProvider } from '~components/vocdoni-api-context'
@@ -24,14 +25,16 @@ document.documentElement.style.setProperty('--font-averia-libre', 'Averia Libre,
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <MiniAppProvider>
-        <VocdoniApiProvider>
-          <InstallPrompt />
-          <RouterProvider />
-          <OfflineIndicator />
-        </VocdoniApiProvider>
-      </MiniAppProvider>
-    </QueryClientProvider>
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <MiniAppProvider>
+          <VocdoniApiProvider>
+            <InstallPrompt />
+            <RouterProvider />
+            <OfflineIndicator />
+          </VocdoniApiProvider>
+        </MiniAppProvider>
+      </QueryClientProvider>
+    </AppErrorBoundary>
   </React.StrictMode>
 )

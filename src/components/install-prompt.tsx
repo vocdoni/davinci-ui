@@ -4,7 +4,7 @@ import { Button } from '~components/ui/button'
 import { useInstallPrompt } from '~hooks/use-install-prompt'
 
 export const InstallPrompt = () => {
-  const { isInstallable, isInstallableOnSafari, isIOS, isSafari, installApp } = useInstallPrompt()
+  const { isInstallable, isInstallableOnSafari, isIOS, installApp } = useInstallPrompt()
   const [isDismissed, setIsDismissed] = useState(false)
 
   useEffect(() => {

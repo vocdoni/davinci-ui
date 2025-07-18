@@ -361,6 +361,7 @@ export function CreateVoteForm() {
             navigate(`/vote/${processId}`)
             break
           }
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-empty
         } catch (e) {}
 
         await new Promise((r) => setTimeout(r, 2500))

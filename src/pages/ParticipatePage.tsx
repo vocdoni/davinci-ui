@@ -17,6 +17,7 @@ function CodeBlock({ children, className = '' }: { children: string; className?:
         description: 'Environment variable copied successfully',
       })
       setTimeout(() => setCopied(false), 2000)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       toast({
         title: 'Failed to copy',
@@ -27,7 +28,9 @@ function CodeBlock({ children, className = '' }: { children: string; className?:
   }
 
   return (
-    <div className={`relative bg-davinci-digital-highlight border border-davinci-callout-border rounded-lg p-4 ${className}`}>
+    <div
+      className={`relative bg-davinci-digital-highlight border border-davinci-callout-border rounded-lg p-4 ${className}`}
+    >
       <code className='font-mono text-xs text-davinci-black-alt break-all'>{children}</code>
       <Button
         variant='ghost'
@@ -80,14 +83,16 @@ export default function ParticipatePage() {
             </CardHeader>
             <CardContent className='space-y-6 pt-6 bg-davinci-text-base'>
               <p className='text-davinci-black-alt/80 font-medium'>
-                Worker nodes are crucial to help Sequencers process votes and keep the network running fast and smoothly.
+                Worker nodes are crucial to help Sequencers process votes and keep the network running fast and
+                smoothly.
               </p>
 
               <div className='space-y-4'>
                 <p className='text-davinci-black-alt/80'>
-                  Setting up a worker node requires some technical knowledge, but we provide all the necessary tools and resources to help you get started.
+                  Setting up a worker node requires some technical knowledge, but we provide all the necessary tools and
+                  resources to help you get started.
                 </p>
-                
+
                 <div>
                   <h3 className='text-davinci-black-alt font-medium mb-2'>Requirements:</h3>
                   <ul className='list-disc list-inside space-y-1 text-davinci-black-alt/80 ml-4'>
@@ -101,7 +106,8 @@ export default function ParticipatePage() {
                   Detailed instructions and requirements can be found in the official{' '}
                   <ExternalLinkText href='https://github.com/vocdoni/davinci-node#-run-a-worker-node'>
                     DAVINCI node documentation
-                  </ExternalLinkText>.
+                  </ExternalLinkText>
+                  .
                 </p>
               </div>
 
@@ -110,7 +116,7 @@ export default function ParticipatePage() {
                 <p className='text-davinci-black-alt/80'>
                   To join Vocdoni's official Sequencer worker network, set the following environment variables:
                 </p>
-                
+
                 <div className='space-y-3'>
                   <div>
                     <p className='text-sm text-davinci-black-alt/70 mb-2'>Master URL:</p>
@@ -118,21 +124,18 @@ export default function ParticipatePage() {
                       DAVINCI_WORKER_MASTERURL="https://sequencer1.davinci.vote/workers/1744b84a-eca6-c7f0-2ebf-593f7234465f"
                     </CodeBlock>
                   </div>
-                  
+
                   <div>
                     <p className='text-sm text-davinci-black-alt/70 mb-2'>Worker Address:</p>
-                    <CodeBlock>
-                      DAVINCI_WORKER_ADDRESS="your_ethereum_address_here"
-                    </CodeBlock>
+                    <CodeBlock>DAVINCI_WORKER_ADDRESS="your_ethereum_address_here"</CodeBlock>
                   </div>
                 </div>
               </div>
 
               <p className='text-davinci-black-alt/80'>
-                <strong className='text-davinci-black-alt'>Monitoring:</strong> Once your worker node is running, monitor its status and performance at{' '}
-                <ExternalLinkText href='https://sequencer1.davinci.vote/app'>
-                  the Sequencer dashboard
-                </ExternalLinkText>.
+                <strong className='text-davinci-black-alt'>Monitoring:</strong> Once your worker node is running,
+                monitor its status and performance at{' '}
+                <ExternalLinkText href='https://sequencer1.davinci.vote/app'>the Sequencer dashboard</ExternalLinkText>.
               </p>
 
               <div className='flex justify-start'>

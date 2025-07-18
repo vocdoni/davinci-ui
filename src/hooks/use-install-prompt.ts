@@ -14,6 +14,7 @@ export const useInstallPrompt = () => {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
   const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)
   const isInStandaloneMode =
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true
 
   // Safari/iOS can show install instructions if not already installed
@@ -46,7 +47,7 @@ export const useInstallPrompt = () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
       window.removeEventListener('appinstalled', handleAppInstalled)
     }
-  }, [])
+  })
 
   const installApp = async () => {
     if (!deferredPrompt) return false

@@ -12,10 +12,12 @@ export interface UnifiedWalletState {
   isAppKitConnected: boolean
 
   // Farcaster-specific data
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   farcasterUser: any
   farcasterAddress: string | null
 
   // Connection methods
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   connectFarcaster: () => Promise<any>
   checkFarcasterConnection: () => Promise<boolean>
 }

@@ -91,6 +91,7 @@ export const ProcessProvider: FC<ProcessProviderProps> = ({ children, process })
       isHasVotedLoading,
       isInCensus,
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [process, censusProof, isInCensus, isCensusProofLoading, isCensusProofError]
   )
 

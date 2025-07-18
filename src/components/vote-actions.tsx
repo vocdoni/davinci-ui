@@ -12,7 +12,7 @@ const VoteActions = () => {
     isCreator,
     process: { process },
   } = useProcess()
-  const { address, isConnected } = useAppKitAccount()
+  const { isConnected } = useAppKitAccount()
   const { walletProvider } = useAppKitProvider('eip155')
   const [isLoading, setIsLoading] = useState(false)
 

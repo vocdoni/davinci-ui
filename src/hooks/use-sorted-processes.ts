@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 import { useCallback, useMemo, useState } from 'react'
 
 export interface ProcessSortData {

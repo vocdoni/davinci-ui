@@ -12,14 +12,6 @@ import type { GetProcessResponse } from '@vocdoni/davinci-sdk/sequencer'
 import { formatNanosecondsInterval } from '~lib/utils'
 import { useProcess } from './process-context'
 
-interface ProcessData {
-  voteCount: number
-  endDate: number
-  maxVoteCount: number
-  isAcceptingVotes: boolean
-  creator: string
-}
-
 interface VoteParametersProps {
   voteData: ElectionMetadata
   processData: GetProcessResponse

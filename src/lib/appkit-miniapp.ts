@@ -1,6 +1,6 @@
 import { EthersAdapter } from '@reown/appkit-adapter-ethers'
 import { sepolia } from '@reown/appkit/networks'
-import { createAppKit } from '@reown/appkit/react'
+import { AppKit, createAppKit } from '@reown/appkit/react'
 
 // 1. Get projectId from environment
 const projectId = import.meta.env.WALLETCONNECT_PROJECT_ID
@@ -16,7 +16,7 @@ const metadata = {
 // 3. Create Ethers Adapter with conditional provider
 const ethersAdapter = new EthersAdapter()
 
-let appKit: any = null
+let appKit: AppKit | null = null
 
 /**
  * Initialize AppKit - simplified version since mini app logic is now in context
