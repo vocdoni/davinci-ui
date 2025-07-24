@@ -7,22 +7,22 @@
   "miniapp": {
     "version": "1",
     "name": "DAVINCI",
-    "iconUrl": "https://farcapp.netlify.app/icons/ic_launcher_google_play.png",
-    "homeUrl": "https://farcapp.netlify.app",
-    "imageUrl": "https://farcapp.netlify.app/icons/ic_launcher_google_play.png",
+    "iconUrl": "https://app.davinci.vote/icons/ic_launcher_google_play.png",
+    "homeUrl": "https://app.davinci.vote",
     "buttonTitle": "Create Vote",
-    "splashImageUrl": "https://farcapp.netlify.app/icons/ic_launcher_google_play.png",
+    "splashImageUrl": "https://app.davinci.vote/images/opengraph_generic.png",
     "splashBackgroundColor": "#F5F1E8",
-    "description": "Decentralized voting platform powered by DAVINCI protocol",
     "subtitle": "Anonymous, verifiable & anti-coercion voting",
-    "primaryCategory": "governance",
+    "description": "Decentralized voting platform powered by DAVINCI protocol",
+    "primaryCategory": "social",
     "tags": [
-      "voting",
       "governance",
-      "decentralized",
-      "anonymous",
-      "verifiable"
+      "voting",
+      "anti-coercion",
+      "dao",
+      "community"
     ],
+    "ogTitle": "DAVINCI Voting App",
     "requiredChains": [
       "eip155:11155111"
     ]
