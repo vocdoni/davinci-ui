@@ -57,7 +57,7 @@ export default {
           type: 'launch_miniapp',
           name: 'DAVINCI',
           url: `${destination}${pathname}`,
-          splashImageUrl: `${origin}/icons/apple-touch-icon-1024.png`,
+          splashImageUrl: `${destination}/light/android-chrome-512x512.png`,
           splashBackgroundColor: '#F5F1E8',
         },
       },

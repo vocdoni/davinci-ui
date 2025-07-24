@@ -10,7 +10,7 @@
     "iconUrl": "https://app.davinci.vote/icons/ic_launcher_google_play.png",
     "homeUrl": "https://app.davinci.vote",
     "buttonTitle": "Create Vote",
-    "splashImageUrl": "https://app.davinci.vote/images/opengraph_generic.png",
+    "splashImageUrl": "https://app.davinci.vote/light/android-chrome-512x512.png",
     "splashBackgroundColor": "#F5F1E8",
     "subtitle": "Anonymous anti-coercion voting",
     "description": "Decentralized voting platform powered by DAVINCI protocol",
