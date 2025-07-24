@@ -32,17 +32,16 @@ export default {
 
     // 2. Detect meta info based on pathname
     let title = 'DAVINCI'
-    let imagePath = 'images/opengraph_miniapp.png'
+    let imagePath = 'images/miniapp.png'
 
     if (pathname === '/') {
       title = 'Create vote'
-      imagePath = 'images/opengraph_miniapp.png'
     } else if (pathname === '/explore') {
       title = 'Explore'
-      imagePath = 'images/opengraph_explore.png'
+      imagePath = 'images/miniapp_explore.png'
     } else if (pathname.startsWith('/vote/')) {
       title = 'Vote'
-      imagePath = 'images/opengraph_vote.png'
+      imagePath = 'images/miniapp_vote.png'
     }
 
     const fullImageUrl = `${destination}/${imagePath}`
