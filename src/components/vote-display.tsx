@@ -28,6 +28,7 @@ import { useUnifiedProvider } from '~hooks/use-unified-provider'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 import { truncateAddress } from '~lib/web3-utils'
 import { useProcess } from './process-context'
+import RelativeTimeRemaining from './relative-time-remaining'
 import ConnectWalletButtonMiniApp from './ui/connect-wallet-button-miniapp'
 import { Spinner } from './ui/spinner'
 import VotingTimeRemaining from './voting-time-remaining'
@@ -861,7 +862,7 @@ export function VoteDisplay() {
               <div>
                 <h3 className='font-medium text-davinci-black-alt mb-2'>Encrypted Results</h3>
                 <p className='text-sm text-davinci-black-alt/80'>
-                  Votes are encrypted and remain hidden until the voting period ends (<VotingTimeRemaining />{' '}
+                  Votes are encrypted and remain hidden until the voting period ends (<RelativeTimeRemaining />{' '}
                   remaining). This ensures fairness by preventing biases like the bandwagon effect.
                 </p>
               </div>
