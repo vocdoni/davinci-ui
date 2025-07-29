@@ -80,11 +80,11 @@ export function FloatingHeader() {
 
   return (
     <div
-      className={`fixed top-6 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl px-4 transition-transform duration-300 ease-in-out ${
-        isVisible ? 'translate-y-0' : '-translate-y-full'
+      className={`fixed top-0 lg:top-6 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-6xl px-0 lg:px-4 transition-transform duration-300 ease-in-out ${
+        isVisible ? 'translate-y-0' : '-translate-y-3/4 lg:-translate-y-full'
       }`}
     >
-      <Card className='bg-davinci-paper-base/95 backdrop-blur-md border border-davinci-callout-border/50 shadow-lg'>
+      <Card className='bg-davinci-paper-base/95 backdrop-blur-md border-b border-davinci-callout-border/50 lg:border lg:border-davinci-callout-border/50 shadow-lg rounded-b-lg rounded-t-none lg:rounded-lg'>
         <div className='flex items-center justify-between p-4'>
           <Link to='/' className='flex items-center space-x-3'>
             <img src='/images/davinci-logo.png' alt='DAVINCI' className='h-8 w-auto' />
