@@ -12,6 +12,7 @@ export type Snapshot = {
   displayAvatar: string
   queryName: string
   createdAt: string // ISO date string
+  weightStrategy: string
 }
 
 export type SnapshotsResponse = {
