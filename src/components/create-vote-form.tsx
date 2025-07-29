@@ -1010,7 +1010,7 @@ const generateBallotMode = (election: ElectionMetadata, form: Purosesu): BallotM
         maxValue,
         minValue: '0',
         forceUniqueness: false,
-        costFromWeight: true,
+        costFromWeight: false,
         costExponent: 1,
         maxTotalCost: form.multipleChoiceMax,
         minTotalCost: form.multipleChoiceMin,
