@@ -32,7 +32,7 @@ const progressSteps: ProgressStep[] = [
   {
     id: VoteStatus.Pending,
     label: 'Pending',
-    description: 'Vote submitted, awaiting verification',
+    description: 'Vote submitted and accepted by the sequencer. It is now queued for verification.',
     icon: <Clock className='w-4 h-4' />,
     color: 'text-blue-600',
     bgColor: 'bg-blue-100',
@@ -149,7 +149,7 @@ export function VoteProgressTracker({ onVoteAgain, processId, voteId }: VoteProg
                     : 'bg-blue-100 text-blue-800'
               }`}
             >
-              {currentStatus === VoteStatus.Settled ? 'Complete' : isProcessing ? 'Processing' : 'Failed'}
+              {currentStatus === VoteStatus.Settled ? 'Complete' : isProcessing ? 'Queued' : 'Failed'}
             </Badge>
           </div>
         </div>

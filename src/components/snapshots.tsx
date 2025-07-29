@@ -73,10 +73,10 @@ export function Snapshots({ snapshots, isLoading, isError, selectedCensusRoot, o
                 <div className='space-y-2'>
                   <Label className='text-davinci-black-alt text-sm'>Select a dynamic census</Label>
                   <Select value={selectedCensusRoot || ''} onValueChange={onSnapshotSelect}>
-                    <SelectTrigger className='border-davinci-callout-border bg-davinci-text-base'>
+                    <SelectTrigger className='border-davinci-callout-border bg-davinci-text-base max-h-60 text-ellipsis text-clip'>
                       <SelectValue placeholder='Select a census type' />
                     </SelectTrigger>
-                    <SelectContent className='bg-davinci-paper-base border-davinci-callout-border'>
+                    <SelectContent className='bg-davinci-paper-base border-davinci-callout-border z-50'>
                       {Object.entries(censusTypes).map(([queryName, snapshots]) => {
                         // Use the most recent snapshot for each census type
                         const latestSnapshot = snapshots.sort(

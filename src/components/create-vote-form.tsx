@@ -857,6 +857,33 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
     }
   }, [isMiniApp, getFarcasterEthereumProvider])
 
+  // PRIORITY 2: Check chain compatibility (only for external wallets)
+  // Convert hex chain ID to decimal for comparison
+  const actualChainIdDecimal = actualChainId ? parseInt(actualChainId, 16) : null
+  const isOnSepoliaActually = actualChainIdDecimal === sepolia.id
+
+  useEffect(() => {
+    console.info('🔍 Chain validation debug:', {
+      caipNetwork,
+      sepoliaId: sepolia.id,
+      appKitChainId: caipNetwork?.id,
+      actualChainId,
+      actualChainIdDecimal,
+      isOnSepoliaActually,
+      isMiniApp,
+      supportedChains,
+      isExternalWallet,
+    })
+  }, [
+    caipNetwork,
+    actualChainId,
+    isMiniApp,
+    supportedChains,
+    isExternalWallet,
+    actualChainIdDecimal,
+    isOnSepoliaActually,
+  ])
+
   if (!isConnected) {
     return <ConnectWalletButtonMiniApp />
   }
@@ -888,23 +915,6 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
       </div>
     )
   }
-
-  // PRIORITY 2: Check chain compatibility (only for external wallets)
-  // Convert hex chain ID to decimal for comparison
-  const actualChainIdDecimal = actualChainId ? parseInt(actualChainId, 16) : null
-  const isOnSepoliaActually = actualChainIdDecimal === sepolia.id
-
-  console.log('🔍 Chain validation debug:', {
-    caipNetwork,
-    sepoliaId: sepolia.id,
-    appKitChainId: caipNetwork?.id,
-    actualChainId,
-    actualChainIdDecimal,
-    isOnSepoliaActually,
-    isMiniApp,
-    supportedChains,
-    isExternalWallet,
-  })
 
   // For miniapp users with external wallets: check actual Farcaster provider chain
   if (isMiniApp && isExternalWallet && actualChainId && !isOnSepoliaActually) {

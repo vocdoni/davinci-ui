@@ -22,6 +22,7 @@ import { Label } from '~components/ui/label'
 import { RadioGroup, RadioGroupItem } from '~components/ui/radio-group'
 import { VoteProgressTracker } from '~components/vote-progress-tracker'
 import { VotingModal } from '~components/voting-modal'
+import { PostVoteModal } from '~components/post-vote-modal'
 import { usePersistedVote } from '~hooks/use-persisted-vote'
 import { useProcessQuery } from '~hooks/use-process-query'
 import { useUnifiedProvider } from '~hooks/use-unified-provider'
@@ -79,6 +80,7 @@ export function VoteDisplay() {
   const [selectedChoices, setSelectedChoices] = useState<string[]>([])
   const [quadraticVotes, setQuadraticVotes] = useState<QuadraticVote>({})
   const [showVotingModal, setShowVotingModal] = useState(false)
+  const [showPostVoteModal, setShowPostVoteModal] = useState(false)
   const [isVoting, setIsVoting] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   const { voteId, trackVote, resetVote } = usePersistedVote(process.id)
@@ -217,6 +219,9 @@ export function VoteDisplay() {
       trackVote(out.voteId)
 
       console.info('✅ Vote submitted successfully:', out.voteId)
+
+      // Show post-vote modal
+      setShowPostVoteModal(true)
 
       // refetch process info
       await processQuery.refetch()
@@ -779,6 +784,11 @@ export function VoteDisplay() {
             {!isConnected ? (
               <div className='space-y-4'>
                 <ConnectWalletButtonMiniApp className='w-full' />
+                <div className='text-center'>
+                  <p className='text-xs text-davinci-black-alt/60'>
+                    <strong>Note:</strong> Some wallets like Rainbow and others that don't accept custom networks may not work properly.
+                  </p>
+                </div>
                 <div className='bg-davinci-digital-highlight p-3 rounded-lg border border-davinci-callout-border'>
                   <p className='text-xs text-davinci-black-alt/80 text-center'>
                     Connect your wallet to verify eligibility and cast your vote. Your selections will be saved.
@@ -880,6 +890,12 @@ export function VoteDisplay() {
         voteQuestion={meta.questions[0].title.default}
         isRevote={Boolean(hasVoted)}
         votingMethod={votingMethod.type}
+      />
+
+      {/* Post Vote Modal */}
+      <PostVoteModal
+        isOpen={showPostVoteModal}
+        onClose={() => setShowPostVoteModal(false)}
       />
     </div>
   )

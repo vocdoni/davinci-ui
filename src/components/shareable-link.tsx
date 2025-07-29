@@ -19,6 +19,10 @@ export function ShareableLink({ voteId, voteData }: ShareableLinkProps) {
   // Generate the shareable URL
   const shareUrl = `${window.location.origin}/vote/${voteId}`
 
+  // Check if native sharing is actually available and functional
+  // We check for the API existence rather than just mobile detection
+  const isNativeShareAvailable = 'share' in navigator && typeof navigator.share === 'function'
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl)
@@ -29,21 +33,35 @@ export function ShareableLink({ voteId, voteData }: ShareableLinkProps) {
     }
   }
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
+  const handleNativeShare = async () => {
+    try {
+      await navigator.share({
         title: 'DAVINCI Vote',
         text: 'Check out this vote on DAVINCI',
         url: shareUrl,
       })
-    } else {
-      const link = `https://x.com/intent/post?text=${encodeURIComponent(
-        import.meta.env.SHARE_TEXT.replace('{link}', shareUrl)
-          .replace('{app}', window.location.origin)
-          .replace('{title}', truncateText(voteData.title.default, 60))
-      )}`
-      window.open(link, '_blank', 'noopener,noreferrer')
+    } catch (error) {
+      console.error('Native share failed:', error)
+      // Fallback to Twitter share if native share fails
+      handleTwitterShare()
     }
+  }
+
+  const handleTwitterShare = () => {
+    const link = `https://x.com/intent/post?text=${encodeURIComponent(
+      import.meta.env.SHARE_TEXT.replace('{link}', shareUrl)
+        .replace('{app}', window.location.origin)
+        .replace('{title}', truncateText(voteData.title.default, 60))
+    )}`
+    window.open(link, '_blank', 'noopener,noreferrer')
+  }
+
+  const handleFarcasterShare = () => {
+    const text = import.meta.env.SHARE_TEXT.replace('{link}', shareUrl)
+      .replace('{app}', window.location.origin)
+      .replace('{title}', truncateText(voteData.title.default, 60))
+    const link = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`
+    window.open(link, '_blank', 'noopener,noreferrer')
   }
 
   return (
@@ -72,15 +90,45 @@ export function ShareableLink({ voteId, voteData }: ShareableLinkProps) {
             </Button>
           </div>
 
-          <Button
-            onClick={handleShare}
-            variant='outline'
-            size='sm'
-            className='w-full border-davinci-callout-border text-davinci-black-alt hover:bg-davinci-soft-neutral/20'
-          >
-            <Share2 className='w-3 h-3 mr-1' />
-            Share
-          </Button>
+          {/* Native share if available */}
+          {isNativeShareAvailable && (
+            <Button
+              onClick={handleNativeShare}
+              variant='outline'
+              size='sm'
+              className='w-full border-davinci-callout-border text-davinci-black-alt hover:bg-davinci-soft-neutral/20'
+            >
+              <Share2 className='w-3 h-3 mr-1' />
+              Share
+            </Button>
+          )}
+
+          {/* Social platform buttons */}
+          <div className='flex gap-2'>
+            <Button
+              onClick={handleTwitterShare}
+              variant='outline'
+              size='sm'
+              className='flex-1 border-davinci-callout-border text-davinci-black-alt hover:bg-davinci-soft-neutral/20'
+            >
+              <svg className='w-3 h-3 mr-1' fill='currentColor' viewBox='0 0 24 24'>
+                <path d='M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z' />
+              </svg>
+              Twitter
+            </Button>
+            <Button
+              onClick={handleFarcasterShare}
+              variant='outline'
+              size='sm'
+              className='flex-1 border-davinci-callout-border text-davinci-black-alt hover:bg-davinci-soft-neutral/20'
+            >
+              <svg className='w-3 h-3 mr-1' fill='currentColor' viewBox='0 0 24 24'>
+                <path d='M5.5 2h13A3.5 3.5 0 0122 5.5v13a3.5 3.5 0 01-3.5 3.5h-13A3.5 3.5 0 012 18.5v-13A3.5 3.5 0 015.5 2z' />
+                <path d='M8 16h8v-1.5H8V16zM8 12h8v-1.5H8V12zM8 8h8V6.5H8V8z' fill='white' />
+              </svg>
+              Farcaster
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
