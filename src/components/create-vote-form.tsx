@@ -37,6 +37,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '~components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~components/ui/card'
+import { Checkbox } from '~components/ui/checkbox'
 import { Input } from '~components/ui/input'
 import { Label } from '~components/ui/label'
 import { RadioGroup, RadioGroupItem } from '~components/ui/radio-group'
@@ -73,6 +74,7 @@ type Purosesu = {
   multipleChoiceMin: string
   multipleChoiceMax: string
   quadraticCredits: string
+  useWeightedVoting: boolean
   censusType: string
   duration: string
   durationUnit: DurationUnit
@@ -147,6 +149,7 @@ export function CreateVoteForm() {
     multipleChoiceMin: '1',
     multipleChoiceMax: '2',
     quadraticCredits: '100',
+    useWeightedVoting: false,
     censusType: '',
     duration: '',
     durationUnit: 'minutes',
@@ -154,6 +157,19 @@ export function CreateVoteForm() {
   })
   const api = useVocdoniApi()
   const { data: snapshots, isLoading: isLoadingSnapshot, isError: isSnapshotError } = useSnapshots()
+
+  // Reset weighted voting when switching to non-proportional snapshots
+  useEffect(() => {
+    if (formData.censusType === 'ethereum-wallets' && formData.useWeightedVoting) {
+      const selectedSnapshot = formData.selectedCensusRoot
+        ? snapshots?.find((s) => s.censusRoot === formData.selectedCensusRoot)
+        : snapshots?.[0]
+
+      if (selectedSnapshot?.weightStrategy !== 'proportional') {
+        setFormData((prev) => ({ ...prev, useWeightedVoting: false }))
+      }
+    }
+  }, [formData.selectedCensusRoot, formData.censusType, formData.useWeightedVoting, snapshots])
 
   const addChoice = () => {
     if (formData.choices.length < 8) {
@@ -487,6 +503,94 @@ export function CreateVoteForm() {
                 </SortableContext>
               </DndContext>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Section 2: Vote Configuration */}
+        <Card className='border-davinci-callout-border'>
+          <CardHeader className='bg-davinci-paper-base'>
+            <CardTitle className='flex items-center gap-2 text-davinci-black-alt'>
+              <Users className='w-5 h-5' />
+              2. Vote Configuration
+            </CardTitle>
+            <CardDescription className='text-davinci-black-alt/70'>
+              Configure voter eligibility and voting duration
+            </CardDescription>
+          </CardHeader>
+          <CardContent className='space-y-6 pt-6 bg-davinci-text-base'>
+            <div className='space-y-4'>
+              <div className='flex items-center gap-2'>
+                <Label className='text-davinci-black-alt'>Census Type</Label>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <HelpCircle className='w-4 h-4 text-davinci-black-alt/60' />
+                  </TooltipTrigger>
+                  <TooltipContent className='bg-davinci-paper-base text-davinci-black-alt border-davinci-callout-border max-w-xs'>
+                    <p>
+                      This miniapp showcases two census types, but the DAVINCI Protocol is designed to be compatible
+                      with a wide range of census types and authentication methods. Censuses are based on snapshots that
+                      are automatically updated every hour.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <RadioGroup
+                value={formData.censusType}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    censusType: value,
+                    // Reset weighted voting when switching away from ethereum-wallets
+                    useWeightedVoting: value === 'ethereum-wallets' ? formData.useWeightedVoting : false,
+                  })
+                }
+              >
+                <div className='space-y-2'>
+                  <div className='flex items-center space-x-2'>
+                    <RadioGroupItem
+                      value='custom-addresses'
+                      id='custom-addresses'
+                      className='border-davinci-callout-border'
+                    />
+                    <Label htmlFor='custom-addresses' className='text-davinci-black-alt'>
+                      Custom Addresses
+                    </Label>
+                  </div>
+                  {formData.censusType === 'custom-addresses' && (
+                    <div className='ml-6 bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border space-y-3'>
+                      <CustomAddressesManager
+                        addresses={formData.customAddresses}
+                        setAddresses={(newAddresses) =>
+                          setFormData((prev) => ({ ...prev, customAddresses: newAddresses }))
+                        }
+                      />
+                    </div>
+                  )}
+
+                  <div className='flex items-center space-x-2'>
+                    <RadioGroupItem
+                      value='ethereum-wallets'
+                      id='ethereum-wallets'
+                      className='border-davinci-callout-border'
+                    />
+                    <Label htmlFor='ethereum-wallets' className='text-davinci-black-alt'>
+                      Prebuilt censuses
+                    </Label>
+                  </div>
+                  {formData.censusType === 'ethereum-wallets' && (
+                    <Snapshots
+                      snapshots={snapshots || []}
+                      isLoading={isLoadingSnapshot}
+                      isError={isSnapshotError}
+                      selectedCensusRoot={formData.selectedCensusRoot}
+                      onSnapshotSelect={(censusRoot) =>
+                        setFormData((prev) => ({ ...prev, selectedCensusRoot: censusRoot }))
+                      }
+                    />
+                  )}
+                </div>
+              </RadioGroup>
+            </div>
 
             <Separator className='bg-davinci-callout-border' />
 
@@ -622,112 +726,83 @@ export function CreateVoteForm() {
               {formData.votingMethod === ElectionResultsTypeNames.QUADRATIC && (
                 <div className='bg-davinci-digital-highlight p-4 rounded-lg space-y-4 border border-davinci-callout-border'>
                   <h4 className='font-medium text-davinci-black-alt'>Quadratic Voting Configuration</h4>
-                  <div>
-                    <Label htmlFor='credits' className='text-davinci-black-alt'>
-                      Credits per Voter
-                    </Label>
-                    <Input
-                      id='credits'
-                      type='number'
-                      min='1'
-                      max='256'
-                      value={formData.quadraticCredits}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          quadraticCredits: e.target.value,
-                        })
-                      }
-                      className='border-davinci-callout-border'
-                    />
-                  </div>
-                  <p className='text-sm text-davinci-black-alt/80'>
-                    Each voter will receive {formData.quadraticCredits} credits to allocate across choices. The cost to
-                    vote increases quadratically (1 vote = 1 credit, 2 votes = 4 credits, etc.).
-                  </p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Section 2: Vote Configuration */}
-        <Card className='border-davinci-callout-border'>
-          <CardHeader className='bg-davinci-paper-base'>
-            <CardTitle className='flex items-center gap-2 text-davinci-black-alt'>
-              <Users className='w-5 h-5' />
-              2. Vote Configuration
-            </CardTitle>
-            <CardDescription className='text-davinci-black-alt/70'>
-              Configure voter eligibility and voting duration
-            </CardDescription>
-          </CardHeader>
-          <CardContent className='space-y-6 pt-6 bg-davinci-text-base'>
-            <div className='space-y-4'>
-              <div className='flex items-center gap-2'>
-                <Label className='text-davinci-black-alt'>Census Type</Label>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <HelpCircle className='w-4 h-4 text-davinci-black-alt/60' />
-                  </TooltipTrigger>
-                  <TooltipContent className='bg-davinci-paper-base text-davinci-black-alt border-davinci-callout-border max-w-xs'>
-                    <p>
-                      This miniapp showcases two census types, but the DAVINCI Protocol is designed to be compatible
-                      with a wide range of census types and authentication methods. Censuses are based on snapshots that
-                      are automatically updated every hour.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <RadioGroup
-                value={formData.censusType}
-                onValueChange={(value) => setFormData({ ...formData, censusType: value })}
-              >
-                <div className='space-y-2'>
-                  <div className='flex items-center space-x-2'>
-                    <RadioGroupItem
-                      value='custom-addresses'
-                      id='custom-addresses'
-                      className='border-davinci-callout-border'
-                    />
-                    <Label htmlFor='custom-addresses' className='text-davinci-black-alt'>
-                      Custom Addresses
-                    </Label>
-                  </div>
-                  {formData.censusType === 'custom-addresses' && (
-                    <div className='ml-6 bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border space-y-3'>
-                      <CustomAddressesManager
-                        addresses={formData.customAddresses}
-                        setAddresses={(newAddresses) =>
-                          setFormData((prev) => ({ ...prev, customAddresses: newAddresses }))
+                  {/* Weighted voting option for dynamic censuses with proportional strategy */}
+                  {formData.censusType === 'ethereum-wallets' &&
+                    (() => {
+                      const selectedSnapshot = formData.selectedCensusRoot
+                        ? snapshots?.find((s) => s.censusRoot === formData.selectedCensusRoot)
+                        : snapshots?.[0]
+                      return selectedSnapshot?.weightStrategy === 'proportional'
+                    })() && (
+                      <div className='space-y-3'>
+                        <div className='flex items-center space-x-2'>
+                          <Checkbox
+                            id='weighted-voting'
+                            checked={formData.useWeightedVoting}
+                            onCheckedChange={(checked) =>
+                              setFormData({
+                                ...formData,
+                                useWeightedVoting: checked === true,
+                              })
+                            }
+                          />
+                          <Label htmlFor='weighted-voting' className='text-davinci-black-alt'>
+                            Use weighted voting (based on snapshot balances)
+                          </Label>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <HelpCircle className='w-4 h-4 text-davinci-black-alt/60' />
+                            </TooltipTrigger>
+                            <TooltipContent className='bg-davinci-paper-base text-davinci-black-alt border-davinci-callout-border max-w-xs'>
+                              <p>
+                                When enabled, voting power is determined by token balances from the snapshot instead of
+                                manually assigned credits. This creates proportional representation based on holdings.
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+
+                        <div className='bg-davinci-soft-neutral/20 p-3 rounded border border-davinci-callout-border'>
+                          <p className='text-sm text-davinci-black-alt/70'>
+                            {formData.useWeightedVoting
+                              ? 'Voting power will be determined by token balances from the selected snapshot. Voters with larger balances will have proportionally more voting credits.'
+                              : 'All voters will receive the same number of credits regardless of their token balances.'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Credits configuration - only show when not using weighted voting */}
+                  {!formData.useWeightedVoting && (
+                    <div>
+                      <Label htmlFor='credits' className='text-davinci-black-alt'>
+                        Credits per Voter
+                      </Label>
+                      <Input
+                        id='credits'
+                        type='number'
+                        min='1'
+                        max='256'
+                        value={formData.quadraticCredits}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            quadraticCredits: e.target.value,
+                          })
                         }
+                        className='border-davinci-callout-border'
                       />
                     </div>
                   )}
 
-                  <div className='flex items-center space-x-2'>
-                    <RadioGroupItem
-                      value='ethereum-wallets'
-                      id='ethereum-wallets'
-                      className='border-davinci-callout-border'
-                    />
-                    <Label htmlFor='ethereum-wallets' className='text-davinci-black-alt'>
-                      Prebuilt censuses
-                    </Label>
-                  </div>
-                  {formData.censusType === 'ethereum-wallets' && (
-                    <Snapshots
-                      snapshots={snapshots || []}
-                      isLoading={isLoadingSnapshot}
-                      isError={isSnapshotError}
-                      selectedCensusRoot={formData.selectedCensusRoot}
-                      onSnapshotSelect={(censusRoot) =>
-                        setFormData((prev) => ({ ...prev, selectedCensusRoot: censusRoot }))
-                      }
-                    />
-                  )}
+                  <p className='text-sm text-davinci-black-alt/80'>
+                    {formData.useWeightedVoting
+                      ? 'Voting power is derived from token balances. The cost to vote increases quadratically (1 vote = 1 credit, 2 votes = 4 credits, etc.).'
+                      : `Each voter will receive ${formData.quadraticCredits} credits to allocate across choices. The cost to vote increases quadratically (1 vote = 1 credit, 2 votes = 4 credits, etc.).`}
+                  </p>
                 </div>
-              </RadioGroup>
+              )}
             </div>
 
             <Separator className='bg-davinci-callout-border' />
@@ -1028,12 +1103,16 @@ const generateBallotMode = (election: ElectionMetadata, form: Purosesu): BallotM
     case ElectionResultsTypeNames.QUADRATIC:
       return {
         maxCount: election.questions[0].choices.length,
-        maxValue: (Math.floor(Math.sqrt(Number(form.quadraticCredits))) + 1).toString(),
+        maxValue: form.useWeightedVoting
+          ? maxValue // Use maximum when weighted (will be limited by individual voter's weight)
+          : (Math.floor(Math.sqrt(Number(form.quadraticCredits))) + 1).toString(),
         minValue: '0',
         forceUniqueness: false,
-        costFromWeight: false,
+        costFromWeight: form.useWeightedVoting, // Use weight from census when weighted voting is enabled
         costExponent: 2,
-        maxTotalCost: form.quadraticCredits,
+        maxTotalCost: form.useWeightedVoting
+          ? maxValue // When weighted, max cost is determined by voter's actual weight
+          : form.quadraticCredits,
         minTotalCost: '0',
       }
   }
