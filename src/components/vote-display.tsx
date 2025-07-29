@@ -4,6 +4,7 @@ import {
   ProcessStatus,
   VocdoniApiService,
   type BallotProofInputs,
+  type CensusProof,
   type GetProcessResponse,
   type VoteBallot,
   type VoteRequest,
@@ -13,6 +14,7 @@ import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { BarChart3, CheckCircle, Clock, Diamond, Lock, Minus, Plus, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { PostVoteModal } from '~components/post-vote-modal'
 import { Badge } from '~components/ui/badge'
 import { Button } from '~components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
@@ -22,7 +24,6 @@ import { Label } from '~components/ui/label'
 import { RadioGroup, RadioGroupItem } from '~components/ui/radio-group'
 import { VoteProgressTracker } from '~components/vote-progress-tracker'
 import { VotingModal } from '~components/voting-modal'
-import { PostVoteModal } from '~components/post-vote-modal'
 import { usePersistedVote } from '~hooks/use-persisted-vote'
 import { useProcessQuery } from '~hooks/use-process-query'
 import { useUnifiedProvider } from '~hooks/use-unified-provider'
@@ -41,7 +42,11 @@ interface VotingMethod {
   credits?: number
 }
 
-function getVotingMethod(process: GetProcessResponse, meta: ElectionMetadata): VotingMethod {
+function getVotingMethod(
+  process: GetProcessResponse,
+  meta: ElectionMetadata,
+  censusProof?: CensusProof | null
+): VotingMethod {
   const { type } = meta
   switch (type.name) {
     case ElectionResultsTypeNames.MULTIPLE_CHOICE:
@@ -50,11 +55,17 @@ function getVotingMethod(process: GetProcessResponse, meta: ElectionMetadata): V
         min: Number(process.ballotMode.minTotalCost) || 1,
         max: Number(process.ballotMode.maxTotalCost) || 2,
       }
-    case ElectionResultsTypeNames.QUADRATIC:
+    case ElectionResultsTypeNames.QUADRATIC: {
+      // For weighted quadratic voting, use the user's census proof weight as total credits
+      const credits =
+        process.ballotMode.costFromWeight && censusProof
+          ? Number(censusProof.weight)
+          : Number(process.ballotMode.maxTotalCost) || 100
       return {
         type: type.name,
-        credits: Number(process.ballotMode.maxTotalCost) || 100,
+        credits,
       }
+    }
     default:
       return { type: ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION }
   }
@@ -88,7 +99,7 @@ export function VoteDisplay() {
 
   // Initialize quadratic votes
   useEffect(() => {
-    const votingMethod = getVotingMethod(process, meta)
+    const votingMethod = getVotingMethod(process, meta, censusProof)
     if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
       const initialVotes: QuadraticVote = {}
       meta.questions[0].choices.forEach((choice) => {
@@ -96,7 +107,7 @@ export function VoteDisplay() {
       })
       setQuadraticVotes(initialVotes)
     }
-  }, [meta.questions, meta.type.name, meta, process])
+  }, [meta.questions, meta.type.name, meta, process, censusProof])
 
   // Calculate quadratic cost
   const calculateQuadraticCost = (votes: number): number => {
@@ -110,7 +121,7 @@ export function VoteDisplay() {
 
   // Get remaining credits
   const getRemainingCredits = (): number => {
-    const votingMethod = getVotingMethod(process, meta)
+    const votingMethod = getVotingMethod(process, meta, censusProof)
     return (votingMethod.credits || 100) - getTotalCreditsUsed()
   }
 
@@ -157,10 +168,10 @@ export function VoteDisplay() {
 
       const fieldValues =
         meta.type.name === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION
-          ? getBinaryArray([selectedChoice], censusProof.weight)
+          ? getBinaryArray([selectedChoice], process.ballotMode.costFromWeight ? censusProof.weight : '1')
           : meta.type.name === ElectionResultsTypeNames.QUADRATIC
             ? padTo(Object.values(quadraticVotes))
-            : getBinaryArray(selectedChoices, censusProof.weight)
+            : getBinaryArray(selectedChoices, process.ballotMode.costFromWeight ? censusProof.weight : '1')
 
       const inputs: BallotProofInputs = {
         address: address,
@@ -237,7 +248,7 @@ export function VoteDisplay() {
     // Clear selections after voting
     setSelectedChoice('')
     setSelectedChoices([])
-    const votingMethod = getVotingMethod(process, meta)
+    const votingMethod = getVotingMethod(process, meta, censusProof)
     if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
       const resetVotes: QuadraticVote = {}
       meta.questions[0].choices.forEach((choice) => {
@@ -252,7 +263,7 @@ export function VoteDisplay() {
     // Reset form to allow voting again
     setSelectedChoice('')
     setSelectedChoices([])
-    const votingMethod = getVotingMethod(process, meta)
+    const votingMethod = getVotingMethod(process, meta, censusProof)
     if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
       const resetVotes: QuadraticVote = {}
       meta.questions[0].choices.forEach((choice) => {
@@ -264,7 +275,7 @@ export function VoteDisplay() {
 
   // Validation for different voting methods
   const isVoteValid = (): boolean => {
-    const votingMethod = getVotingMethod(process, meta)
+    const votingMethod = getVotingMethod(process, meta, censusProof)
     switch (votingMethod.type) {
       case ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION:
         return selectedChoice !== ''
@@ -297,7 +308,7 @@ export function VoteDisplay() {
         (total, votes) => total + calculateQuadraticCost(votes),
         0
       )
-      const votingMethod = getVotingMethod(process, meta)
+      const votingMethod = getVotingMethod(process, meta, censusProof)
       const totalCredits = votingMethod.credits || 100
 
       if (totalCost <= totalCredits) {
@@ -310,7 +321,7 @@ export function VoteDisplay() {
 
   const getVoteSelectionSummary = () => {
     const choices = meta.questions[0].choices
-    const votingMethod = getVotingMethod(process, meta)
+    const votingMethod = getVotingMethod(process, meta, censusProof)
     switch (votingMethod.type) {
       case ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION:
         return choices.find((choice) => choice.value.toString() === selectedChoice)?.title.default || ''
@@ -331,7 +342,7 @@ export function VoteDisplay() {
     }
   }
 
-  const votingMethod = getVotingMethod(process, meta)
+  const votingMethod = getVotingMethod(process, meta, censusProof)
   const results = process.result || []
 
   return (
@@ -601,12 +612,14 @@ export function VoteDisplay() {
               <div className='bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border'>
                 <h4 className='font-medium text-davinci-black-alt mb-2'>Quadratic Voting</h4>
                 <p className='text-sm text-davinci-black-alt/80 mb-2'>
-                  You have {votingMethod.credits} credits to distribute. The cost increases quadratically (1 vote = 1
-                  credit, 2 votes = 4 credits, etc.).
+                  You have {(votingMethod.credits || 0).toLocaleString()} credits to distribute. The cost increases
+                  quadratically (1 vote = 1 credit, 2 votes = 4 credits, etc.).
                 </p>
                 <div className='flex justify-between text-sm'>
-                  <span className='text-davinci-black-alt/80'>Credits used: {getTotalCreditsUsed()}</span>
-                  <span className='text-davinci-black-alt/80'>Remaining: {getRemainingCredits()}</span>
+                  <span className='text-davinci-black-alt/80'>
+                    Credits used: {getTotalCreditsUsed().toLocaleString()}
+                  </span>
+                  <span className='text-davinci-black-alt/80'>Remaining: {getRemainingCredits().toLocaleString()}</span>
                 </div>
               </div>
             )}
@@ -786,7 +799,8 @@ export function VoteDisplay() {
                 <ConnectWalletButtonMiniApp className='w-full' />
                 <div className='text-center'>
                   <p className='text-xs text-davinci-black-alt/60'>
-                    <strong>Note:</strong> Some wallets like Rainbow and others that don't accept custom networks may not work properly.
+                    <strong>Note:</strong> Some wallets like Rainbow and others that don't accept custom networks may
+                    not work properly.
                   </p>
                 </div>
                 <div className='bg-davinci-digital-highlight p-3 rounded-lg border border-davinci-callout-border'>
@@ -893,10 +907,7 @@ export function VoteDisplay() {
       />
 
       {/* Post Vote Modal */}
-      <PostVoteModal
-        isOpen={showPostVoteModal}
-        onClose={() => setShowPostVoteModal(false)}
-      />
+      <PostVoteModal isOpen={showPostVoteModal} onClose={() => setShowPostVoteModal(false)} />
     </div>
   )
 }

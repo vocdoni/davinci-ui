@@ -722,6 +722,65 @@ export function CreateVoteForm() {
                 </div>
               )}
 
+              {/* Single Choice Voting Configuration */}
+              {formData.votingMethod === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION && (
+                <div className='bg-davinci-digital-highlight p-4 rounded-lg space-y-4 border border-davinci-callout-border'>
+                  <h4 className='font-medium text-davinci-black-alt'>Single Choice Configuration</h4>
+
+                  {/* Weighted voting option for dynamic censuses with proportional strategy */}
+                  {formData.censusType === 'ethereum-wallets' &&
+                    (() => {
+                      const selectedSnapshot = formData.selectedCensusRoot
+                        ? snapshots?.find((s) => s.censusRoot === formData.selectedCensusRoot)
+                        : snapshots?.[0]
+                      return selectedSnapshot?.weightStrategy === 'proportional'
+                    })() && (
+                      <div className='space-y-3'>
+                        <div className='flex items-center space-x-2'>
+                          <Checkbox
+                            id='weighted-voting'
+                            checked={formData.useWeightedVoting}
+                            onCheckedChange={(checked) =>
+                              setFormData({
+                                ...formData,
+                                useWeightedVoting: checked === true,
+                              })
+                            }
+                          />
+                          <Label htmlFor='weighted-voting' className='text-davinci-black-alt'>
+                            Use weighted voting (based on snapshot balances)
+                          </Label>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <HelpCircle className='w-4 h-4 text-davinci-black-alt/60' />
+                            </TooltipTrigger>
+                            <TooltipContent className='bg-davinci-paper-base text-davinci-black-alt border-davinci-callout-border max-w-xs'>
+                              <p>
+                                When enabled, voting power is determined by token balances from the snapshot. This
+                                creates proportional representation based on holdings.
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+
+                        <div className='bg-davinci-soft-neutral/20 p-3 rounded border border-davinci-callout-border'>
+                          <p className='text-sm text-davinci-black-alt/70'>
+                            {formData.useWeightedVoting
+                              ? 'Voting power will be determined by token balances from the selected snapshot. Voters with larger balances will have proportionally more voting weight.'
+                              : 'All voters will have equal voting power regardless of their token balances.'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                  <p className='text-sm text-davinci-black-alt/80'>
+                    {formData.useWeightedVoting
+                      ? 'Each voter can select one choice, but their voting power is proportional to their token balance from the snapshot.'
+                      : 'Each voter can select one choice with equal voting power.'}
+                  </p>
+                </div>
+              )}
+
               {/* Quadratic Voting Configuration */}
               {formData.votingMethod === ElectionResultsTypeNames.QUADRATIC && (
                 <div className='bg-davinci-digital-highlight p-4 rounded-lg space-y-4 border border-davinci-callout-border'>
@@ -1084,7 +1143,7 @@ const generateBallotMode = (election: ElectionMetadata, form: Purosesu): BallotM
         maxValue,
         minValue: '0',
         forceUniqueness: false,
-        costFromWeight: true,
+        costFromWeight: form.useWeightedVoting,
         costExponent: 1,
         maxTotalCost: election.questions[0].choices.length.toString(),
         minTotalCost: '0',
@@ -1104,14 +1163,14 @@ const generateBallotMode = (election: ElectionMetadata, form: Purosesu): BallotM
       return {
         maxCount: election.questions[0].choices.length,
         maxValue: form.useWeightedVoting
-          ? maxValue // Use maximum when weighted (will be limited by individual voter's weight)
+          ? Math.floor(Math.sqrt(Number(maxValue))).toString() // Use maximum when weighted (will be limited by individual voter's weight)
           : (Math.floor(Math.sqrt(Number(form.quadraticCredits))) + 1).toString(),
         minValue: '0',
         forceUniqueness: false,
         costFromWeight: form.useWeightedVoting, // Use weight from census when weighted voting is enabled
         costExponent: 2,
         maxTotalCost: form.useWeightedVoting
-          ? maxValue // When weighted, max cost is determined by voter's actual weight
+          ? '0' // When weighted, max cost is determined by voter's actual weight
           : form.quadraticCredits,
         minTotalCost: '0',
       }
