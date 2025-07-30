@@ -21,7 +21,8 @@ DAVINCI is a decentralized voting protocol by [Vocdoni](https://vocdoni.io) that
 - 🔐 **Web3 Ready**: Seamless wallet connections with WalletConnect
 - ⚡ **Lightning Fast**: Built with Vite for optimal performance
 - 🎨 **Accessible**: Radix UI components for everyone
-
+- 🗳️ **Flexible Voting Methods:** The UI currently supports Single Choice, Multiple Choice, Quadratic Voting, and Weighted Voting.
+- 🧾 **Diverse Census Types:** The UI currently allows the creation of votes with eligible voters composed of active Ethereum wallets, ENS-based identities, and DAOs like The Haberdashery and The Yellow Collective.
 ## 🚀 Quick Start
 
 ### Prerequisites
