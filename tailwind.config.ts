@@ -4,7 +4,7 @@ import animate from 'tailwindcss-animate'
 export default {
   darkMode: ['class'],
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
-  safelist: ['bg-blue-200', 'bg-green-200', 'bg-yellow-200'],
+  safelist: ['bg-blue-200', 'bg-green-200', 'bg-yellow-200', 'bg-purple-200'],
   theme: {
     extend: {
       fontFamily: {

@@ -14,12 +14,14 @@ const typesNames = {
   [ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION]: 'Single choice',
   [ElectionResultsTypeNames.MULTIPLE_CHOICE]: 'Multichoice',
   [ElectionResultsTypeNames.QUADRATIC]: 'Quadratic',
+  [ElectionResultsTypeNames.BUDGET]: 'Budget',
 } as Record<ElectionResultsTypeNames, string>
 
 const typesColors = {
   [ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION]: 'blue-200',
   [ElectionResultsTypeNames.MULTIPLE_CHOICE]: 'green-200',
   [ElectionResultsTypeNames.QUADRATIC]: 'yellow-200',
+  [ElectionResultsTypeNames.BUDGET]: 'purple-200',
 } as Record<ElectionResultsTypeNames, string>
 
 function ProcessRow({ id, onDataLoaded }: { id: string; onDataLoaded?: (id: string, data: ProcessSortData) => void }) {

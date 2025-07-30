@@ -66,12 +66,27 @@ function getVotingMethod(
         credits,
       }
     }
+    case ElectionResultsTypeNames.BUDGET: {
+      // For weighted budget voting, use the user's census proof weight as total credits
+      const credits =
+        process.ballotMode.costFromWeight && censusProof
+          ? Number(censusProof.weight)
+          : Number(process.ballotMode.maxTotalCost) || 100
+      return {
+        type: type.name,
+        credits,
+      }
+    }
     default:
       return { type: ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION }
   }
 }
 
 interface QuadraticVote {
+  [choiceId: string]: number
+}
+
+interface BudgetVote {
   [choiceId: string]: number
 }
 
@@ -90,6 +105,7 @@ export function VoteDisplay() {
   const [selectedChoice, setSelectedChoice] = useState('')
   const [selectedChoices, setSelectedChoices] = useState<string[]>([])
   const [quadraticVotes, setQuadraticVotes] = useState<QuadraticVote>({})
+  const [budgetVotes, setBudgetVotes] = useState<BudgetVote>({})
   const [showVotingModal, setShowVotingModal] = useState(false)
   const [showPostVoteModal, setShowPostVoteModal] = useState(false)
   const [isVoting, setIsVoting] = useState(false)
@@ -97,7 +113,7 @@ export function VoteDisplay() {
   const { voteId, trackVote, resetVote } = usePersistedVote(process.id)
   const voteEnded = process.status === ProcessStatus.ENDED || process.status === ProcessStatus.RESULTS
 
-  // Initialize quadratic votes
+  // Initialize quadratic and budget votes
   useEffect(() => {
     const votingMethod = getVotingMethod(process, meta, censusProof)
     if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
@@ -106,6 +122,12 @@ export function VoteDisplay() {
         initialVotes[choice.value.toString()] = 0
       })
       setQuadraticVotes(initialVotes)
+    } else if (votingMethod.type === ElectionResultsTypeNames.BUDGET) {
+      const initialVotes: BudgetVote = {}
+      meta.questions[0].choices.forEach((choice) => {
+        initialVotes[choice.value.toString()] = 0
+      })
+      setBudgetVotes(initialVotes)
     }
   }, [meta.questions, meta.type.name, meta, process, censusProof])
 
@@ -114,9 +136,20 @@ export function VoteDisplay() {
     return votes * votes
   }
 
+  // Calculate budget cost (linear)
+  const calculateBudgetCost = (votes: number): number => {
+    return votes
+  }
+
   // Calculate total credits used
   const getTotalCreditsUsed = (): number => {
-    return Object.values(quadraticVotes).reduce((total, votes) => total + calculateQuadraticCost(votes), 0)
+    const votingMethod = getVotingMethod(process, meta, censusProof)
+    if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
+      return Object.values(quadraticVotes).reduce((total, votes) => total + calculateQuadraticCost(votes), 0)
+    } else if (votingMethod.type === ElectionResultsTypeNames.BUDGET) {
+      return Object.values(budgetVotes).reduce((total, votes) => total + calculateBudgetCost(votes), 0)
+    }
+    return 0
   }
 
   // Get remaining credits
@@ -171,7 +204,9 @@ export function VoteDisplay() {
           ? getBinaryArray([selectedChoice], process.ballotMode.costFromWeight ? censusProof.weight : '1')
           : meta.type.name === ElectionResultsTypeNames.QUADRATIC
             ? padTo(Object.values(quadraticVotes))
-            : getBinaryArray(selectedChoices, process.ballotMode.costFromWeight ? censusProof.weight : '1')
+            : meta.type.name === ElectionResultsTypeNames.BUDGET
+              ? padTo(Object.values(budgetVotes))
+              : getBinaryArray(selectedChoices, process.ballotMode.costFromWeight ? censusProof.weight : '1')
 
       const inputs: BallotProofInputs = {
         address: address,
@@ -255,6 +290,12 @@ export function VoteDisplay() {
         resetVotes[choice.value.toString()] = 0
       })
       setQuadraticVotes(resetVotes)
+    } else if (votingMethod.type === ElectionResultsTypeNames.BUDGET) {
+      const resetVotes: BudgetVote = {}
+      meta.questions[0].choices.forEach((choice) => {
+        resetVotes[choice.value.toString()] = 0
+      })
+      setBudgetVotes(resetVotes)
     }
   }
 
@@ -282,6 +323,8 @@ export function VoteDisplay() {
       case ElectionResultsTypeNames.MULTIPLE_CHOICE:
         return selectedChoices.length >= (votingMethod.min || 1) && selectedChoices.length <= (votingMethod.max || 2)
       case ElectionResultsTypeNames.QUADRATIC:
+        return getTotalCreditsUsed() > 0 && getRemainingCredits() >= 0
+      case ElectionResultsTypeNames.BUDGET:
         return getTotalCreditsUsed() > 0 && getRemainingCredits() >= 0
       default:
         return false
@@ -319,6 +362,25 @@ export function VoteDisplay() {
     })
   }
 
+  // Handle budget vote change
+  const handleBudgetVoteChange = (choiceId: string, change: number) => {
+    setBudgetVotes((prev) => {
+      const newVotes = Math.max(0, (prev[choiceId] || 0) + change)
+      const newBudgetVotes = { ...prev, [choiceId]: newVotes }
+
+      // Check if this would exceed available credits
+      const totalCost = Object.values(newBudgetVotes).reduce((total, votes) => total + calculateBudgetCost(votes), 0)
+      const votingMethod = getVotingMethod(process, meta, censusProof)
+      const totalCredits = votingMethod.credits || 100
+
+      if (totalCost <= totalCredits) {
+        return newBudgetVotes
+      }
+
+      return prev // Don't update if it would exceed credits
+    })
+  }
+
   const getVoteSelectionSummary = () => {
     const choices = meta.questions[0].choices
     const votingMethod = getVotingMethod(process, meta, censusProof)
@@ -331,6 +393,14 @@ export function VoteDisplay() {
           .join(', ')
       case ElectionResultsTypeNames.QUADRATIC:
         return Object.entries(quadraticVotes)
+          .filter(([, votes]) => votes > 0)
+          .map(([choiceId, votes]) => {
+            const choice = choices.find((c) => c.value.toString() === choiceId)
+            return `${choice?.title.default}: ${votes} vote${votes !== 1 ? 's' : ''}`
+          })
+          .join(', ')
+      case ElectionResultsTypeNames.BUDGET:
+        return Object.entries(budgetVotes)
           .filter(([, votes]) => votes > 0)
           .map(([choiceId, votes]) => {
             const choice = choices.find((c) => c.value.toString() === choiceId)
@@ -612,8 +682,24 @@ export function VoteDisplay() {
               <div className='bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border'>
                 <h4 className='font-medium text-davinci-black-alt mb-2'>Quadratic Voting</h4>
                 <p className='text-sm text-davinci-black-alt/80 mb-2'>
-                  You have {(votingMethod.credits || 0).toLocaleString()} credits to distribute. The cost increases
-                  quadratically (1 vote = 1 credit, 2 votes = 4 credits, etc.).
+                  You have {(votingMethod.credits || 0).toLocaleString()} credits to distribute. The cost of voting the
+                  same option increases quadratically (i.e. assign 3 credits to the same option costs 3²=9 credits).
+                </p>
+                <div className='flex justify-between text-sm'>
+                  <span className='text-davinci-black-alt/80'>
+                    Credits used: {getTotalCreditsUsed().toLocaleString()}
+                  </span>
+                  <span className='text-davinci-black-alt/80'>Remaining: {getRemainingCredits().toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+
+            {votingMethod.type === ElectionResultsTypeNames.BUDGET && (
+              <div className='bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border'>
+                <h4 className='font-medium text-davinci-black-alt mb-2'>Budget Voting</h4>
+                <p className='text-sm text-davinci-black-alt/80 mb-2'>
+                  You have {(votingMethod.credits || 0).toLocaleString()} credits to distribute. Each credit equals one
+                  vote.
                 </p>
                 <div className='flex justify-between text-sm'>
                   <span className='text-davinci-black-alt/80'>
@@ -781,6 +867,77 @@ export function VoteDisplay() {
                             size='icon'
                             onClick={() => handleQuadraticVoteChange(choice.value.toString(), 1)}
                             disabled={!isConnected || getRemainingCredits() < calculateQuadraticCost(votes + 1) - cost}
+                            className='h-8 w-8 border-davinci-callout-border'
+                          >
+                            <Plus className='w-3 h-3' />
+                          </Button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Budget Voting */}
+              {votingMethod.type === ElectionResultsTypeNames.BUDGET && (
+                <div className='space-y-4'>
+                  {meta.questions[0].choices.map((choice) => {
+                    const votes = budgetVotes[choice.value.toString()] || 0
+                    const cost = calculateBudgetCost(votes)
+
+                    return (
+                      <div
+                        key={choice.value}
+                        className={`p-4 rounded-lg border border-davinci-callout-border bg-davinci-text-base ${
+                          !isConnected ? 'opacity-70' : ''
+                        }`}
+                      >
+                        <div className='flex items-start justify-between mb-3'>
+                          <Label
+                            className={`flex-1 leading-relaxed pr-4 ${
+                              !isConnected ? 'text-davinci-black-alt/60' : 'text-davinci-black-alt'
+                            }`}
+                          >
+                            {choice.title.default}
+                          </Label>
+                          <div className='text-right'>
+                            <p className='text-sm font-medium text-davinci-black-alt'>{votes} votes</p>
+                            <p className='text-xs text-davinci-black-alt/60'>{cost} credits</p>
+                          </div>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            size='icon'
+                            onClick={() => handleBudgetVoteChange(choice.value.toString(), -1)}
+                            disabled={!isConnected || votes === 0}
+                            className='h-8 w-8 border-davinci-callout-border'
+                          >
+                            <Minus className='w-3 h-3' />
+                          </Button>
+                          <div className='flex-1 text-center'>
+                            <Input
+                              type='number'
+                              min='0'
+                              value={votes}
+                              onChange={(e) => {
+                                const newVotes = Math.max(0, Number(e.target.value) || 0)
+                                setBudgetVotes((prev) => ({
+                                  ...prev,
+                                  [choice.value.toString()]: newVotes,
+                                }))
+                              }}
+                              disabled={!isConnected}
+                              className='text-center border-davinci-callout-border h-8'
+                            />
+                          </div>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            size='icon'
+                            onClick={() => handleBudgetVoteChange(choice.value.toString(), 1)}
+                            disabled={!isConnected || getRemainingCredits() < calculateBudgetCost(votes + 1) - cost}
                             className='h-8 w-8 border-davinci-callout-border'
                           >
                             <Plus className='w-3 h-3' />

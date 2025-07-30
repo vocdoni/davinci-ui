@@ -74,6 +74,7 @@ type Purosesu = {
   multipleChoiceMin: string
   multipleChoiceMax: string
   quadraticCredits: string
+  budgetCredits: string
   useWeightedVoting: boolean
   censusType: string
   duration: string
@@ -149,6 +150,7 @@ export function CreateVoteForm() {
     multipleChoiceMin: '1',
     multipleChoiceMax: '2',
     quadraticCredits: '100',
+    budgetCredits: '100',
     useWeightedVoting: false,
     censusType: '',
     duration: '',
@@ -668,6 +670,24 @@ export function CreateVoteForm() {
                     </TooltipContent>
                   </Tooltip>
                 </div>
+                <div className='flex items-center space-x-2'>
+                  <RadioGroupItem
+                    value={ElectionResultsTypeNames.BUDGET}
+                    id='budget-voting'
+                    className='border-davinci-callout-border'
+                  />
+                  <Label htmlFor='budget-voting' className='text-davinci-black-alt'>
+                    Budget Voting
+                  </Label>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <HelpCircle className='w-4 h-4 text-davinci-black-alt/60' />
+                    </TooltipTrigger>
+                    <TooltipContent className='bg-davinci-paper-base text-davinci-black-alt border-davinci-callout-border'>
+                      <p>Voters allocate credits linearly (1 credit = 1 vote)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
               </RadioGroup>
 
               {/* Multiple Choice Configuration */}
@@ -859,6 +879,88 @@ export function CreateVoteForm() {
                     {formData.useWeightedVoting
                       ? 'Voting power is derived from token balances. The cost to vote increases quadratically (1 vote = 1 credit, 2 votes = 4 credits, etc.).'
                       : `Each voter will receive ${formData.quadraticCredits} credits to allocate across choices. The cost to vote increases quadratically (1 vote = 1 credit, 2 votes = 4 credits, etc.).`}
+                  </p>
+                </div>
+              )}
+
+              {/* Budget Voting Configuration */}
+              {formData.votingMethod === ElectionResultsTypeNames.BUDGET && (
+                <div className='bg-davinci-digital-highlight p-4 rounded-lg space-y-4 border border-davinci-callout-border'>
+                  <h4 className='font-medium text-davinci-black-alt'>Budget Voting Configuration</h4>
+
+                  {/* Weighted voting option for dynamic censuses with proportional strategy */}
+                  {formData.censusType === 'ethereum-wallets' &&
+                    (() => {
+                      const selectedSnapshot = formData.selectedCensusRoot
+                        ? snapshots?.find((s) => s.censusRoot === formData.selectedCensusRoot)
+                        : snapshots?.[0]
+                      return selectedSnapshot?.weightStrategy === 'proportional'
+                    })() && (
+                      <div className='space-y-3'>
+                        <div className='flex items-center space-x-2'>
+                          <Checkbox
+                            id='weighted-voting-budget'
+                            checked={formData.useWeightedVoting}
+                            onCheckedChange={(checked) =>
+                              setFormData({
+                                ...formData,
+                                useWeightedVoting: checked === true,
+                              })
+                            }
+                          />
+                          <Label htmlFor='weighted-voting-budget' className='text-davinci-black-alt'>
+                            Use weighted voting (based on snapshot balances)
+                          </Label>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <HelpCircle className='w-4 h-4 text-davinci-black-alt/60' />
+                            </TooltipTrigger>
+                            <TooltipContent className='bg-davinci-paper-base text-davinci-black-alt border-davinci-callout-border max-w-xs'>
+                              <p>
+                                When enabled, voting power is determined by token balances from the snapshot instead of
+                                manually assigned credits. This creates proportional representation based on holdings.
+                              </p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+
+                        <div className='bg-davinci-soft-neutral/20 p-3 rounded border border-davinci-callout-border'>
+                          <p className='text-sm text-davinci-black-alt/70'>
+                            {formData.useWeightedVoting
+                              ? 'Voting power will be determined by token balances from the selected snapshot. Voters with larger balances will have proportionally more voting credits.'
+                              : 'All voters will receive the same number of credits regardless of their token balances.'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Credits configuration - only show when not using weighted voting */}
+                  {!formData.useWeightedVoting && (
+                    <div>
+                      <Label htmlFor='budget-credits' className='text-davinci-black-alt'>
+                        Credits per Voter
+                      </Label>
+                      <Input
+                        id='budget-credits'
+                        type='number'
+                        min='1'
+                        max='256'
+                        value={formData.budgetCredits}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            budgetCredits: e.target.value,
+                          })
+                        }
+                        className='border-davinci-callout-border'
+                      />
+                    </div>
+                  )}
+
+                  <p className='text-sm text-davinci-black-alt/80'>
+                    {formData.useWeightedVoting
+                      ? 'Voting power is derived from token balances. Each credit equals one vote (1 credit = 1 vote, 2 credits = 2 votes, etc.).'
+                      : `Each voter will receive ${formData.budgetCredits} credits to allocate across choices. Each credit equals one vote (1 credit = 1 vote, 2 credits = 2 votes, etc.).`}
                   </p>
                 </div>
               )}
@@ -1172,6 +1274,21 @@ const generateBallotMode = (election: ElectionMetadata, form: Purosesu): BallotM
         maxTotalCost: form.useWeightedVoting
           ? '0' // When weighted, max cost is determined by voter's actual weight
           : form.quadraticCredits,
+        minTotalCost: '0',
+      }
+    case ElectionResultsTypeNames.BUDGET:
+      return {
+        maxCount: election.questions[0].choices.length,
+        maxValue: form.useWeightedVoting
+          ? maxValue // Use maximum when weighted (will be limited by individual voter's weight)
+          : form.budgetCredits,
+        minValue: '0',
+        forceUniqueness: false,
+        costFromWeight: form.useWeightedVoting, // Use weight from census when weighted voting is enabled
+        costExponent: 1, // Linear cost: 1 credit = 1 vote
+        maxTotalCost: form.useWeightedVoting
+          ? '0' // When weighted, max cost is determined by voter's actual weight
+          : form.budgetCredits,
         minTotalCost: '0',
       }
   }

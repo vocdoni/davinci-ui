@@ -40,6 +40,8 @@ export function VotingModal({
         return <CheckSquare className='w-5 h-5 text-green-500' />
       case ElectionResultsTypeNames.QUADRATIC:
         return <BarChart3 className='w-5 h-5 text-purple-500' />
+      case ElectionResultsTypeNames.BUDGET:
+        return <BarChart3 className='w-5 h-5 text-blue-500' />
       default:
         return <AlertTriangle className='w-5 h-5 text-orange-500' />
     }
@@ -53,6 +55,8 @@ export function VotingModal({
         return 'Confirm Multiple Choice Vote'
       case ElectionResultsTypeNames.QUADRATIC:
         return 'Confirm Quadratic Vote'
+      case ElectionResultsTypeNames.BUDGET:
+        return 'Confirm Budget Vote'
       default:
         return 'Confirm Your Vote'
     }
@@ -67,6 +71,8 @@ export function VotingModal({
       case ElectionResultsTypeNames.MULTIPLE_CHOICE:
         return 'Please review your multiple selections before submitting. You can change your vote later if needed.'
       case ElectionResultsTypeNames.QUADRATIC:
+        return 'Please review your credit allocation before submitting. You can change your vote later if needed.'
+      case ElectionResultsTypeNames.BUDGET:
         return 'Please review your credit allocation before submitting. You can change your vote later if needed.'
       default:
         return 'Please review your selection before submitting. You can change your vote later if needed.'

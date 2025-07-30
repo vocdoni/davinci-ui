@@ -55,6 +55,8 @@ export function VoteParameters({ voteData, processData }: VoteParametersProps) {
         return 'Multiple Choice'
       case ElectionResultsTypeNames.QUADRATIC:
         return 'Quadratic Voting'
+      case ElectionResultsTypeNames.BUDGET:
+        return 'Budget Voting'
       default:
         return 'Unknown'
     }
