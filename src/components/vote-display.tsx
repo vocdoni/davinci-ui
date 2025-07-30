@@ -495,7 +495,8 @@ export function VoteDisplay() {
                       .map((choice, index) => {
                         const result = results[choice.value] || '0'
                         const percentage =
-                          votingMethod.type === ElectionResultsTypeNames.QUADRATIC
+                          votingMethod.type === ElectionResultsTypeNames.QUADRATIC ||
+                          votingMethod.type === ElectionResultsTypeNames.BUDGET
                             ? (Number(result) / results.reduce((acc, val) => acc + (Number(val) || 0), 0)) * 100
                             : (Number(result) / Number(process.voteCount)) * 100 || 0
                         const votes = result || 0
