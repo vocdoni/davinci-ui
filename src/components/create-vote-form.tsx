@@ -80,6 +80,7 @@ type Purosesu = {
   duration: string
   durationUnit: DurationUnit
   customAddresses: string[]
+  customAddressWeights: string[]
   selectedCensusRoot?: string
 }
 
@@ -156,6 +157,7 @@ export function CreateVoteForm() {
     duration: '',
     durationUnit: 'minutes',
     customAddresses: address ? [address] : [],
+    customAddressWeights: address ? ['1'] : [],
   })
   const api = useVocdoniApi()
   const { data: snapshots, isLoading: isLoadingSnapshot, isError: isSnapshotError } = useSnapshots()
@@ -172,6 +174,17 @@ export function CreateVoteForm() {
       }
     }
   }, [formData.selectedCensusRoot, formData.censusType, formData.useWeightedVoting, snapshots])
+
+  // Switch away from multiple choice when weighted voting is enabled (for custom addresses)
+  useEffect(() => {
+    if (
+      formData.censusType === 'custom-addresses' &&
+      formData.useWeightedVoting &&
+      formData.votingMethod === ElectionResultsTypeNames.MULTIPLE_CHOICE
+    ) {
+      setFormData((prev) => ({ ...prev, votingMethod: ElectionResultsTypeNames.BUDGET }))
+    }
+  }, [formData.censusType, formData.useWeightedVoting, formData.votingMethod])
 
   const addChoice = () => {
     if (formData.choices.length < 8) {
@@ -267,9 +280,12 @@ export function CreateVoteForm() {
           const censusId = await api.createCensus()
 
           // Step 2: Add participants
-          const participants = formData.customAddresses.map((address) => ({
+          const participants = formData.customAddresses.map((address, index) => ({
             key: address,
-            weight: '1',
+            weight:
+              formData.useWeightedVoting && formData.customAddressWeights[index]
+                ? formData.customAddressWeights[index]
+                : '1',
           }))
           await api.addParticipants(censusId, participants)
           const censusRoot = await api.getCensusRoot(censusId)
@@ -562,8 +578,16 @@ export function CreateVoteForm() {
                     <div className='ml-6 bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border space-y-3'>
                       <CustomAddressesManager
                         addresses={formData.customAddresses}
+                        weights={formData.customAddressWeights}
+                        useWeightedVoting={formData.useWeightedVoting}
                         setAddresses={(newAddresses) =>
                           setFormData((prev) => ({ ...prev, customAddresses: newAddresses }))
+                        }
+                        setWeights={(newWeights) =>
+                          setFormData((prev) => ({ ...prev, customAddressWeights: newWeights }))
+                        }
+                        setUseWeightedVoting={(useWeighted) =>
+                          setFormData((prev) => ({ ...prev, useWeightedVoting: useWeighted }))
                         }
                       />
                     </div>
@@ -639,8 +663,12 @@ export function CreateVoteForm() {
                     value={ElectionResultsTypeNames.MULTIPLE_CHOICE}
                     id='multiple-choice'
                     className='border-davinci-callout-border'
+                    disabled={formData.censusType === 'custom-addresses' && formData.useWeightedVoting}
                   />
-                  <Label htmlFor='multiple-choice' className='text-davinci-black-alt'>
+                  <Label
+                    htmlFor='multiple-choice'
+                    className={`${formData.censusType === 'custom-addresses' && formData.useWeightedVoting ? 'text-davinci-black-alt/50' : 'text-davinci-black-alt'}`}
+                  >
                     Multiple Choice
                   </Label>
                   <Tooltip>
@@ -648,7 +676,11 @@ export function CreateVoteForm() {
                       <HelpCircle className='w-4 h-4 text-davinci-black-alt/60' />
                     </TooltipTrigger>
                     <TooltipContent className='bg-davinci-paper-base text-davinci-black-alt border-davinci-callout-border'>
-                      <p>Voters can select multiple options within specified limits</p>
+                      <p>
+                        {formData.censusType === 'custom-addresses' && formData.useWeightedVoting
+                          ? 'Multiple choice voting is not available with custom weighted addresses. Use budget voting instead for similar functionality.'
+                          : 'Voters can select multiple options within specified limits'}
+                      </p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -852,8 +884,9 @@ export function CreateVoteForm() {
                   )}
 
                   <p className='text-sm text-davinci-black-alt/80'>
-                    {!formData.useWeightedVoting &&
-                      `Each voter will receive ${formData.quadraticCredits} credits to allocate across choices. The cost to vote increases quadratically (1 vote = 1 credit, 2 votes = 4 credits, etc.).`}
+                    {!formData.useWeightedVoting
+                      ? `Each voter will receive ${formData.quadraticCredits} credits to allocate across choices. The cost to vote increases quadratically (1 vote = 1 credit, 2 votes = 4 credits, etc.).`
+                      : 'Credits are determined by the weight assigned to each address. The cost to vote increases quadratically (1 vote = 1 credit, 2 votes = 4 credits, etc.).'}
                   </p>
                 </div>
               )}
@@ -921,8 +954,9 @@ export function CreateVoteForm() {
                   )}
 
                   <p className='text-sm text-davinci-black-alt/80'>
-                    {!formData.useWeightedVoting &&
-                      `Each voter will receive ${formData.budgetCredits} credits to allocate across choices. Each credit equals one vote.`}
+                    {!formData.useWeightedVoting
+                      ? `Each voter will receive ${formData.budgetCredits} credits to allocate across choices. Each credit equals one vote.`
+                      : 'Credits are determined by the weight assigned to each address. Each credit equals one vote.'}
                   </p>
                 </div>
               )}
