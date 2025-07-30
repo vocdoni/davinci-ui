@@ -605,7 +605,7 @@ export function CreateVoteForm() {
                   </TooltipTrigger>
                   <TooltipContent className='bg-davinci-paper-base text-davinci-black-alt border-davinci-callout-border max-w-xs'>
                     <p>
-                      This miniapp offers 3 voting methods, but DAVINCI allows any type of voting method thanks to the
+                      This miniapp offers 4 voting methods, but DAVINCI allows any type of voting method thanks to the
                       use of a{' '}
                       <a
                         href='https://developer.vocdoni.io/protocol/ballot-protocol'
@@ -769,23 +769,12 @@ export function CreateVoteForm() {
                             leftLabel='Fixed weight'
                             rightLabel='Token-based weight'
                           />
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <HelpCircle className='w-4 h-4 text-davinci-black-alt/60' />
-                            </TooltipTrigger>
-                            <TooltipContent className='bg-davinci-paper-base text-davinci-black-alt border-davinci-callout-border max-w-xs'>
-                              <p>
-                                When enabled, voting power is determined by token balances from the snapshot. This
-                                creates proportional representation based on holdings.
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
                         </div>
 
                         <div className='bg-davinci-soft-neutral/20 p-3 rounded border border-davinci-callout-border'>
                           <p className='text-sm text-davinci-black-alt/70'>
                             {formData.useWeightedVoting
-                              ? 'Voting power will be determined by token balances from the selected snapshot. Voters with larger balances will have proportionally more voting weight.'
+                              ? 'Voting power will be determined by token balances from the selected snapshot.'
                               : 'All voters will have equal voting power regardless of their token balances.'}
                           </p>
                         </div>
@@ -827,23 +816,12 @@ export function CreateVoteForm() {
                             leftLabel='Fixed weight'
                             rightLabel='Token-based weight'
                           />
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <HelpCircle className='w-4 h-4 text-davinci-black-alt/60' />
-                            </TooltipTrigger>
-                            <TooltipContent className='bg-davinci-paper-base text-davinci-black-alt border-davinci-callout-border max-w-xs'>
-                              <p>
-                                When enabled, voting power is determined by token balances from the snapshot instead of
-                                manually assigned credits. This creates proportional representation based on holdings.
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
                         </div>
 
                         <div className='bg-davinci-soft-neutral/20 p-3 rounded border border-davinci-callout-border'>
                           <p className='text-sm text-davinci-black-alt/70'>
                             {formData.useWeightedVoting
-                              ? 'Voting power will be determined by token balances from the selected snapshot. Voters with larger balances will have proportionally more voting credits.'
+                              ? 'Voting power will be determined by token balances from the selected snapshot.'
                               : 'All voters will receive the same number of credits regardless of their token balances.'}
                           </p>
                         </div>
@@ -874,9 +852,8 @@ export function CreateVoteForm() {
                   )}
 
                   <p className='text-sm text-davinci-black-alt/80'>
-                    {formData.useWeightedVoting
-                      ? 'Voting power is derived from token balances. The cost to vote increases quadratically (1 vote = 1 credit, 2 votes = 4 credits, etc.).'
-                      : `Each voter will receive ${formData.quadraticCredits} credits to allocate across choices. The cost to vote increases quadratically (1 vote = 1 credit, 2 votes = 4 credits, etc.).`}
+                    {!formData.useWeightedVoting &&
+                      `Each voter will receive ${formData.quadraticCredits} credits to allocate across choices. The cost to vote increases quadratically (1 vote = 1 credit, 2 votes = 4 credits, etc.).`}
                   </p>
                 </div>
               )}
@@ -908,23 +885,12 @@ export function CreateVoteForm() {
                             leftLabel='Fixed weight'
                             rightLabel='Token-based weight'
                           />
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <HelpCircle className='w-4 h-4 text-davinci-black-alt/60' />
-                            </TooltipTrigger>
-                            <TooltipContent className='bg-davinci-paper-base text-davinci-black-alt border-davinci-callout-border max-w-xs'>
-                              <p>
-                                When enabled, voting power is determined by token balances from the snapshot instead of
-                                manually assigned credits. This creates proportional representation based on holdings.
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
                         </div>
 
                         <div className='bg-davinci-soft-neutral/20 p-3 rounded border border-davinci-callout-border'>
                           <p className='text-sm text-davinci-black-alt/70'>
                             {formData.useWeightedVoting
-                              ? 'Voting power will be determined by token balances from the selected snapshot. Voters with larger balances will have proportionally more voting credits.'
+                              ? 'Voting power will be determined by token balances from the selected snapshot.'
                               : 'All voters will receive the same number of credits regardless of their token balances.'}
                           </p>
                         </div>
@@ -955,9 +921,8 @@ export function CreateVoteForm() {
                   )}
 
                   <p className='text-sm text-davinci-black-alt/80'>
-                    {formData.useWeightedVoting
-                      ? 'Voting power is derived from token balances. Each credit equals one vote.'
-                      : `Each voter will receive ${formData.budgetCredits} credits to allocate across choices. Each credit equals one vote.`}
+                    {!formData.useWeightedVoting &&
+                      `Each voter will receive ${formData.budgetCredits} credits to allocate across choices. Each credit equals one vote.`}
                   </p>
                 </div>
               )}
