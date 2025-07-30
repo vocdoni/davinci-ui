@@ -496,7 +496,8 @@ export function VoteDisplay() {
                         const result = results[choice.value] || '0'
                         const percentage =
                           votingMethod.type === ElectionResultsTypeNames.QUADRATIC ||
-                          votingMethod.type === ElectionResultsTypeNames.BUDGET
+                          votingMethod.type === ElectionResultsTypeNames.BUDGET ||
+                          (votingMethod.type === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION && process.ballotMode.costFromWeight)
                             ? (Number(result) / results.reduce((acc, val) => acc + (Number(val) || 0), 0)) * 100
                             : (Number(result) / Number(process.voteCount)) * 100 || 0
                         const votes = result || 0
