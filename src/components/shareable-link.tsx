@@ -122,10 +122,7 @@ export function ShareableLink({ voteId, voteData }: ShareableLinkProps) {
               size='sm'
               className='flex-1 border-davinci-callout-border text-davinci-black-alt hover:bg-davinci-soft-neutral/20'
             >
-              <svg className='w-3 h-3 mr-1' fill='currentColor' viewBox='0 0 24 24'>
-                <path d='M5.5 2h13A3.5 3.5 0 0122 5.5v13a3.5 3.5 0 01-3.5 3.5h-13A3.5 3.5 0 012 18.5v-13A3.5 3.5 0 015.5 2z' />
-                <path d='M8 16h8v-1.5H8V16zM8 12h8v-1.5H8V12zM8 8h8V6.5H8V8z' fill='white' />
-              </svg>
+              <img src='/icons/farcaster.svg' alt='Farcaster' className='w-3 h-3 mr-1 brightness-0' />
               Farcaster
             </Button>
           </div>
