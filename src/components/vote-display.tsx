@@ -110,7 +110,7 @@ export function VoteDisplay() {
   const [showPostVoteModal, setShowPostVoteModal] = useState(false)
   const [isVoting, setIsVoting] = useState(false)
   const [error, setError] = useState<Error | null>(null)
-  const { voteId, trackVote, resetVote } = usePersistedVote(process.id)
+  const { voteId, trackVote, resetVote } = usePersistedVote(process.id, address)
   const voteEnded = process.status === ProcessStatus.ENDED || process.status === ProcessStatus.RESULTS
 
   // Initialize quadratic and budget votes
