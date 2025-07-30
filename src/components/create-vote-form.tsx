@@ -37,9 +37,9 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '~components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~components/ui/card'
-import { Checkbox } from '~components/ui/checkbox'
 import { Input } from '~components/ui/input'
 import { Label } from '~components/ui/label'
+import { LabeledSwitch } from '~components/ui/labeled-switch'
 import { RadioGroup, RadioGroupItem } from '~components/ui/radio-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~components/ui/select'
 import { Separator } from '~components/ui/separator'
@@ -757,7 +757,7 @@ export function CreateVoteForm() {
                     })() && (
                       <div className='space-y-3'>
                         <div className='flex items-center space-x-2'>
-                          <Checkbox
+                          <LabeledSwitch
                             id='weighted-voting'
                             checked={formData.useWeightedVoting}
                             onCheckedChange={(checked) =>
@@ -766,10 +766,9 @@ export function CreateVoteForm() {
                                 useWeightedVoting: checked === true,
                               })
                             }
+                            leftLabel='Fixed weight'
+                            rightLabel='Token-based weight'
                           />
-                          <Label htmlFor='weighted-voting' className='text-davinci-black-alt'>
-                            Use weighted voting (based on snapshot balances)
-                          </Label>
                           <Tooltip>
                             <TooltipTrigger>
                               <HelpCircle className='w-4 h-4 text-davinci-black-alt/60' />
@@ -816,8 +815,8 @@ export function CreateVoteForm() {
                     })() && (
                       <div className='space-y-3'>
                         <div className='flex items-center space-x-2'>
-                          <Checkbox
-                            id='weighted-voting'
+                          <LabeledSwitch
+                            id='weighted-voting-quadratic'
                             checked={formData.useWeightedVoting}
                             onCheckedChange={(checked) =>
                               setFormData({
@@ -825,10 +824,9 @@ export function CreateVoteForm() {
                                 useWeightedVoting: checked === true,
                               })
                             }
+                            leftLabel='Fixed weight'
+                            rightLabel='Token-based weight'
                           />
-                          <Label htmlFor='weighted-voting' className='text-davinci-black-alt'>
-                            Use weighted voting (based on snapshot balances)
-                          </Label>
                           <Tooltip>
                             <TooltipTrigger>
                               <HelpCircle className='w-4 h-4 text-davinci-black-alt/60' />
@@ -898,7 +896,7 @@ export function CreateVoteForm() {
                     })() && (
                       <div className='space-y-3'>
                         <div className='flex items-center space-x-2'>
-                          <Checkbox
+                          <LabeledSwitch
                             id='weighted-voting-budget'
                             checked={formData.useWeightedVoting}
                             onCheckedChange={(checked) =>
@@ -907,10 +905,9 @@ export function CreateVoteForm() {
                                 useWeightedVoting: checked === true,
                               })
                             }
+                            leftLabel='Fixed weight'
+                            rightLabel='Token-based weight'
                           />
-                          <Label htmlFor='weighted-voting-budget' className='text-davinci-black-alt'>
-                            Use weighted voting (based on snapshot balances)
-                          </Label>
                           <Tooltip>
                             <TooltipTrigger>
                               <HelpCircle className='w-4 h-4 text-davinci-black-alt/60' />
@@ -959,8 +956,8 @@ export function CreateVoteForm() {
 
                   <p className='text-sm text-davinci-black-alt/80'>
                     {formData.useWeightedVoting
-                      ? 'Voting power is derived from token balances. Each credit equals one vote (1 credit = 1 vote, 2 credits = 2 votes, etc.).'
-                      : `Each voter will receive ${formData.budgetCredits} credits to allocate across choices. Each credit equals one vote (1 credit = 1 vote, 2 credits = 2 votes, etc.).`}
+                      ? 'Voting power is derived from token balances. Each credit equals one vote.'
+                      : `Each voter will receive ${formData.budgetCredits} credits to allocate across choices. Each credit equals one vote.`}
                   </p>
                 </div>
               )}
