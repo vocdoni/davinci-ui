@@ -13,11 +13,16 @@ const viteconfig = defineConfig(({ mode }) => {
       react(),
       tsconfigPaths(),
       VitePWA({
-        registerType: 'autoUpdate',
+        registerType: 'prompt',
         devOptions: {
           enabled: true,
         },
-        includeAssets: ['favicon.ico', 'light/apple-touch-icon.png', 'dark/apple-touch-icon.png', 'icons/farcaster.svg'],
+        includeAssets: [
+          'favicon.ico',
+          'light/apple-touch-icon.png',
+          'dark/apple-touch-icon.png',
+          'icons/farcaster.svg',
+        ],
         manifest: {
           name: 'DAVINCI Voting App',
           short_name: 'DAVINCI',
