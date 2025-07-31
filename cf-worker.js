@@ -12,6 +12,7 @@ export default {
     // bypass assets
     const isStaticAsset =
       pathname.startsWith('/assets/') ||
+      pathname.startsWith('/icons/') ||
       pathname.endsWith('.js') ||
       pathname.endsWith('.css') ||
       pathname.endsWith('.map') ||
@@ -19,7 +20,8 @@ export default {
       pathname.endsWith('.json') ||
       pathname.endsWith('.webmanifest') ||
       pathname.endsWith('.png') ||
-      pathname.endsWith('.jpg')
+      pathname.endsWith('.jpg') ||
+      pathname.endsWith('.svg')
 
     if (isStaticAsset) {
       const proxiedUrl = `${origin}${pathname}`
