@@ -1,5 +1,5 @@
 import { CheckCircle, Mail } from 'lucide-react'
-import type React from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import MailchimpSubscribe from 'react-mailchimp-subscribe'
 
@@ -10,10 +10,19 @@ import { Input } from '~components/ui/input'
 const MAILCHIMP_URL = import.meta.env.PUBLIC_MAILCHIMP_URL ?? ''
 
 export function NewsletterCard() {
+  const [resetKey, setResetKey] = useState(0)
+
+  const handleReset = () => {
+    setResetKey((prev) => prev + 1)
+  }
+
   return (
     <MailchimpSubscribe
+      key={resetKey}
       url={MAILCHIMP_URL}
-      render={({ subscribe, status, message }) => <Form status={status} message={message} onValidated={subscribe} />}
+      render={({ subscribe, status, message }) => (
+        <Form status={status} message={message} onValidated={subscribe} onReset={handleReset} />
+      )}
     />
   )
 }
@@ -26,15 +35,17 @@ function Form({
   status,
   message,
   onValidated,
+  onReset,
 }: {
   status: string | null
   message: string | Error | null
   onValidated: (formData: { EMAIL: string }) => void
+  onReset: () => void
 }) {
   const form = useForm<FormData>({
     defaultValues: {
-      email: ''
-    }
+      email: '',
+    },
   })
 
   const { register, handleSubmit, reset } = form
@@ -63,7 +74,7 @@ function Form({
               size='sm'
               onClick={() => {
                 reset()
-                window.location.reload()
+                onReset()
               }}
               className='border-davinci-callout-border text-davinci-black-alt hover:bg-davinci-soft-neutral/20'
             >
