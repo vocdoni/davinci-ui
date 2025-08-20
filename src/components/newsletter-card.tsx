@@ -1,6 +1,6 @@
 import { CheckCircle, Mail } from 'lucide-react'
 import type React from 'react'
-import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import MailchimpSubscribe from 'react-mailchimp-subscribe'
 
 import { Button } from '~components/ui/button'
@@ -18,6 +18,10 @@ export function NewsletterCard() {
   )
 }
 
+interface FormData {
+  email: string
+}
+
 function Form({
   status,
   message,
@@ -27,12 +31,17 @@ function Form({
   message: string | Error | null
   onValidated: (formData: { EMAIL: string }) => void
 }) {
-  const [email, setEmail] = useState('')
+  const form = useForm<FormData>({
+    defaultValues: {
+      email: ''
+    }
+  })
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!email.trim()) return
-    onValidated({ EMAIL: email })
+  const { register, handleSubmit, reset } = form
+
+  const onSubmit = (data: FormData) => {
+    if (!data.email.trim()) return
+    onValidated({ EMAIL: data.email })
   }
 
   if (status === 'success') {
@@ -53,7 +62,7 @@ function Form({
               variant='outline'
               size='sm'
               onClick={() => {
-                setEmail('')
+                reset()
                 window.location.reload()
               }}
               className='border-davinci-callout-border text-davinci-black-alt hover:bg-davinci-soft-neutral/20'
@@ -79,14 +88,12 @@ function Form({
           Get the latest updates on DAVINCI protocol developments, new features, and other ecosystem opportunities.
         </p>
 
-        <form onSubmit={handleSubmit} className='space-y-3'>
+        <form onSubmit={handleSubmit(onSubmit)} className='space-y-3'>
           <Input
             type='email'
             placeholder='Enter your email'
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            {...register('email', { required: true })}
             className='border-davinci-callout-border'
-            required
           />
           <Button
             type='submit'

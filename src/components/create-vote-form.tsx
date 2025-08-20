@@ -8,7 +8,6 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core'
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
@@ -34,6 +33,7 @@ import { createProcessSignatureMessage } from '@vocdoni/davinci-sdk/sequencer'
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { CheckCircle, Clock, GripVertical, HelpCircle, Plus, Rocket, Users, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { Controller, useFieldArray, useForm, type Control } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '~components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~components/ui/card'
@@ -67,7 +67,7 @@ const durationUnits = [
 
 type DurationUnit = (typeof durationUnits)[number]['value']
 
-type Purosesu = {
+type FormData = {
   question: string
   choices: Choice[]
   votingMethod: string
@@ -88,12 +88,12 @@ type Purosesu = {
 interface SortableChoiceItemProps {
   choice: Choice
   index: number
-  onUpdate: (id: string, text: string) => void
+  control: Control<FormData>
   onRemove: (id: string) => void
   canRemove: boolean
 }
 
-function SortableChoiceItem({ choice, index, onUpdate, onRemove, canRemove }: SortableChoiceItemProps) {
+function SortableChoiceItem({ choice, index, control, onRemove, canRemove }: SortableChoiceItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: choice.id })
 
   const style = {
@@ -112,11 +112,19 @@ function SortableChoiceItem({ choice, index, onUpdate, onRemove, canRemove }: So
         <GripVertical className='w-4 h-4' />
       </div>
       <div className='flex-1'>
-        <Input
-          placeholder={`Choice ${index + 1}`}
-          value={choice.text}
-          onChange={(e) => onUpdate(choice.id, e.target.value)}
-          className='border-davinci-callout-border'
+        <Controller
+          name={`choices.${index}.text`}
+          control={control}
+          render={({ field }) => (
+            <Input
+              placeholder={`Choice ${index + 1}`}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              name={`poll-choice-${index + 1}`}
+              className='border-davinci-callout-border'
+            />
+          )}
         />
       </div>
       {canRemove && (
@@ -141,24 +149,35 @@ export function CreateVoteForm() {
   const { address, isConnected } = useUnifiedWallet()
   const { getProvider } = useUnifiedProvider()
   const [error, setError] = useState<Error | null>(null)
-  const [formData, setFormData] = useState<Purosesu>({
-    question: '',
-    choices: [
-      { id: '1', text: '' },
-      { id: '2', text: '' },
-    ],
-    votingMethod: '',
-    multipleChoiceMin: '1',
-    multipleChoiceMax: '2',
-    quadraticCredits: '100',
-    budgetCredits: '100',
-    useWeightedVoting: false,
-    censusType: '',
-    duration: '',
-    durationUnit: 'minutes',
-    customAddresses: address ? [address] : [],
-    customAddressWeights: address ? ['1'] : [],
+
+  const form = useForm<FormData>({
+    defaultValues: {
+      question: '',
+      choices: [
+        { id: '1', text: '' },
+        { id: '2', text: '' },
+      ],
+      votingMethod: '',
+      multipleChoiceMin: '1',
+      multipleChoiceMax: '2',
+      quadraticCredits: '100',
+      budgetCredits: '100',
+      useWeightedVoting: false,
+      censusType: '',
+      duration: '',
+      durationUnit: 'minutes',
+      customAddresses: address ? [address] : [],
+      customAddressWeights: address ? ['1'] : [],
+    },
   })
+
+  const { control, watch, setValue, getValues, handleSubmit } = form
+  const { fields, append, remove, move } = useFieldArray({
+    control,
+    name: 'choices',
+  })
+
+  const formData = watch()
   const api = useVocdoniApi()
   const { data: snapshots, isLoading: isLoadingSnapshot, isError: isSnapshotError } = useSnapshots()
 
@@ -170,10 +189,10 @@ export function CreateVoteForm() {
         : snapshots?.[0]
 
       if (selectedSnapshot?.weightStrategy !== 'proportional') {
-        setFormData((prev) => ({ ...prev, useWeightedVoting: false }))
+        setValue('useWeightedVoting', false)
       }
     }
-  }, [formData.selectedCensusRoot, formData.censusType, formData.useWeightedVoting, snapshots])
+  }, [formData.selectedCensusRoot, formData.censusType, formData.useWeightedVoting, snapshots, setValue])
 
   // Switch away from multiple choice when weighted voting is enabled (for custom addresses)
   useEffect(() => {
@@ -182,37 +201,26 @@ export function CreateVoteForm() {
       formData.useWeightedVoting &&
       formData.votingMethod === ElectionResultsTypeNames.MULTIPLE_CHOICE
     ) {
-      setFormData((prev) => ({ ...prev, votingMethod: ElectionResultsTypeNames.BUDGET }))
+      setValue('votingMethod', ElectionResultsTypeNames.BUDGET)
     }
-  }, [formData.censusType, formData.useWeightedVoting, formData.votingMethod])
+  }, [formData.censusType, formData.useWeightedVoting, formData.votingMethod, setValue])
 
   const addChoice = () => {
-    if (formData.choices.length < 8) {
-      const newChoice = {
+    if (fields.length < 8) {
+      append({
         id: Date.now().toString(),
         text: '',
-      }
-      setFormData({
-        ...formData,
-        choices: [...formData.choices, newChoice],
       })
     }
   }
 
   const removeChoice = (id: string) => {
-    if (formData.choices.length > 2) {
-      setFormData({
-        ...formData,
-        choices: formData.choices.filter((choice) => choice.id !== id),
-      })
+    if (fields.length > 2) {
+      const index = fields.findIndex((field) => field.id === id)
+      if (index !== -1) {
+        remove(index)
+      }
     }
-  }
-
-  const updateChoice = (id: string, text: string) => {
-    setFormData({
-      ...formData,
-      choices: formData.choices.map((choice) => (choice.id === id ? { ...choice, text } : choice)),
-    })
   }
 
   // Drag and drop sensors
@@ -228,22 +236,20 @@ export function CreateVoteForm() {
     const { active, over } = event
 
     if (over && active.id !== over.id) {
-      const oldIndex = formData.choices.findIndex((choice) => choice.id === active.id)
-      const newIndex = formData.choices.findIndex((choice) => choice.id === over.id)
+      const oldIndex = fields.findIndex((field) => field.id === active.id)
+      const newIndex = fields.findIndex((field) => field.id === over.id)
 
-      const newChoices = arrayMove(formData.choices, oldIndex, newIndex)
-      setFormData({
-        ...formData,
-        choices: newChoices,
-      })
+      move(oldIndex, newIndex)
     }
   }
 
-  const handleLaunch = async () => {
-    if (!isFormValid() || !isConnected) return
+  const handleLaunch = async (data: FormData) => {
+    if (!isConnected) return
 
     setIsLaunching(true)
     setError(null)
+
+    console.info('ℹ️ form data:', data)
 
     try {
       const census = {
@@ -251,15 +257,15 @@ export function CreateVoteForm() {
         censusRoot: '',
         censusSize: 0,
       }
-      switch (formData.censusType) {
+      switch (data.censusType) {
         case 'ethereum-wallets': {
           if (!snapshots || snapshots.length === 0) {
             throw new Error('No snapshot data available')
           }
 
           // Find the selected snapshot by censusRoot, or use the first one if none selected
-          const selectedSnapshot = formData.selectedCensusRoot
-            ? snapshots.find((s) => s.censusRoot === formData.selectedCensusRoot)
+          const selectedSnapshot = data.selectedCensusRoot
+            ? snapshots.find((s) => s.censusRoot === data.selectedCensusRoot)
             : snapshots[0]
 
           if (!selectedSnapshot) {
@@ -272,7 +278,7 @@ export function CreateVoteForm() {
           break
         }
         default: {
-          if (formData.customAddresses.length === 0) {
+          if (data.customAddresses.length === 0) {
             throw new Error('Please add at least one address to the custom addresses list')
           }
 
@@ -280,12 +286,9 @@ export function CreateVoteForm() {
           const censusId = await api.createCensus()
 
           // Step 2: Add participants
-          const participants = formData.customAddresses.map((address, index) => ({
+          const participants = data.customAddresses.map((address, index) => ({
             key: address,
-            weight:
-              formData.useWeightedVoting && formData.customAddressWeights[index]
-                ? formData.customAddressWeights[index]
-                : '1',
+            weight: data.useWeightedVoting && data.customAddressWeights[index] ? data.customAddressWeights[index] : '1',
           }))
           await api.addParticipants(censusId, participants)
           const censusRoot = await api.getCensusRoot(censusId)
@@ -302,15 +305,15 @@ export function CreateVoteForm() {
 
       // Step 7: Create and push metadata
       const metadata: ElectionMetadata = {
-        title: { default: formData.question },
+        title: { default: data.question },
         description: { default: '' },
         media: { header: '', logo: '' },
         questions: [
           {
-            title: { default: formData.question },
+            title: { default: data.question },
             description: { default: '' },
             meta: {},
-            choices: formData.choices
+            choices: data.choices
               .filter((choice) => choice.text.trim() !== '')
               .map((choice, index) => ({
                 title: { default: choice.text },
@@ -322,7 +325,7 @@ export function CreateVoteForm() {
         version: '1.2' as ProtocolVersion,
         meta: {},
         type: {
-          name: formData.votingMethod as ElectionResultsTypeNames,
+          name: data.votingMethod as ElectionResultsTypeNames,
           properties: {} as Record<string, never>,
         } as ElectionResultsType,
       }
@@ -346,7 +349,7 @@ export function CreateVoteForm() {
       const message = await createProcessSignatureMessage(pid)
       const signature = await signer.signMessage(message)
 
-      const ballotMode = generateBallotMode(metadata, formData)
+      const ballotMode = generateBallotMode(metadata, data)
       console.info('ℹ️ Ballot mode:', ballotMode)
 
       const { processId, encryptionPubKey, stateRoot } = await api.createProcess({
@@ -360,7 +363,7 @@ export function CreateVoteForm() {
       console.info('ℹ️ Creating new process with data:', [
         ProcessStatus.READY,
         Math.floor(Date.now() / 1000) + 60,
-        Number.parseInt(formData.duration) * (formData.durationUnit === 'hours' ? 3600 : 60),
+        Number.parseInt(data.duration) * (data.durationUnit === 'hours' ? 3600 : 60),
         ballotMode,
         {
           censusOrigin: 1,
@@ -378,7 +381,7 @@ export function CreateVoteForm() {
         registry.newProcess(
           ProcessStatus.READY,
           Math.floor(Date.now() / 1000) + 60,
-          Number.parseInt(formData.duration) * (formData.durationUnit === 'hours' ? 3600 : 60),
+          Number.parseInt(data.duration) * (data.durationUnit === 'hours' ? 3600 : 60),
           ballotMode,
           {
             censusOrigin: 1,
@@ -417,13 +420,14 @@ export function CreateVoteForm() {
   }
 
   const isFormValid = () => {
-    const hasQuestion = formData.question.trim() !== ''
-    const hasValidChoices = formData.choices.filter((choice) => choice.text.trim() !== '').length >= 2
-    const hasVotingMethod = formData.votingMethod !== ''
-    const hasCensusType = formData.censusType !== ''
-    const hasDuration = formData.duration !== '' && Number.parseInt(formData.duration) > 0
+    const currentData = getValues()
+    const hasQuestion = currentData.question.trim() !== ''
+    const hasValidChoices = currentData.choices.filter((choice) => choice.text.trim() !== '').length >= 2
+    const hasVotingMethod = currentData.votingMethod !== ''
+    const hasCensusType = currentData.censusType !== ''
+    const hasDuration = currentData.duration !== '' && Number.parseInt(currentData.duration) > 0
     const hasAddresses =
-      formData.censusType !== 'custom-addresses' || formData.customAddresses.filter(Boolean).length > 0
+      currentData.censusType !== 'custom-addresses' || currentData.customAddresses.filter(Boolean).length > 0
 
     return hasQuestion && hasValidChoices && hasVotingMethod && hasCensusType && hasDuration && hasAddresses
   }
@@ -479,21 +483,20 @@ export function CreateVoteForm() {
                 id='question'
                 placeholder='What would you like to ask voters?'
                 rows={3}
-                value={formData.question}
-                onChange={(e) => setFormData({ ...formData, question: e.target.value })}
+                {...form.register('question')}
                 className='border-davinci-callout-border'
               />
             </div>
 
             <div className='space-y-4'>
               <div className='flex items-center justify-between'>
-                <Label className='text-davinci-black-alt'>Choices ({formData.choices.length}/8)</Label>
+                <Label className='text-davinci-black-alt'>Choices ({fields.length}/8)</Label>
                 <Button
                   type='button'
                   variant='outline'
                   size='sm'
                   onClick={addChoice}
-                  disabled={formData.choices.length >= 8}
+                  disabled={fields.length >= 8}
                   className='border-davinci-callout-border text-davinci-black-alt hover:bg-davinci-soft-neutral/20'
                 >
                   <Plus className='w-4 h-4 mr-1' />
@@ -502,19 +505,16 @@ export function CreateVoteForm() {
               </div>
 
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext
-                  items={formData.choices.map((choice) => choice.id)}
-                  strategy={verticalListSortingStrategy}
-                >
+                <SortableContext items={fields.map((field) => field.id)} strategy={verticalListSortingStrategy}>
                   <div className='space-y-3'>
-                    {formData.choices.map((choice, index) => (
+                    {fields.map((field, index) => (
                       <SortableChoiceItem
-                        key={choice.id}
-                        choice={choice}
+                        key={field.id}
+                        choice={field}
                         index={index}
-                        onUpdate={updateChoice}
+                        control={control}
                         onRemove={removeChoice}
-                        canRemove={formData.choices.length > 2}
+                        canRemove={fields.length > 2}
                       />
                     ))}
                   </div>
@@ -554,14 +554,13 @@ export function CreateVoteForm() {
               </div>
               <RadioGroup
                 value={formData.censusType}
-                onValueChange={(value) =>
-                  setFormData({
-                    ...formData,
-                    censusType: value,
-                    // Reset weighted voting when switching away from ethereum-wallets
-                    useWeightedVoting: value === 'ethereum-wallets' ? formData.useWeightedVoting : false,
-                  })
-                }
+                onValueChange={(value) => {
+                  setValue('censusType', value)
+                  // Reset weighted voting when switching away from ethereum-wallets
+                  if (value !== 'ethereum-wallets') {
+                    setValue('useWeightedVoting', false)
+                  }
+                }}
               >
                 <div className='space-y-2'>
                   <div className='flex items-center space-x-2'>
@@ -580,15 +579,9 @@ export function CreateVoteForm() {
                         addresses={formData.customAddresses}
                         weights={formData.customAddressWeights}
                         useWeightedVoting={formData.useWeightedVoting}
-                        setAddresses={(newAddresses) =>
-                          setFormData((prev) => ({ ...prev, customAddresses: newAddresses }))
-                        }
-                        setWeights={(newWeights) =>
-                          setFormData((prev) => ({ ...prev, customAddressWeights: newWeights }))
-                        }
-                        setUseWeightedVoting={(useWeighted) =>
-                          setFormData((prev) => ({ ...prev, useWeightedVoting: useWeighted }))
-                        }
+                        setAddresses={(newAddresses) => setValue('customAddresses', newAddresses)}
+                        setWeights={(newWeights) => setValue('customAddressWeights', newWeights)}
+                        setUseWeightedVoting={(useWeighted) => setValue('useWeightedVoting', useWeighted)}
                       />
                     </div>
                   )}
@@ -609,9 +602,7 @@ export function CreateVoteForm() {
                       isLoading={isLoadingSnapshot}
                       isError={isSnapshotError}
                       selectedCensusRoot={formData.selectedCensusRoot}
-                      onSnapshotSelect={(censusRoot) =>
-                        setFormData((prev) => ({ ...prev, selectedCensusRoot: censusRoot }))
-                      }
+                      onSnapshotSelect={(censusRoot) => setValue('selectedCensusRoot', censusRoot)}
                     />
                   )}
                 </div>
@@ -644,10 +635,7 @@ export function CreateVoteForm() {
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <RadioGroup
-                value={formData.votingMethod}
-                onValueChange={(value) => setFormData({ ...formData, votingMethod: value })}
-              >
+              <RadioGroup value={formData.votingMethod} onValueChange={(value) => setValue('votingMethod', value)}>
                 <div className='flex items-center space-x-2'>
                   <RadioGroupItem
                     value={ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION}
@@ -733,13 +721,13 @@ export function CreateVoteForm() {
                       </Label>
                       <Select
                         value={formData.multipleChoiceMin}
-                        onValueChange={(value) => setFormData({ ...formData, multipleChoiceMin: value })}
+                        onValueChange={(value) => setValue('multipleChoiceMin', value)}
                       >
                         <SelectTrigger className='border-davinci-callout-border'>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className='bg-davinci-paper-base border-davinci-callout-border'>
-                          {Array.from({ length: Math.min(formData.choices.length, 8) }, (_, i) => (
+                          {Array.from({ length: Math.min(fields.length, 8) }, (_, i) => (
                             <SelectItem key={i + 1} value={(i + 1).toString()}>
                               {i + 1}
                             </SelectItem>
@@ -753,13 +741,13 @@ export function CreateVoteForm() {
                       </Label>
                       <Select
                         value={formData.multipleChoiceMax}
-                        onValueChange={(value) => setFormData({ ...formData, multipleChoiceMax: value })}
+                        onValueChange={(value) => setValue('multipleChoiceMax', value)}
                       >
                         <SelectTrigger className='border-davinci-callout-border'>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className='bg-davinci-paper-base border-davinci-callout-border'>
-                          {Array.from({ length: Math.min(formData.choices.length, 8) }, (_, i) => (
+                          {Array.from({ length: Math.min(fields.length, 8) }, (_, i) => (
                             <SelectItem key={i + 1} value={(i + 1).toString()}>
                               {i + 1}
                             </SelectItem>
@@ -792,12 +780,7 @@ export function CreateVoteForm() {
                           <LabeledSwitch
                             id='weighted-voting'
                             checked={formData.useWeightedVoting}
-                            onCheckedChange={(checked) =>
-                              setFormData({
-                                ...formData,
-                                useWeightedVoting: checked === true,
-                              })
-                            }
+                            onCheckedChange={(checked) => setValue('useWeightedVoting', checked === true)}
                             leftLabel='Fixed weight'
                             rightLabel='Token-based weight'
                           />
@@ -839,12 +822,7 @@ export function CreateVoteForm() {
                           <LabeledSwitch
                             id='weighted-voting-quadratic'
                             checked={formData.useWeightedVoting}
-                            onCheckedChange={(checked) =>
-                              setFormData({
-                                ...formData,
-                                useWeightedVoting: checked === true,
-                              })
-                            }
+                            onCheckedChange={(checked) => setValue('useWeightedVoting', checked === true)}
                             leftLabel='Fixed weight'
                             rightLabel='Token-based weight'
                           />
@@ -871,13 +849,7 @@ export function CreateVoteForm() {
                         type='number'
                         min='1'
                         max='256'
-                        value={formData.quadraticCredits}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            quadraticCredits: e.target.value,
-                          })
-                        }
+                        {...form.register('quadraticCredits')}
                         className='border-davinci-callout-border'
                       />
                     </div>
@@ -909,12 +881,7 @@ export function CreateVoteForm() {
                           <LabeledSwitch
                             id='weighted-voting-budget'
                             checked={formData.useWeightedVoting}
-                            onCheckedChange={(checked) =>
-                              setFormData({
-                                ...formData,
-                                useWeightedVoting: checked === true,
-                              })
-                            }
+                            onCheckedChange={(checked) => setValue('useWeightedVoting', checked === true)}
                             leftLabel='Fixed weight'
                             rightLabel='Token-based weight'
                           />
@@ -941,13 +908,7 @@ export function CreateVoteForm() {
                         type='number'
                         min='1'
                         max='256'
-                        value={formData.budgetCredits}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            budgetCredits: e.target.value,
-                          })
-                        }
+                        {...form.register('budgetCredits')}
                         className='border-davinci-callout-border'
                       />
                     </div>
@@ -972,20 +933,16 @@ export function CreateVoteForm() {
                     type='number'
                     min='1'
                     placeholder='Duration'
-                    value={formData.duration}
-                    onChange={(e) => {
-                      const value = e.target.value
-                      if (value === '' || Number.parseInt(value) >= 0) {
-                        setFormData({ ...formData, duration: value })
-                      }
-                    }}
+                    {...form.register('duration', {
+                      validate: (value) => value === '' || Number.parseInt(value) >= 0,
+                    })}
                     className='border-davinci-callout-border'
                   />
                 </div>
                 <div className='w-32'>
                   <Select
                     value={formData.durationUnit}
-                    onValueChange={(value) => setFormData({ ...formData, durationUnit: value as DurationUnit })}
+                    onValueChange={(value) => setValue('durationUnit', value as DurationUnit)}
                   >
                     <SelectTrigger className='border-davinci-callout-border'>
                       <SelectValue />
@@ -1047,7 +1004,11 @@ export function CreateVoteForm() {
                   <p className='text-sm'>Error launching vote: {error.message}</p>
                 </div>
               )}
-              <LaunchVoteButton handleLaunch={handleLaunch} isLaunching={isLaunching} isFormValid={isFormValid} />
+              <LaunchVoteButton
+                handleLaunch={handleSubmit(handleLaunch)}
+                isLaunching={isLaunching}
+                isFormValid={isFormValid}
+              />
             </div>
           </CardContent>
         </Card>
@@ -1231,7 +1192,7 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
   )
 }
 
-const generateBallotMode = (election: ElectionMetadata, form: Purosesu): BallotMode => {
+const generateBallotMode = (election: ElectionMetadata, form: FormData): BallotMode => {
   const maxValue = Math.pow(2, 16).toString()
   switch (election.type.name) {
     default:
