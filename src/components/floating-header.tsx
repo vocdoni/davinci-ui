@@ -1,6 +1,6 @@
 import { ExternalLink, Menu } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, matchPath, useLocation, useNavigate } from 'react-router-dom'
+import { Link, matchPath, useLocation } from 'react-router-dom'
 import { Button } from '~components/ui/button'
 import { Card } from '~components/ui/card'
 import { Sheet, SheetContent, SheetTrigger } from '~components/ui/sheet'
@@ -15,7 +15,6 @@ interface NavigationItem {
 }
 
 export function FloatingHeader() {
-  const navigate = useNavigate()
   const { pathname } = useLocation()
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
@@ -65,13 +64,6 @@ export function FloatingHeader() {
     },
   ]
 
-  const handleLinkClick = (href: string, external?: boolean) => {
-    if (external) {
-      window.open(href, '_blank', 'noopener,noreferrer')
-    } else {
-      navigate(href)
-    }
-  }
 
   const isActiveLink = (href: string) => {
     const match = matchPath({ path: href, end: href === '/' }, pathname)
@@ -93,19 +85,37 @@ export function FloatingHeader() {
           <div className='hidden lg:block'>
             <nav className='flex items-center space-x-1'>
               {navigationItems.map((item) => (
-                <button
-                  key={item.value}
-                  onClick={() => handleLinkClick(item.href, item.external)}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 flex items-center gap-1 ${
-                    isActiveLink(item.href)
-                      ? 'bg-davinci-soft-neutral text-davinci-black-alt'
-                      : 'text-davinci-black-alt hover:text-davinci-black-alt hover:bg-davinci-soft-neutral/50'
-                  }`}
-                >
-                  {item.label}
-                  {item.icon && item.icon}
-                  {item.external && <ExternalLink className='w-3 h-3' />}
-                </button>
+                item.external ? (
+                  <a
+                    key={item.value}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 flex items-center gap-1 ${
+                      isActiveLink(item.href)
+                        ? 'bg-davinci-soft-neutral text-davinci-black-alt'
+                        : 'text-davinci-black-alt hover:text-davinci-black-alt hover:bg-davinci-soft-neutral/50'
+                    }`}
+                  >
+                    {item.label}
+                    {item.icon && item.icon}
+                    {item.external && <ExternalLink className='w-3 h-3' />}
+                  </a>
+                ) : (
+                  <Link
+                    key={item.value}
+                    to={item.href}
+                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 flex items-center gap-1 ${
+                      isActiveLink(item.href)
+                        ? 'bg-davinci-soft-neutral text-davinci-black-alt'
+                        : 'text-davinci-black-alt hover:text-davinci-black-alt hover:bg-davinci-soft-neutral/50'
+                    }`}
+                  >
+                    {item.label}
+                    {item.icon && item.icon}
+                    {item.external && <ExternalLink className='w-3 h-3' />}
+                  </Link>
+                )
               ))}
             </nav>
           </div>
@@ -120,19 +130,37 @@ export function FloatingHeader() {
               <SheetContent className='bg-davinci-paper-base'>
                 <div className='flex flex-col space-y-4 mt-8'>
                   {navigationItems.map((item) => (
-                    <button
-                      key={item.value}
-                      onClick={() => handleLinkClick(item.href, item.external)}
-                      className={`flex items-center justify-start gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-                        isActiveLink(item.href)
-                          ? 'bg-davinci-soft-neutral text-davinci-black-alt'
-                          : 'text-davinci-black-alt hover:text-davinci-black-alt hover:bg-davinci-soft-neutral/50'
-                      }`}
-                    >
-                      {item.label}
-                      {item.icon && item.icon}
-                      {item.external && <ExternalLink className='w-3 h-3' />}
-                    </button>
+                    item.external ? (
+                      <a
+                        key={item.value}
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`flex items-center justify-start gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                          isActiveLink(item.href)
+                            ? 'bg-davinci-soft-neutral text-davinci-black-alt'
+                            : 'text-davinci-black-alt hover:text-davinci-black-alt hover:bg-davinci-soft-neutral/50'
+                        }`}
+                      >
+                        {item.label}
+                        {item.icon && item.icon}
+                        {item.external && <ExternalLink className='w-3 h-3' />}
+                      </a>
+                    ) : (
+                      <Link
+                        key={item.value}
+                        to={item.href}
+                        className={`flex items-center justify-start gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                          isActiveLink(item.href)
+                            ? 'bg-davinci-soft-neutral text-davinci-black-alt'
+                            : 'text-davinci-black-alt hover:text-davinci-black-alt hover:bg-davinci-soft-neutral/50'
+                        }`}
+                      >
+                        {item.label}
+                        {item.icon && item.icon}
+                        {item.external && <ExternalLink className='w-3 h-3' />}
+                      </Link>
+                    )
                   ))}
                 </div>
               </SheetContent>
