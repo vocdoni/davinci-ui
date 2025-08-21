@@ -1088,9 +1088,8 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
       <div className='space-y-4'>
         <div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
           <p className='text-sm text-blue-800'>
-            <strong>Process creation not available with embedded wallet:</strong> The Warpcast embedded wallet uses a
-            limited provider that doesn't support the smart contract interactions required for creating votes. Please
-            connect an external wallet to create votes.
+            <strong>Process creation not yet supported with embedded wallet:</strong> Please use an external wallet
+            (e.g. MetaMask or Rainbow) to create votes. Support for embedded wallets is coming soon.
           </p>
         </div>
         <div className='space-y-3'>
