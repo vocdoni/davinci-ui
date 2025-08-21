@@ -128,6 +128,9 @@ const viteconfig = defineConfig(({ mode }) => {
 Want to create your own vote & earn rewards?
 👉 {app}`
       ),
+      'import.meta.env.SEPOLIA_RPC_URL': JSON.stringify(
+        process.env.SEPOLIA_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com'
+      ),
     },
   }
 })

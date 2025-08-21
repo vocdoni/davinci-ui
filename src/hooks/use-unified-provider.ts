@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useAppKitProvider } from '@reown/appkit/react'
+import { BrowserProvider, JsonRpcProvider } from 'ethers'
 import { useMiniApp } from '~contexts/MiniAppContext'
 import { useUnifiedWallet } from './use-unified-wallet'
 
@@ -30,17 +31,25 @@ export const useUnifiedProvider = (): UnifiedProviderState => {
 
   // Get the appropriate provider based on connection state
   const getProvider = async () => {
-    // In miniapp context, always use Farcaster provider
-    // This handles both embedded (Warpcast) and external wallets selected through Farcaster client
+    // In miniapp context with Farcaster, use reliable JsonRpcProvider for read operations
+    // This ensures consistent read performance across all operations
     if (isMiniApp && isFarcasterConnected) {
       try {
-        const farcasterProvider = await getFarcasterEthereumProvider()
-        if (farcasterProvider) {
-          return farcasterProvider
-        }
-        console.warn('Farcaster provider not available')
+        // For Farcaster miniapps, return reliable JsonRpcProvider for reads
+        // This separates read operations from the potentially unreliable Farcaster wallet provider
+        return new JsonRpcProvider(import.meta.env.SEPOLIA_RPC_URL)
       } catch (error) {
-        console.error('Error getting Farcaster provider:', error)
+        console.error('Error creating Farcaster read provider:', error)
+        
+        // Fallback to Farcaster provider if JsonRpcProvider fails
+        try {
+          const farcasterProvider = await getFarcasterEthereumProvider()
+          if (farcasterProvider) {
+            return new BrowserProvider(farcasterProvider)
+          }
+        } catch (farcasterError) {
+          console.error('Error getting Farcaster provider fallback:', farcasterError)
+        }
       }
     }
 

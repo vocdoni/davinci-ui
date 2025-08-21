@@ -11,7 +11,6 @@ import {
 } from '@vocdoni/davinci-sdk'
 import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
 import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
-import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { BarChart3, CheckCircle, Clock, Diamond, Lock, Minus, Plus, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { PostVoteModal } from '~components/post-vote-modal'
@@ -26,7 +25,7 @@ import { VoteProgressTracker } from '~components/vote-progress-tracker'
 import { VotingModal } from '~components/voting-modal'
 import { usePersistedVote } from '~hooks/use-persisted-vote'
 import { useProcessQuery } from '~hooks/use-process-query'
-import { useUnifiedProvider } from '~hooks/use-unified-provider'
+import { useUnifiedSigner } from '~hooks/use-unified-signer'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 import { truncateAddress } from '~lib/web3-utils'
 import { useProcess } from './process-context'
@@ -92,7 +91,7 @@ interface BudgetVote {
 
 export function VoteDisplay() {
   const { address, isConnected } = useUnifiedWallet()
-  const { getProvider } = useUnifiedProvider()
+  const { getSigner } = useUnifiedSigner()
   const {
     censusProof,
     isInCensus,
@@ -168,9 +167,9 @@ export function VoteDisplay() {
       throw new Error('Wallet not connected')
     }
 
-    const walletProvider = await getProvider()
-    if (!walletProvider) {
-      throw new Error('Wallet provider not available')
+    const signer = await getSigner()
+    if (!signer) {
+      throw new Error('Signer not available')
     }
 
     setShowVotingModal(false)
@@ -241,9 +240,7 @@ export function VoteDisplay() {
         ciphertexts: out.ballot.ciphertexts,
       }
 
-      // Use the unified provider (automatically handles Farcaster vs regular wallet)
-      const provider = new BrowserProvider(walletProvider as Eip1193Provider)
-      const signer = await provider.getSigner()
+      // Use the unified signer (automatically handles Farcaster read/write separation vs regular wallet)
       console.info('ℹ️ census proof:', censusProof)
       console.info('ℹ️ voteid:', out.voteId)
       const signature = await signer.signMessage(hexStringToUint8Array(out.voteId))
