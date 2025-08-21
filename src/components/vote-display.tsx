@@ -241,7 +241,7 @@ export function VoteDisplay() {
         ciphertexts: out.ballot.ciphertexts,
       }
 
-      // Use the unified provider (automatically handles Farcaster vs regular wallet)
+      // Use the unified provider (HybridProvider handles Farcaster read/write separation vs regular wallet)
       const provider = new BrowserProvider(walletProvider as Eip1193Provider)
       const signer = await provider.getSigner()
       console.info('ℹ️ census proof:', censusProof)

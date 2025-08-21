@@ -333,7 +333,7 @@ export function CreateVoteForm() {
       const metadataUrl = api.getMetadataUrl(metadataHash)
       console.info('ℹ️ Metadata URL:', metadataUrl)
 
-      // Use provider for process creation (check wallet capabilities)
+      // Use provider for process creation (HybridProvider handles read/write separation for Farcaster)
       const walletProvider = await getProvider()
       if (!walletProvider) {
         throw new Error('Wallet provider not available.')
