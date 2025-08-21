@@ -30,6 +30,7 @@ import {
   type ProtocolVersion,
 } from '@vocdoni/davinci-sdk/core'
 import { createProcessSignatureMessage } from '@vocdoni/davinci-sdk/sequencer'
+import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { CheckCircle, Clock, GripVertical, HelpCircle, Plus, Rocket, Users, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Controller, useFieldArray, useForm, type Control } from 'react-hook-form'
@@ -46,7 +47,7 @@ import { Textarea } from '~components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~components/ui/tooltip'
 import { useMiniApp } from '~contexts/MiniAppContext'
 import { useSnapshots } from '~hooks/use-snapshots'
-import { useUnifiedSigner } from '~hooks/use-unified-signer'
+import { useUnifiedProvider } from '~hooks/use-unified-provider'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 import { CustomAddressesManager } from './census-addresses'
 import { Snapshots } from './snapshots'
@@ -146,7 +147,7 @@ export function CreateVoteForm() {
   const [isLaunching, setIsLaunching] = useState(false)
   const [launchSuccess, setLaunchSuccess] = useState(false)
   const { address, isConnected } = useUnifiedWallet()
-  const { getSigner } = useUnifiedSigner()
+  const { getProvider } = useUnifiedProvider()
   const [error, setError] = useState<Error | null>(null)
 
   const form = useForm<FormData>({
@@ -332,12 +333,14 @@ export function CreateVoteForm() {
       const metadataUrl = api.getMetadataUrl(metadataHash)
       console.info('ℹ️ Metadata URL:', metadataUrl)
 
-      // Use signer for process creation (with read/write separation for Farcaster)
-      const signer = await getSigner()
-      if (!signer) {
-        throw new Error('Signer not available.')
+      // Use provider for process creation (HybridProvider handles read/write separation for Farcaster)
+      const walletProvider = await getProvider()
+      if (!walletProvider) {
+        throw new Error('Wallet provider not available.')
       }
-      console.info('ℹ️ Signer initialized:', signer)
+      const provider = new BrowserProvider(walletProvider as Eip1193Provider)
+      console.info('ℹ️ Browser provider initialized:', provider)
+      const signer = await provider.getSigner()
       const registry = new ProcessRegistryService(deployedAddresses.processRegistry.sepolia, signer)
       const address = await signer.getAddress()
       const pid = await registry.getNextProcessId(address)

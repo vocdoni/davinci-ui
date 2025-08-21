@@ -1,7 +1,8 @@
 import { deployedAddresses, ProcessRegistryService, ProcessStatus } from '@vocdoni/davinci-sdk'
+import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { Cog, StopCircle } from 'lucide-react'
 import { useState } from 'react'
-import { useUnifiedSigner } from '~hooks/use-unified-signer'
+import { useUnifiedProvider } from '~hooks/use-unified-provider'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 import { useProcess } from './process-context'
 import { Button } from './ui/button'
@@ -13,17 +14,19 @@ const VoteActions = () => {
     process: { process },
   } = useProcess()
   const { isConnected } = useUnifiedWallet()
-  const { getSigner } = useUnifiedSigner()
+  const { getProvider } = useUnifiedProvider()
   const [isLoading, setIsLoading] = useState(false)
 
   if (!isConnected || !isCreator || ![ProcessStatus.PAUSED, ProcessStatus.READY].includes(process.status)) return null
 
   const handleEndProcess = async () => {
-    const signer = await getSigner()
-    if (!signer) return
+    const walletProvider = await getProvider()
+    if (!walletProvider) return
 
     setIsLoading(true)
     try {
+      const provider = new BrowserProvider(walletProvider as Eip1193Provider)
+      const signer = await provider.getSigner()
       const registry = new ProcessRegistryService(deployedAddresses.processRegistry.sepolia, signer)
       await registry.endProcess(process.id)
     } catch (error) {
