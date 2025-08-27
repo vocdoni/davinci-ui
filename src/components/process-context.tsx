@@ -51,7 +51,7 @@ export const ProcessProvider: FC<ProcessProviderProps> = ({ children, process })
           params: { key: address },
         })
       }
-      return await api.getCensusProof(censusRoot, address!)
+      return await api.census.getCensusProof(censusRoot, address!)
     },
     retry: false,
     staleTime: 1000 * 60 * 5,
@@ -67,7 +67,7 @@ export const ProcessProvider: FC<ProcessProviderProps> = ({ children, process })
     enabled: !!address && !!process.process.id,
     queryKey: ['has-voted', process.process.id, address],
     queryFn: async () => {
-      return await api.hasAddressVoted(process.process.id, address!)
+      return await api.sequencer.hasAddressVoted(process.process.id, address!)
     },
     retry: false,
     staleTime: 1000 * 60 * 5,

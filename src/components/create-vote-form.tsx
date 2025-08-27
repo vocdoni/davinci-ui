@@ -17,19 +17,17 @@ import { CSS } from '@dnd-kit/utilities'
 import { sepolia } from '@reown/appkit/networks'
 import { useAppKitNetwork } from '@reown/appkit/react'
 import {
+  createProcessSignatureMessage,
   deployedAddresses,
+  ElectionResultsTypeNames,
   ProcessRegistryService,
   ProcessStatus,
   SmartContractService,
-} from '@vocdoni/davinci-sdk/contracts'
-import {
-  ElectionResultsTypeNames,
   type BallotMode,
   type ElectionMetadata,
   type ElectionResultsType,
   type ProtocolVersion,
-} from '@vocdoni/davinci-sdk/core'
-import { createProcessSignatureMessage } from '@vocdoni/davinci-sdk/sequencer'
+} from '@vocdoni/davinci-sdk'
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { CheckCircle, Clock, GripVertical, HelpCircle, Plus, Rocket, Users, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -255,8 +253,8 @@ export function CreateVoteForm() {
       let selectedSnapshot: Snapshot | undefined
       if (snapshots?.length) {
         // Find the selected snapshot by censusRoot, or use the first one if none selected
-        selectedSnapshot = formData.selectedCensusRoot
-          ? snapshots.find((s) => s.censusRoot === formData.selectedCensusRoot)
+        selectedSnapshot = data.selectedCensusRoot
+          ? snapshots.find((s) => s.censusRoot === data.selectedCensusRoot)
           : snapshots[0]
       }
 
@@ -286,16 +284,16 @@ export function CreateVoteForm() {
           }
 
           // Step 1: Create census
-          const censusId = await api.createCensus()
+          const censusId = await api.census.createCensus()
 
           // Step 2: Add participants
           const participants = data.customAddresses.map((address, index) => ({
             key: address,
             weight: data.useWeightedVoting && data.customAddressWeights[index] ? data.customAddressWeights[index] : '1',
           }))
-          await api.addParticipants(censusId, participants)
-          const censusRoot = await api.getCensusRoot(censusId)
-          const censusSize = await api.getCensusSize(censusId)
+          await api.census.addParticipants(censusId, participants)
+          const censusRoot = await api.census.getCensusRoot(censusId)
+          const censusSize = await api.census.getCensusSize(censusId)
 
           census.censusURI = censusId
           census.censusRoot = censusRoot
@@ -343,8 +341,8 @@ export function CreateVoteForm() {
         }
       }
 
-      const metadataHash = await api.pushMetadata(metadata)
-      const metadataUrl = api.getMetadataUrl(metadataHash)
+      const metadataHash = await api.sequencer.pushMetadata(metadata)
+      const metadataUrl = api.sequencer.getMetadataUrl(metadataHash)
       console.info('ℹ️ Metadata URL:', metadataUrl)
 
       // Use provider for process creation (check wallet capabilities)
@@ -366,7 +364,7 @@ export function CreateVoteForm() {
       const ballotMode = generateBallotMode(metadata, data)
       console.info('ℹ️ Ballot mode:', ballotMode)
 
-      const { processId, encryptionPubKey, stateRoot } = await api.createProcess({
+      const { processId, encryptionPubKey, stateRoot } = await api.sequencer.createProcess({
         processId: pid,
         censusRoot: census.censusRoot,
         ballotMode,
@@ -415,7 +413,7 @@ export function CreateVoteForm() {
       // Wait to navigate
       while (true) {
         try {
-          const process = await api.getProcess(processId)
+          const process = await api.sequencer.getProcess(processId)
           if (process.isAcceptingVotes) {
             navigate(`/vote/${processId}`)
             break
@@ -1054,7 +1052,6 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
           if (provider) {
             const chainId = await provider.request({ method: 'eth_chainId' })
             setActualChainId(chainId)
-            console.log('🔍 Actual Farcaster provider chain ID:', chainId)
           }
         } catch (error) {
           console.error('Error getting actual chain ID from Farcaster provider:', error)

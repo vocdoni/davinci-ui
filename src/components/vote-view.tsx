@@ -1,5 +1,5 @@
 import { useCopyToClipboard } from '@uidotdev/usehooks'
-import { type GetProcessResponse } from '@vocdoni/davinci-sdk/sequencer'
+import { type GetProcessResponse } from '@vocdoni/davinci-sdk'
 import { LucideCheck, LucideCopy, LucideSearch } from 'lucide-react'
 import { NewsletterCard } from '~components/newsletter-card'
 import { ShareableLink } from '~components/shareable-link'
