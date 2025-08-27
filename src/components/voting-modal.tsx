@@ -1,6 +1,4 @@
-'use client'
-
-import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
+import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk'
 import { AlertTriangle, BarChart3, CheckSquare, Shield } from 'lucide-react'
 import { Button } from '~components/ui/button'
 import {

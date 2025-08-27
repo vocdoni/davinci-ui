@@ -1,6 +1,8 @@
+import type { ElectionMetadata } from '@vocdoni/davinci-sdk'
 import {
   BallotProof,
   CircomProof,
+  ElectionResultsTypeNames,
   ProcessStatus,
   VocdoniApiService,
   type BallotProofInputs,
@@ -9,8 +11,6 @@ import {
   type VoteBallot,
   type VoteRequest,
 } from '@vocdoni/davinci-sdk'
-import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
-import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { BarChart3, CheckCircle, Clock, Diamond, Lock, Minus, Plus, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -182,17 +182,20 @@ export function VoteDisplay() {
         throw new Error('Census proof is required to vote')
       }
       // Initialize API service
-      const api = new VocdoniApiService(import.meta.env.SEQUENCER_URL)
+      const api = new VocdoniApiService({
+        sequencerURL: import.meta.env.SEQUENCER_URL,
+        censusURL: import.meta.env.SEQUENCER_URL,
+      })
 
       // Step 2: Fetch circuit info (unnecessary)
-      const info = await api.getInfo()
+      const info = await api.sequencer.getInfo()
 
       const sdk = new BallotProof({
         wasmExecUrl: info.ballotProofWasmHelperExecJsUrl,
         wasmUrl: info.ballotProofWasmHelperUrl,
       })
       await sdk.init()
-      console.info('ℹ️ BallotProof SDK initialized')
+      console.info('ℹ️ BallotProof SDK initialized', info)
 
       const kHex = Array.from(crypto.getRandomValues(new Uint8Array(8)))
         .map((b) => b.toString(16).padStart(2, '0'))
@@ -259,7 +262,7 @@ export function VoteDisplay() {
         voteId: out.voteId,
       }
 
-      await api.submitVote(voteRequest)
+      await api.sequencer.submitVote(voteRequest)
 
       // Track the vote
       trackVote(out.voteId)
@@ -497,7 +500,8 @@ export function VoteDisplay() {
                         const percentage =
                           votingMethod.type === ElectionResultsTypeNames.QUADRATIC ||
                           votingMethod.type === ElectionResultsTypeNames.BUDGET ||
-                          (votingMethod.type === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION && process.ballotMode.costFromWeight)
+                          (votingMethod.type === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION &&
+                            process.ballotMode.costFromWeight)
                             ? (Number(result) / results.reduce((acc, val) => acc + (Number(val) || 0), 0)) * 100
                             : (Number(result) / Number(process.voteCount)) * 100 || 0
                         const votes = result || 0

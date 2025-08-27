@@ -10,7 +10,7 @@ const upfetch = up(fetch)
 export const getProcessQuery = (id: string, api: ReturnType<typeof useVocdoniApi>) => ({
   queryKey: ['process', id],
   queryFn: async (): Promise<Process> => {
-    const process = await api.getProcess(id)
+    const process = await api.sequencer.getProcess(id)
     if (!process) throw new Error('Vote not found')
 
     let meta
@@ -62,7 +62,7 @@ export const useProcessList = () => {
 
   return useQuery<string[]>({
     queryKey: ['processList'],
-    queryFn: async () => await api.listProcesses(),
+    queryFn: async () => await api.sequencer.listProcesses(),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: true,
   })

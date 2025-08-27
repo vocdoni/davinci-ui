@@ -1,4 +1,4 @@
-import { VocdoniApiService } from '@vocdoni/davinci-sdk/sequencer'
+import { VocdoniApiService } from '@vocdoni/davinci-sdk'
 import { createContext, useContext, useMemo, type FC, type ReactNode } from 'react'
 
 interface VocdoniApiContextValue {
@@ -11,7 +11,10 @@ const VocdoniApiContext = createContext<VocdoniApiContextValue | undefined>(unde
 // Provider que inicializa la instancia de la API
 export const VocdoniApiProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const apiInstance = useMemo(() => {
-    return new VocdoniApiService(import.meta.env.SEQUENCER_URL)
+    return new VocdoniApiService({
+      sequencerURL: import.meta.env.SEQUENCER_URL,
+      censusURL: import.meta.env.SEQUENCER_URL,
+    })
   }, [])
 
   return <VocdoniApiContext.Provider value={{ api: apiInstance }}>{children}</VocdoniApiContext.Provider>
