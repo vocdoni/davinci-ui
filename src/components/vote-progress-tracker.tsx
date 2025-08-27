@@ -2,7 +2,7 @@
 
 import type React from 'react'
 
-import { VoteStatus } from '@vocdoni/davinci-sdk/sequencer'
+import { VoteStatus } from '@vocdoni/davinci-sdk'
 import { AlertTriangle, CheckCircle, Clock, Cpu, Info, Package, RefreshCw, Shield } from 'lucide-react'
 import { useEffect } from 'react'
 import { Badge } from '~components/ui/badge'
@@ -171,7 +171,11 @@ export function VoteProgressTracker({ onVoteAgain, processId, voteId }: VoteProg
           <div className='space-y-2'>
             {progressSteps.map((step, index) => {
               const isCompleted = currentStatus !== VoteStatus.Error && !error && index <= currentStepIndex
-              const isCurrent = currentStatus !== VoteStatus.Error && !error && index === currentStepIndex + 1 && currentStatus !== VoteStatus.Settled
+              const isCurrent =
+                currentStatus !== VoteStatus.Error &&
+                !error &&
+                index === currentStepIndex + 1 &&
+                currentStatus !== VoteStatus.Settled
 
               return (
                 <div key={step.id} className='flex items-center gap-3'>

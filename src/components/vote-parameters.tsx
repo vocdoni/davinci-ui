@@ -5,10 +5,8 @@ import { useEffect, useState } from 'react'
 import { Badge } from '~components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
 
-import { ProcessStatus } from '@vocdoni/davinci-sdk/contracts'
-import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
-import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
-import type { GetProcessResponse } from '@vocdoni/davinci-sdk/sequencer'
+import type { ElectionMetadata, GetProcessResponse } from '@vocdoni/davinci-sdk'
+import { ElectionResultsTypeNames, ProcessStatus } from '@vocdoni/davinci-sdk'
 import { formatNanosecondsInterval } from '~lib/utils'
 import { useProcess } from './process-context'
 

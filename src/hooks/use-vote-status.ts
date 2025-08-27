@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { VocdoniApiService, VoteStatus } from '@vocdoni/davinci-sdk/sequencer'
+import { VocdoniApiService, VoteStatus } from '@vocdoni/davinci-sdk'
 
 export function useVoteStatus(processId: string, voteId: string) {
   return useQuery({

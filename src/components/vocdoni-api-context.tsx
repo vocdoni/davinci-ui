@@ -1,4 +1,4 @@
-import { VocdoniApiService } from '@vocdoni/davinci-sdk/sequencer'
+import { VocdoniApiService } from '@vocdoni/davinci-sdk'
 import { createContext, useContext, useMemo, type FC, type ReactNode } from 'react'
 
 interface VocdoniApiContextValue {

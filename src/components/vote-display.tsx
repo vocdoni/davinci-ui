@@ -1,6 +1,8 @@
+import type { ElectionMetadata } from '@vocdoni/davinci-sdk'
 import {
   BallotProof,
   CircomProof,
+  ElectionResultsTypeNames,
   ProcessStatus,
   VocdoniApiService,
   type BallotProofInputs,
@@ -9,8 +11,6 @@ import {
   type VoteBallot,
   type VoteRequest,
 } from '@vocdoni/davinci-sdk'
-import type { ElectionMetadata } from '@vocdoni/davinci-sdk/core'
-import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk/core'
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { BarChart3, CheckCircle, Clock, Diamond, Lock, Minus, Plus, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -497,7 +497,8 @@ export function VoteDisplay() {
                         const percentage =
                           votingMethod.type === ElectionResultsTypeNames.QUADRATIC ||
                           votingMethod.type === ElectionResultsTypeNames.BUDGET ||
-                          (votingMethod.type === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION && process.ballotMode.costFromWeight)
+                          (votingMethod.type === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION &&
+                            process.ballotMode.costFromWeight)
                             ? (Number(result) / results.reduce((acc, val) => acc + (Number(val) || 0), 0)) * 100
                             : (Number(result) / Number(process.voteCount)) * 100 || 0
                         const votes = result || 0

@@ -17,19 +17,17 @@ import { CSS } from '@dnd-kit/utilities'
 import { sepolia } from '@reown/appkit/networks'
 import { useAppKitNetwork } from '@reown/appkit/react'
 import {
+  createProcessSignatureMessage,
   deployedAddresses,
+  ElectionResultsTypeNames,
   ProcessRegistryService,
   ProcessStatus,
   SmartContractService,
-} from '@vocdoni/davinci-sdk/contracts'
-import {
-  ElectionResultsTypeNames,
   type BallotMode,
   type ElectionMetadata,
   type ElectionResultsType,
   type ProtocolVersion,
-} from '@vocdoni/davinci-sdk/core'
-import { createProcessSignatureMessage } from '@vocdoni/davinci-sdk/sequencer'
+} from '@vocdoni/davinci-sdk'
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { CheckCircle, Clock, GripVertical, HelpCircle, Plus, Rocket, Users, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
