@@ -1,8 +1,9 @@
-import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react'
 import { deployedAddresses, ProcessRegistryService, ProcessStatus } from '@vocdoni/davinci-sdk'
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { Cog, StopCircle } from 'lucide-react'
 import { useState } from 'react'
+import { useUnifiedProvider } from '~hooks/use-unified-provider'
+import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 import { useProcess } from './process-context'
 import { Button } from './ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
@@ -12,13 +13,14 @@ const VoteActions = () => {
     isCreator,
     process: { process },
   } = useProcess()
-  const { isConnected } = useAppKitAccount()
-  const { walletProvider } = useAppKitProvider('eip155')
+  const { isConnected } = useUnifiedWallet()
+  const { getProvider } = useUnifiedProvider()
   const [isLoading, setIsLoading] = useState(false)
 
   if (!isConnected || !isCreator || ![ProcessStatus.PAUSED, ProcessStatus.READY].includes(process.status)) return null
 
   const handleEndProcess = async () => {
+    const walletProvider = await getProvider()
     if (!walletProvider) return
 
     setIsLoading(true)
