@@ -61,9 +61,24 @@ interface Choice {
 const durationUnits = [
   { value: 'minutes', label: 'Minutes' },
   { value: 'hours', label: 'Hours' },
+  { value: 'days', label: 'Days' },
 ] as const
 
 type DurationUnit = (typeof durationUnits)[number]['value']
+
+const getDurationInSeconds = (duration: string, unit: DurationUnit): number => {
+  const durationNum = Number.parseInt(duration)
+  switch (unit) {
+    case 'minutes':
+      return durationNum * 60
+    case 'hours':
+      return durationNum * 3600
+    case 'days':
+      return durationNum * 86400
+    default:
+      return durationNum * 60 // fallback to minutes
+  }
+}
 
 type FormData = {
   question: string
@@ -375,7 +390,7 @@ export function CreateVoteForm() {
       console.info('ℹ️ Creating new process with data:', [
         ProcessStatus.READY,
         Math.floor(Date.now() / 1000) + 60,
-        Number.parseInt(data.duration) * (data.durationUnit === 'hours' ? 3600 : 60),
+        getDurationInSeconds(data.duration, data.durationUnit),
         ballotMode,
         {
           censusOrigin: 1,
@@ -393,7 +408,7 @@ export function CreateVoteForm() {
         registry.newProcess(
           ProcessStatus.READY,
           Math.floor(Date.now() / 1000) + 60,
-          Number.parseInt(data.duration) * (data.durationUnit === 'hours' ? 3600 : 60),
+          getDurationInSeconds(data.duration, data.durationUnit),
           ballotMode,
           {
             censusOrigin: 1,
