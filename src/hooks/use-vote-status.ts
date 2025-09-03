@@ -6,7 +6,7 @@ export function useVoteStatus(processId: string, voteId: string) {
     queryKey: ['voteStatus', processId, voteId],
     queryFn: async () => {
       const api = new VocdoniApiService(import.meta.env.SEQUENCER_URL)
-      const status = await api.getVoteStatus(processId, voteId)
+      const status = await api.sequencer.getVoteStatus(processId, voteId)
       return status
     },
     refetchInterval: (query) => {
