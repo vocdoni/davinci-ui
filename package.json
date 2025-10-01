@@ -49,7 +49,7 @@
     "@tanstack/react-query": "^5.81.2",
     "@uidotdev/usehooks": "^2.4.1",
     "@vocdoni/davinci-contracts": "0.0.14",
-    "@vocdoni/davinci-sdk": "github:vocdoni/davinci-sdk#f/ts-bundling",
+    "@vocdoni/davinci-sdk": "0.0.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
@@ -98,6 +98,6 @@
   },
   "packageManager": "pnpm@10.12.1",
   "resolutions": {
-    "@vocdoni/davinci-contracts": "0.0.14"
+    "@vocdoni/davinci-contracts": "0.0.18"
   }
 }

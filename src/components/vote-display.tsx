@@ -1,16 +1,27 @@
 import type { ElectionMetadata } from '@vocdoni/davinci-sdk'
 import {
-  BallotProof,
+  DavinciCrypto,
   CircomProof,
   ElectionResultsTypeNames,
   ProcessStatus,
   VocdoniApiService,
-  type BallotProofInputs,
-  type CensusProof,
   type GetProcessResponse,
   type VoteBallot,
   type VoteRequest,
 } from '@vocdoni/davinci-sdk'
+
+// Define CensusProof type locally since it's not exported
+type CensusProof = {
+  root: string
+  address: string
+  weight: string
+  censusOrigin: number
+  value?: string
+  siblings?: string
+  processId?: string
+  publicKey?: string
+  signature?: string
+}
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { BarChart3, CheckCircle, Clock, Diamond, Lock, Minus, Plus, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -52,15 +63,15 @@ function getVotingMethod(
     case ElectionResultsTypeNames.MULTIPLE_CHOICE:
       return {
         type: type.name,
-        min: Number(process.ballotMode.minTotalCost) || 1,
-        max: Number(process.ballotMode.maxTotalCost) || 2,
+        min: Number(process.ballotMode.minValueSum) || 1,
+        max: Number(process.ballotMode.maxValueSum) || 2,
       }
     case ElectionResultsTypeNames.QUADRATIC: {
       // For weighted quadratic voting, use the user's census proof weight as total credits
       const credits =
         process.ballotMode.costFromWeight && censusProof
           ? Number(censusProof.weight)
-          : Number(process.ballotMode.maxTotalCost) || 100
+          : Number(process.ballotMode.maxValueSum) || 100
       return {
         type: type.name,
         credits,
@@ -71,7 +82,7 @@ function getVotingMethod(
       const credits =
         process.ballotMode.costFromWeight && censusProof
           ? Number(censusProof.weight)
-          : Number(process.ballotMode.maxTotalCost) || 100
+          : Number(process.ballotMode.maxValueSum) || 100
       return {
         type: type.name,
         credits,
@@ -187,15 +198,15 @@ export function VoteDisplay() {
         censusURL: import.meta.env.SEQUENCER_URL,
       })
 
-      // Step 2: Fetch circuit info (unnecessary)
+      // Fetch circuit info
       const info = await api.sequencer.getInfo()
 
-      const sdk = new BallotProof({
+      const davinciCrypto = new DavinciCrypto({
         wasmExecUrl: info.ballotProofWasmHelperExecJsUrl,
         wasmUrl: info.ballotProofWasmHelperUrl,
       })
-      await sdk.init()
-      console.info('ℹ️ BallotProof SDK initialized', info)
+      await davinciCrypto.init()
+      console.info('ℹ️ DavinciCrypto initialized', info)
 
       const kHex = Array.from(crypto.getRandomValues(new Uint8Array(8)))
         .map((b) => b.toString(16).padStart(2, '0'))
@@ -211,18 +222,18 @@ export function VoteDisplay() {
               ? padTo(Object.values(budgetVotes))
               : getBinaryArray(selectedChoices, process.ballotMode.costFromWeight ? censusProof.weight : '1')
 
-      const inputs: BallotProofInputs = {
+      const inputs = {
         address: address,
         processID: process.id,
         ballotMode: process.ballotMode,
-        encryptionKey: [process.encryptionKey.x, process.encryptionKey.y],
+        encryptionKey: [process.encryptionKey.x, process.encryptionKey.y] as [string, string],
         k: kStr,
         fieldValues,
         weight: censusProof.weight,
       }
       console.info('ℹ️ Ballot proof inputs:', inputs)
 
-      const out = await sdk.proofInputs(inputs)
+      const out = await davinciCrypto.proofInputs(inputs)
 
       console.info('✅ Ballot proof inputs generated:', out, info)
 

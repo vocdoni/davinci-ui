@@ -1,5 +1,5 @@
 import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react'
-import { deployedAddresses, ProcessRegistryService, ProcessStatus } from '@vocdoni/davinci-sdk'
+import { ProcessRegistryService, ProcessStatus, VocdoniApiService } from '@vocdoni/davinci-sdk'
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { Cog, StopCircle } from 'lucide-react'
 import { useState } from 'react'
@@ -23,10 +23,27 @@ const VoteActions = () => {
 
     setIsLoading(true)
     try {
+      // Get contract address from sequencer info
+      const api = new VocdoniApiService({
+        sequencerURL: import.meta.env.SEQUENCER_URL,
+        censusURL: import.meta.env.SEQUENCER_URL,
+      })
+      const info = await api.sequencer.getInfo()
+      const processRegistryAddress = info.contracts.process
+
       const provider = new BrowserProvider(walletProvider as Eip1193Provider)
       const signer = await provider.getSigner()
-      const registry = new ProcessRegistryService(deployedAddresses.processRegistry.sepolia, signer)
-      await registry.endProcess(process.id)
+      const registry = new ProcessRegistryService(processRegistryAddress, signer)
+      // Use setProcessStatus to end the process
+      const txStream = registry.setProcessStatus(process.id, ProcessStatus.ENDED)
+      // Execute the transaction and wait for it to complete
+      for await (const event of txStream) {
+        if (event.status === 'completed') {
+          console.log('Process ended successfully')
+        } else if (event.status === 'failed' || event.status === 'reverted') {
+          throw new Error('Transaction failed')
+        }
+      }
     } catch (error) {
       console.error('Error ending process:', error)
     } finally {
