@@ -18,7 +18,6 @@ import { sepolia } from '@reown/appkit/networks'
 import { useAppKitNetwork } from '@reown/appkit/react'
 import {
   createProcessSignatureMessage,
-  deployedAddresses,
   ElectionResultsTypeNames,
   ProcessRegistryService,
   ProcessStatus,
@@ -368,7 +367,12 @@ export function CreateVoteForm() {
       const provider = new BrowserProvider(walletProvider as Eip1193Provider)
       console.info('ℹ️ Browser provider initialized:', provider)
       const signer = await provider.getSigner()
-      const registry = new ProcessRegistryService(deployedAddresses.processRegistry.sepolia, signer)
+      
+      // Get contract address from sequencer info
+      const info = await api.sequencer.getInfo()
+      const processRegistryAddress = info.contracts.process
+      
+      const registry = new ProcessRegistryService(processRegistryAddress, signer)
       const address = await signer.getAddress()
       const pid = await registry.getNextProcessId(address)
       console.info('ℹ️ Process ID:', pid)
@@ -384,6 +388,7 @@ export function CreateVoteForm() {
         censusRoot: census.censusRoot,
         ballotMode,
         signature,
+        censusOrigin: data.censusType === 'custom-addresses' ? 1 : 1, // CensusOrigin.CensusOriginMerkleTree
       })
       console.info('✅ Process created with ID:', processId, stateRoot)
 
@@ -1223,55 +1228,55 @@ const generateBallotMode = (election: ElectionMetadata, form: FormData): BallotM
     default:
     case ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION:
       return {
-        maxCount: 1,
+        numFields: election.questions[0].choices.length,
         maxValue,
         minValue: '0',
-        forceUniqueness: false,
+        uniqueValues: false,
         costFromWeight: form.useWeightedVoting,
         costExponent: 1,
-        maxTotalCost: election.questions[0].choices.length.toString(),
-        minTotalCost: '0',
+        maxValueSum: election.questions[0].choices.length.toString(),
+        minValueSum: '0',
       }
     case ElectionResultsTypeNames.MULTIPLE_CHOICE:
       return {
-        maxCount: election.questions[0].choices.length,
+        numFields: election.questions[0].choices.length,
         maxValue,
         minValue: '0',
-        forceUniqueness: false,
+        uniqueValues: false,
         costFromWeight: false,
         costExponent: 1,
-        maxTotalCost: form.multipleChoiceMax,
-        minTotalCost: form.multipleChoiceMin,
+        maxValueSum: form.multipleChoiceMax,
+        minValueSum: form.multipleChoiceMin,
       }
     case ElectionResultsTypeNames.QUADRATIC:
       return {
-        maxCount: election.questions[0].choices.length,
+        numFields: election.questions[0].choices.length,
         maxValue: form.useWeightedVoting
           ? Math.floor(Math.sqrt(Number(maxValue))).toString() // Use maximum when weighted (will be limited by individual voter's weight)
           : (Math.floor(Math.sqrt(Number(form.quadraticCredits))) + 1).toString(),
         minValue: '0',
-        forceUniqueness: false,
+        uniqueValues: false,
         costFromWeight: form.useWeightedVoting, // Use weight from census when weighted voting is enabled
         costExponent: 2,
-        maxTotalCost: form.useWeightedVoting
+        maxValueSum: form.useWeightedVoting
           ? '0' // When weighted, max cost is determined by voter's actual weight
           : form.quadraticCredits,
-        minTotalCost: '0',
+        minValueSum: '0',
       }
     case ElectionResultsTypeNames.BUDGET:
       return {
-        maxCount: election.questions[0].choices.length,
+        numFields: election.questions[0].choices.length,
         maxValue: form.useWeightedVoting
           ? maxValue // Use maximum when weighted (will be limited by individual voter's weight)
           : form.budgetCredits,
         minValue: '0',
-        forceUniqueness: false,
+        uniqueValues: false,
         costFromWeight: form.useWeightedVoting, // Use weight from census when weighted voting is enabled
         costExponent: 1, // Linear cost: 1 credit = 1 vote
-        maxTotalCost: form.useWeightedVoting
+        maxValueSum: form.useWeightedVoting
           ? '0' // When weighted, max cost is determined by voter's actual weight
           : form.budgetCredits,
-        minTotalCost: '0',
+        minValueSum: '0',
       }
   }
 }
