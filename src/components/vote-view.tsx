@@ -5,6 +5,7 @@ import { NewsletterCard } from '~components/newsletter-card'
 import { ShareableLink } from '~components/shareable-link'
 import { VoteDisplay } from '~components/vote-display'
 import { TotalVotesCard, VoteParameters } from '~components/vote-parameters'
+import { LinkifiedText } from '~components/ui/linkified-text'
 import { truncateAddress } from '~lib/web3-utils'
 import type { ProcessLoaderData } from '~src/types'
 import VoteActions from './vote-actions'
@@ -19,7 +20,7 @@ const VoteView = ({ id, meta, process }: ProcessLoaderData) => {
         {/* Page Header */}
         <div className='text-center mb-8'>
           <h1 className='text-3xl font-bold text-davinci-black-alt mb-2 font-averia'>
-            {meta.questions[0].title.default}
+            <LinkifiedText text={meta.questions[0].title.default} />
           </h1>
           <div className='flex items-center justify-center gap-2 text-davinci-black-alt/70'>
             <span className='text-sm font-medium'>Process ID:</span>

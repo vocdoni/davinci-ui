@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from '~components/ui/dialog'
 import { ErrorBoundaryWrapper } from '~components/ui/error-boundary'
+import { LinkifiedText } from '~components/ui/linkified-text'
 
 interface VotingModalProps {
   isOpen: boolean
@@ -92,7 +93,9 @@ export function VotingModal({
           <div className='space-y-4 py-4'>
             <div className='bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border'>
               <h4 className='font-medium text-davinci-black-alt mb-2'>Vote Question:</h4>
-              <p className='text-sm text-davinci-black-alt/80 mb-3'>{voteQuestion}</p>
+              <p className='text-sm text-davinci-black-alt/80 mb-3'>
+                <LinkifiedText text={voteQuestion} />
+              </p>
 
               <h4 className='font-medium text-davinci-black-alt mb-2'>Your Choice:</h4>
               <div className='text-sm font-medium text-davinci-black-alt bg-davinci-text-base p-3 rounded border border-davinci-callout-border'>

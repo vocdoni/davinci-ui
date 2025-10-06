@@ -32,6 +32,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
 import { Checkbox } from '~components/ui/checkbox'
 import { Input } from '~components/ui/input'
 import { Label } from '~components/ui/label'
+import { LinkifiedText } from '~components/ui/linkified-text'
 import { RadioGroup, RadioGroupItem } from '~components/ui/radio-group'
 import { VoteProgressTracker } from '~components/vote-progress-tracker'
 import { VotingModal } from '~components/voting-modal'
@@ -538,7 +539,7 @@ export function VoteDisplay() {
                             <div className='flex items-start justify-between'>
                               <div className='flex-1 pr-4'>
                                 <p className='font-semibold text-lg leading-relaxed text-davinci-black-alt'>
-                                  {choice.title.default}
+                                  <LinkifiedText text={choice.title.default} />
                                 </p>
                               </div>
                               <div className='text-right space-y-1'>
@@ -759,7 +760,7 @@ export function VoteDisplay() {
                               : 'text-davinci-black-alt cursor-pointer'
                           }`}
                         >
-                          {choice.title.default}
+                          <LinkifiedText text={choice.title.default} />
                         </Label>
                       </div>
                     ))}
@@ -816,7 +817,7 @@ export function VoteDisplay() {
                             isDisabled ? 'text-davinci-black-alt/50' : 'text-davinci-black-alt'
                           }`}
                         >
-                          {choice.title.default}
+                          <LinkifiedText text={choice.title.default} />
                         </Label>
                         {isSelected && <CheckCircle className='w-4 h-4 text-green-600 mt-0.5 flex-shrink-0' />}
                       </div>
@@ -845,7 +846,7 @@ export function VoteDisplay() {
                               !isConnected ? 'text-davinci-black-alt/60' : 'text-davinci-black-alt'
                             }`}
                           >
-                            {choice.title.default}
+                            <LinkifiedText text={choice.title.default} />
                           </Label>
                           <div className='text-right'>
                             <p className='text-sm font-medium text-davinci-black-alt'>{votes} votes</p>
@@ -916,7 +917,7 @@ export function VoteDisplay() {
                               !isConnected ? 'text-davinci-black-alt/60' : 'text-davinci-black-alt'
                             }`}
                           >
-                            {choice.title.default}
+                            <LinkifiedText text={choice.title.default} />
                           </Label>
                           <div className='text-right'>
                             <p className='text-sm font-medium text-davinci-black-alt'>{votes} votes</p>
