@@ -204,6 +204,7 @@ export function VoteDisplay() {
       const davinciCrypto = new DavinciCrypto({
         wasmExecUrl: info.ballotProofWasmHelperExecJsUrl,
         wasmUrl: info.ballotProofWasmHelperUrl,
+        initTimeoutMs: 20000,
       })
       await davinciCrypto.init()
       console.info('ℹ️ DavinciCrypto initialized', info)
