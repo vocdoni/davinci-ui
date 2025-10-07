@@ -21,13 +21,57 @@ const NETWORK_MAP: Record<SupportedNetwork, AppKitNetwork> = {
 
 /**
  * Get the configured network from environment variables
- * Defaults to Sepolia if not specified or invalid
+ * If no env var is set, auto-detects from sequencer
+ * If env var is set, validates against sequencer and warns on mismatch
+ */
+export async function getConfiguredNetworkAsync(): Promise<AppKitNetwork> {
+  const { detectSequencerNetwork } = await import('./network-detection')
+  const networkEnv = import.meta.env.ETHEREUM_NETWORK as SupportedNetwork | undefined
+
+  // Detect sequencer network
+  const sequencerNetwork = await detectSequencerNetwork()
+
+  // If no env var configured, use sequencer network (auto-detection)
+  if (!networkEnv) {
+    console.info(`🔗 Auto-detected network from sequencer: ${sequencerNetwork}`)
+    return NETWORK_MAP[sequencerNetwork] || sepolia
+  }
+
+  // Env var is configured - validate it
+  const network = NETWORK_MAP[networkEnv]
+
+  if (!network) {
+    console.error(`Invalid ETHEREUM_NETWORK: ${networkEnv}, falling back to sequencer network: ${sequencerNetwork}`)
+    return NETWORK_MAP[sequencerNetwork] || sepolia
+  }
+
+  // Check for mismatch between configured and sequencer network
+  if (networkEnv !== sequencerNetwork) {
+    console.warn(
+      `⚠️ Network configuration mismatch!\n` +
+        `   Configured: ${networkEnv}\n` +
+        `   Sequencer:  ${sequencerNetwork}\n` +
+        `   The app will use "${networkEnv}" but votes may fail if sequencer expects "${sequencerNetwork}".`
+    )
+  } else {
+    console.info(`✅ Network configuration matches sequencer: ${networkEnv}`)
+  }
+
+  return network
+}
+
+/**
+ * Synchronous version - gets configured network from env var only
+ * Used for initial setup before async detection is available
+ * Returns Sepolia as temporary placeholder when no env var is set
+ * (actual network will be determined by async detection)
  */
 export function getConfiguredNetwork(): AppKitNetwork {
   const networkEnv = import.meta.env.ETHEREUM_NETWORK as SupportedNetwork | undefined
 
   if (!networkEnv) {
-    console.warn('ETHEREUM_NETWORK not configured, defaulting to Sepolia')
+    // Return Sepolia as temporary placeholder
+    // The actual network will be set by getConfiguredNetworkAsync()
     return sepolia
   }
 
@@ -38,7 +82,6 @@ export function getConfiguredNetwork(): AppKitNetwork {
     return sepolia
   }
 
-  console.info(`Using configured network: ${networkEnv}`)
   return network
 }
 
