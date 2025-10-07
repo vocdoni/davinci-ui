@@ -24,6 +24,8 @@
     ],
     "ogTitle": "DAVINCI Voting App",
     "requiredChains": [
+      "eip155:1",
+      "eip155:8453",
       "eip155:11155111"
     ]
   }

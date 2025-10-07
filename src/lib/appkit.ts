@@ -1,6 +1,6 @@
 import { EthersAdapter } from '@reown/appkit-adapter-ethers'
-import { sepolia } from '@reown/appkit/networks'
 import { createAppKit } from '@reown/appkit/react'
+import { getConfiguredNetwork } from './network-config'
 
 // 1. Get projectId from environment
 const projectId = import.meta.env.WALLETCONNECT_PROJECT_ID
@@ -13,13 +13,16 @@ const metadata = {
   icons: ['/images/davinci-icon-small.png'],
 }
 
-// 3. Create Ethers Adapter
+// 3. Get configured network
+const network = getConfiguredNetwork()
+
+// 4. Create Ethers Adapter
 const ethersAdapter = new EthersAdapter()
 
-// 4. Create modal
+// 5. Create modal
 createAppKit({
   adapters: [ethersAdapter],
-  networks: [sepolia],
+  networks: [network],
   projectId,
   metadata,
   features: {

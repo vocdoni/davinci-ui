@@ -41,6 +41,7 @@ import { useProcessQuery } from '~hooks/use-process-query'
 import { useUnifiedProvider } from '~hooks/use-unified-provider'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 import { truncateAddress } from '~lib/web3-utils'
+import { NetworkValidationBanner } from './network-validation-banner'
 import { useProcess } from './process-context'
 import RelativeTimeRemaining from './relative-time-remaining'
 import ConnectWalletButtonMiniApp from './ui/connect-wallet-button-miniapp'
@@ -613,6 +614,9 @@ export function VoteDisplay() {
           </CardHeader>
           <CardContent className='pt-6 bg-davinci-text-base space-y-6'>
             <WalletEligibilityStatus />
+
+            {/* Network Validation Banner */}
+            <NetworkValidationBanner />
 
             {/* Vote Progress Tracker */}
             {voteId && <VoteProgressTracker onVoteAgain={handleVoteAgain} processId={process.id} voteId={voteId} />}

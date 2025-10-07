@@ -1,4 +1,3 @@
-import { sepolia } from '@reown/appkit/networks'
 import { useAppKitNetwork } from '@reown/appkit/react'
 import { useEffect, useState } from 'react'
 import { Outlet, ScrollRestoration } from 'react-router-dom'
@@ -6,6 +5,7 @@ import { FloatingHeader } from '~components/floating-header'
 import { Footer } from '~components/footer'
 import { useMiniApp } from '~contexts/MiniAppContext'
 import { initializeAppKit } from '~lib/appkit-miniapp'
+import { getConfiguredNetwork } from '~lib/network-config'
 
 export function Layout() {
   const { caipNetwork, switchNetwork } = useAppKitNetwork()
@@ -30,16 +30,18 @@ export function Layout() {
     initialize()
   }, [isInitialized])
 
-  // Switch to configured chain if not connected to Sepolia
+  // Switch to configured network if not already connected to it
   useEffect(() => {
     if (!caipNetwork || !appKitInitialized) return
 
-    // Check if we're on Sepolia (chain ID 11155111)
-    if (caipNetwork.id !== sepolia.id) {
+    const configuredNetwork = getConfiguredNetwork()
+
+    // Check if we're on the configured network
+    if (caipNetwork.id !== configuredNetwork.id) {
       try {
-        switchNetwork(sepolia)
+        switchNetwork(configuredNetwork)
       } catch (error) {
-        console.error('Failed to switch chain:', error)
+        console.error('Failed to switch to configured network:', error)
       }
     }
   }, [caipNetwork, switchNetwork, appKitInitialized])
