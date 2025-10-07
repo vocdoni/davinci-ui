@@ -1,16 +1,40 @@
 import { useAppKitNetwork } from '@reown/appkit/react'
+import type { AppKitNetwork } from '@reown/appkit/networks'
 import { useEffect, useState } from 'react'
 import { Outlet, ScrollRestoration } from 'react-router-dom'
 import { FloatingHeader } from '~components/floating-header'
 import { Footer } from '~components/footer'
 import { useMiniApp } from '~contexts/MiniAppContext'
 import { initializeAppKit } from '~lib/appkit-miniapp'
-import { getConfiguredNetwork } from '~lib/network-config'
+import { getConfiguredNetworkAsync } from '~lib/network-config'
 
 export function Layout() {
   const { caipNetwork, switchNetwork } = useAppKitNetwork()
   const { isInitialized } = useMiniApp()
   const [appKitInitialized, setAppKitInitialized] = useState(false)
+  const [detectedNetwork, setDetectedNetwork] = useState<AppKitNetwork | null>(null)
+  const [shouldAutoSwitch, setShouldAutoSwitch] = useState(false)
+
+  // Detect network once on mount and cache it
+  useEffect(() => {
+    const initializeNetworkDetection = async () => {
+      try {
+        // Check if network is manually configured
+        const isManuallyConfigured = !!import.meta.env.ETHEREUM_NETWORK
+        
+        // This will detect sequencer network and validate against env var
+        const network = await getConfiguredNetworkAsync()
+        setDetectedNetwork(network)
+        
+        // Only auto-switch if network was NOT manually configured
+        setShouldAutoSwitch(!isManuallyConfigured)
+      } catch (error) {
+        console.error('Failed to initialize network detection:', error)
+      }
+    }
+
+    initializeNetworkDetection()
+  }, [])
 
   // Initialize AppKit once mini app context is ready
   useEffect(() => {
@@ -30,21 +54,19 @@ export function Layout() {
     initialize()
   }, [isInitialized])
 
-  // Switch to configured network if not already connected to it
+  // Switch to detected network only if auto-detection is enabled
   useEffect(() => {
-    if (!caipNetwork || !appKitInitialized) return
+    if (!caipNetwork || !appKitInitialized || !detectedNetwork || !shouldAutoSwitch) return
 
-    const configuredNetwork = getConfiguredNetwork()
-
-    // Check if we're on the configured network
-    if (caipNetwork.id !== configuredNetwork.id) {
+    // Only switch if using auto-detection (no manual env var configuration)
+    if (caipNetwork.id !== detectedNetwork.id) {
       try {
-        switchNetwork(configuredNetwork)
+        switchNetwork(detectedNetwork)
       } catch (error) {
-        console.error('Failed to switch to configured network:', error)
+        console.error('Failed to switch to detected network:', error)
       }
     }
-  }, [caipNetwork, switchNetwork, appKitInitialized])
+  }, [caipNetwork, switchNetwork, appKitInitialized, detectedNetwork, shouldAutoSwitch])
 
   return (
     <div className='min-h-screen bg-davinci-paper-base/30 flex flex-col font-work-sans'>
