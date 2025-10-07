@@ -1,6 +1,7 @@
 import { ExternalLink, Menu } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, matchPath, useLocation } from 'react-router-dom'
+import { NetworkBadge } from '~components/network-badge'
 import { Button } from '~components/ui/button'
 import { Card } from '~components/ui/card'
 import { Sheet, SheetContent, SheetTrigger } from '~components/ui/sheet'
@@ -78,9 +79,12 @@ export function FloatingHeader() {
     >
       <Card className='bg-davinci-paper-base/95 backdrop-blur-md border-b border-davinci-callout-border/50 lg:border lg:border-davinci-callout-border/50 shadow-lg rounded-b-lg rounded-t-none lg:rounded-lg'>
         <div className='flex items-center justify-between p-4'>
-          <Link to='/' className='flex items-center space-x-3'>
-            <img src='/images/davinci-logo.png' alt='DAVINCI' className='h-8 w-auto' />
-          </Link>
+          <div className='flex items-center space-x-3'>
+            <Link to='/' className='flex items-center'>
+              <img src='/images/davinci-logo.png' alt='DAVINCI' className='h-8 w-auto' />
+            </Link>
+            <NetworkBadge />
+          </div>
 
           <div className='hidden lg:block'>
             <nav className='flex items-center space-x-1'>

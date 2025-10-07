@@ -5,12 +5,26 @@ import { FloatingHeader } from '~components/floating-header'
 import { Footer } from '~components/footer'
 import { useMiniApp } from '~contexts/MiniAppContext'
 import { initializeAppKit } from '~lib/appkit-miniapp'
-import { getConfiguredNetwork } from '~lib/network-config'
+import { getConfiguredNetwork, getConfiguredNetworkAsync } from '~lib/network-config'
 
 export function Layout() {
   const { caipNetwork, switchNetwork } = useAppKitNetwork()
   const { isInitialized } = useMiniApp()
   const [appKitInitialized, setAppKitInitialized] = useState(false)
+
+  // Initialize network detection and validation early
+  useEffect(() => {
+    const initializeNetworkDetection = async () => {
+      try {
+        // This will detect sequencer network and validate against env var
+        await getConfiguredNetworkAsync()
+      } catch (error) {
+        console.error('Failed to initialize network detection:', error)
+      }
+    }
+
+    initializeNetworkDetection()
+  }, [])
 
   // Initialize AppKit once mini app context is ready
   useEffect(() => {
