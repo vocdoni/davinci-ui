@@ -112,3 +112,9 @@ body {
     transform: translateX(100%);
   }
 }
+
+code:not(pre code) {
+  @apply font-mono text-[0.8em] bg-gray-100 dark:bg-neutral-800
+    text-gray-800 dark:text-gray-200
+    rounded px-1 py-0.5 border border-gray-200 dark:border-neutral-700;
+}

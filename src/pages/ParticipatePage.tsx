@@ -29,9 +29,12 @@ function CodeBlock({ children, className = '' }: { children: string; className?:
 
   return (
     <div
-      className={`relative bg-davinci-digital-highlight border border-davinci-callout-border rounded-lg p-4 ${className}`}
+      className={`relative bg-gray-200 mt-2 border border-davinci-callout-border rounded-lg p-4 ${className}`}
     >
-      <code className='font-mono text-xs text-davinci-black-alt break-all'>{children}</code>
+      <pre className="whitespace-pre-wrap break-words font-mono text-xs text-davinci-black-alt">
+        <code>{children}</code>
+      </pre>
+
       <Button
         variant='ghost'
         size='sm'
@@ -94,59 +97,68 @@ export default function ParticipatePage() {
                 </p>
 
                 <div>
-                  <h3 className='text-davinci-black-alt font-medium mb-2'>Requirements:</h3>
+                  <h3 className='text-davinci-black-alt text-lg font-medium mb-2'>Requirements</h3>
                   <ul className='list-disc list-inside space-y-1 text-davinci-black-alt/80 ml-4'>
-                    <li>Computer with stable internet connection</li>
-                    <li>At least 16 GB of RAM</li>
-                    <li>Docker installed</li>
+                    <li>Computer with stable internet connection.</li>
+                    <li>At least 16 GB of RAM.</li>
+                    <li>Docker installed.</li>
                   </ul>
                 </div>
 
-                <p className='text-davinci-black-alt/80'>
-                  Detailed instructions and requirements can be found in the official{' '}
-                  <ExternalLinkText href='https://github.com/vocdoni/davinci-node#-run-a-worker-node'>
-                    DAVINCI node documentation
-                  </ExternalLinkText>
-                  .
-                </p>
-              </div>
+                <div>
+                  <h3 className='text-davinci-black-alt text-lg font-medium mb-2'>Install instructions</h3>
+                </div>
+                <div>
+                  <h4 className='text-davinci-black-alt font-medium mb-2'>1. Instructions</h4>
+                  <p className='text-davinci-black-alt/80'>Go to Davinci <ExternalLinkText href='https://vocdoni.github.io/davinci-workers-registry/'>Worker Registry webapp</ExternalLinkText> to get your token. Ensure that the account used to create it matches with the worker address.</p>
+                </div>
+                <div>
+                  <h4 className='text-davinci-black-alt font-medium mb-2'>2. Instructions</h4>
+                  <p className='text-davinci-black-alt/80'>Clone the repository.</p>
+                  <CodeBlock>git clone https://github.com/vocdoni/davinci-node.git && cd davinci-node</CodeBlock>
+                </div>
+                <div>
+                  <h4 className='text-davinci-black-alt font-medium mb-2'>3. Copy the example ENV file</h4>
+                  <p className='text-davinci-black-alt/80'>Find <code>.env.example</code> in the cloned directory and copy it to a new file named <code>.env</code>.</p>
+                  <CodeBlock>cp .env.example .env</CodeBlock>
+                </div>
+                <div>
+                  <h4 className='text-davinci-black-alt font-medium mb-2'>3. Configure worker variables</h4>
+                  <p className='text-davinci-black-alt/80'>Configure worker-specific variables in the <code>.env</code> file.</p>
+                  <CodeBlock>{`DAVINCI_WORKER_SEQUENCERURL="http://sequencer-host:9090/workers/<UUID>" # unique per sequencer
+DAVINCI_WORKER_AUTHTOKEN="<generated_worker_authtoken>"                 # from step 1
+DAVINCI_WORKER_ADDRESS="0x1111122222333334444455555666667777788888"     # used in step 1
+DAVINCI_WORKER_NAME="my-awesome-davinci-worker"                         # a name for your worker`}</CodeBlock>
+                  <p className='mt-4 text-davinci-black-alt/80'>Here is the URL of our main Sequencer:</p>
+                  <CodeBlock>{`https://sequencer1.davinci.vote/workers/1744b84a-eca6-c7f0-2ebf-593f7234465f`}</CodeBlock>
+                </div>
+                <div>
+                  <h4 className='text-davinci-black-alt font-medium mb-2'>4. Start the worker</h4>
+                  <p className='text-davinci-black-alt/80'>Run the worker using docker compose. <code>--profile=prod</code> runs with <code>watchtower</code> enabled to support auto-updating.</p>
+                  <CodeBlock>{`docker-compose --profile=prod up -d`}</CodeBlock>
+                </div>
+                <div>
+                  <h4 className='text-davinci-black-alt font-medium mb-2'>5. Monitoring</h4>
+                  <p className='text-davinci-black-alt/80'>Once your worker node is running, monitor its status and performance at{' '}<ExternalLinkText href='https://sequencer1.davinci.vote/app'>the Sequencer dashboard</ExternalLinkText>.</p>
+                </div>
 
-              <div className='space-y-4'>
-                <h3 className='text-davinci-black-alt font-medium'>Environment Configuration</h3>
-                <p className='text-davinci-black-alt/80'>
-                  To join Vocdoni's official Sequencer worker network, set the following environment variables:
-                </p>
-
-                <div className='space-y-3'>
-                  <div>
-                    <p className='text-sm text-davinci-black-alt/70 mb-2'>Master URL:</p>
-                    <CodeBlock>
-                      DAVINCI_WORKER_MASTERURL="https://sequencer1.davinci.vote/workers/1744b84a-eca6-c7f0-2ebf-593f7234465f"
-                    </CodeBlock>
-                  </div>
-
-                  <div>
-                    <p className='text-sm text-davinci-black-alt/70 mb-2'>Worker Address:</p>
-                    <CodeBlock>DAVINCI_WORKER_ADDRESS="your_ethereum_address_here"</CodeBlock>
+                <div className='pt-10'>
+                  <p className='text-davinci-black-alt/80 mb-2'>
+                    Detailed instructions and requirements can be found in the official DAVINCI node documentation:
+                  </p>
+                  <div className='flex justify-center'>
+                    <Button
+                      className='bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base'
+                      onClick={() => window.open('https://github.com/vocdoni/davinci-node#-run-a-worker-node', '_blank')}
+                    >
+                      <Github className='w-4 h-4 mr-2' />
+                      View on GitHub
+                    </Button>
                   </div>
                 </div>
               </div>
 
-              <p className='text-davinci-black-alt/80'>
-                <strong className='text-davinci-black-alt'>Monitoring:</strong> Once your worker node is running,
-                monitor its status and performance at{' '}
-                <ExternalLinkText href='https://sequencer1.davinci.vote/app'>the Sequencer dashboard</ExternalLinkText>.
-              </p>
 
-              <div className='flex justify-start'>
-                <Button
-                  className='bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base'
-                  onClick={() => window.open('https://github.com/vocdoni/davinci-node#-run-a-worker-node', '_blank')}
-                >
-                  <Github className='w-4 h-4 mr-2' />
-                  View on GitHub
-                </Button>
-              </div>
             </CardContent>
           </Card>
 
