@@ -1,0 +1,29 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    environment:
+      NODE_ENV: development
+      # file watching in bind mounts on mac/linux
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+      # pass your app envs if you need them in dev.
+      # or use env_file: .env
+      SEQUENCER_URL: "https://sequencer1.davinci.vote"
+      BIGQUERY_URL: "https://c3.davinci.vote"
+      ETHEREUM_NETWORK: "sepolia"
+      SHARE_TEXT: "🗳️ Just launched a vote with DAVINCI!"
+    volumes:
+      - .:/app:delegated
+      # persist pnpm store & node_modules for speed
+      - pnpm-store:/pnpm/store
+      - node-modules:/app/node_modules
+    # optional: if you want to see colored logs
+    tty: true
+
+volumes:
+  pnpm-store: {}
+  node-modules: {}

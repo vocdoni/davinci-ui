@@ -1,0 +1,11 @@
+node_modules
+.pnp*
+.pnpm-store
+dist
+build
+.cache
+.git
+Dockerfile*
+docker-compose.yml
+.vscode
+.idea

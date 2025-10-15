@@ -44,6 +44,11 @@ pnpm install
 pnpm dev
 ```
 
+#### Using docker
+```bash
+docker compose up
+```
+
 ### Available Commands
 
 ```bash
