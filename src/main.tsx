@@ -4,12 +4,15 @@ import ReactDOM from 'react-dom/client'
 import { AppErrorBoundary } from '~components/app-error-boundary'
 import { InstallPrompt } from '~components/install-prompt'
 import { OfflineIndicator } from '~components/offline-indicator'
+import { UpdatePrompt } from '~components/update-prompt'
 import { VocdoniApiProvider } from '~components/vocdoni-api-context'
 import { MiniAppProvider } from '~contexts/MiniAppContext'
 import { SequencerNetworkProvider } from '~contexts/sequencer-network'
 import { RouterProvider } from '~router'
 // Initialize AppKit with all networks
 import '~lib/appkit'
+// Initialize PWA with update handling
+import '~lib/pwa'
 
 import '@fontsource/averia-libre/400.css'
 import '@fontsource/averia-libre/700.css'
@@ -31,6 +34,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <SequencerNetworkProvider>
           <MiniAppProvider>
             <VocdoniApiProvider>
+              <UpdatePrompt />
               <InstallPrompt />
               <RouterProvider />
               <OfflineIndicator />

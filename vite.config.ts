@@ -74,10 +74,9 @@ const viteconfig = defineConfig(({ mode }) => {
           ],
         },
         workbox: {
-          clientsClaim: true,
-          skipWaiting: true,
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
+          cleanupOutdatedCaches: true,
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/sequencer1\.davinci\.vote\/.*/,
