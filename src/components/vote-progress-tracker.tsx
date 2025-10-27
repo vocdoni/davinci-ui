@@ -4,11 +4,12 @@ import type React from 'react'
 
 import { VoteStatus } from '@vocdoni/davinci-sdk'
 import { AlertTriangle, CheckCircle, Clock, Cpu, Info, Package, RefreshCw, Shield } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Badge } from '~components/ui/badge'
 import { Button } from '~components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
 import { Progress } from '~components/ui/progress'
+import { getSequencerNetworkName, useSequencerNetwork } from '~contexts/sequencer-network'
 import { useVoteStatus } from '~hooks/use-vote-status'
 
 export { VoteStatus }
@@ -28,49 +29,6 @@ interface ProgressStep {
   bgColor: string
 }
 
-const progressSteps: ProgressStep[] = [
-  {
-    id: VoteStatus.Pending,
-    label: 'Pending',
-    description: 'Vote submitted and accepted by the sequencer. It is now queued for verification.',
-    icon: <Clock className='w-4 h-4' />,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-100',
-  },
-  {
-    id: VoteStatus.Verified,
-    label: 'Verified',
-    description: 'Vote successfully verified',
-    icon: <CheckCircle className='w-4 h-4' />,
-    color: 'text-green-600',
-    bgColor: 'bg-green-100',
-  },
-  {
-    id: VoteStatus.Aggregated,
-    label: 'Aggregated',
-    description: 'Vote included in aggregated batch',
-    icon: <Package className='w-4 h-4' />,
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-100',
-  },
-  {
-    id: VoteStatus.Processed,
-    label: 'Processed',
-    description: 'Vote incorporated into state transition batch',
-    icon: <Cpu className='w-4 h-4' />,
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-100',
-  },
-  {
-    id: VoteStatus.Settled,
-    label: 'Settled',
-    description: 'Vote finalized on Ethereum blockchain',
-    icon: <Shield className='w-4 h-4' />,
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-100',
-  },
-]
-
 const statusToProgress: Record<VoteStatus, number> = {
   [VoteStatus.Pending]: 10,
   [VoteStatus.Verified]: 25,
@@ -82,6 +40,54 @@ const statusToProgress: Record<VoteStatus, number> = {
 
 export function VoteProgressTracker({ onVoteAgain, processId, voteId }: VoteProgressTrackerProps) {
   const { data: voteStatusData, isLoading, error } = useVoteStatus(processId, voteId)
+  const { sequencerNetwork } = useSequencerNetwork()
+  const networkName = getSequencerNetworkName(sequencerNetwork) || 'Ethereum'
+
+  const progressSteps: ProgressStep[] = useMemo(
+    () => [
+      {
+        id: VoteStatus.Pending,
+        label: 'Pending',
+        description: 'Vote submitted and accepted by the sequencer. It is now queued for verification.',
+        icon: <Clock className='w-4 h-4' />,
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-100',
+      },
+      {
+        id: VoteStatus.Verified,
+        label: 'Verified',
+        description: 'Vote successfully verified',
+        icon: <CheckCircle className='w-4 h-4' />,
+        color: 'text-green-600',
+        bgColor: 'bg-green-100',
+      },
+      {
+        id: VoteStatus.Aggregated,
+        label: 'Aggregated',
+        description: 'Vote included in aggregated batch',
+        icon: <Package className='w-4 h-4' />,
+        color: 'text-purple-600',
+        bgColor: 'bg-purple-100',
+      },
+      {
+        id: VoteStatus.Processed,
+        label: 'Processed',
+        description: 'Vote incorporated into state transition batch',
+        icon: <Cpu className='w-4 h-4' />,
+        color: 'text-indigo-600',
+        bgColor: 'bg-indigo-100',
+      },
+      {
+        id: VoteStatus.Settled,
+        label: 'Settled',
+        description: `Vote finalized on ${networkName} blockchain`,
+        icon: <Shield className='w-4 h-4' />,
+        color: 'text-emerald-600',
+        bgColor: 'bg-emerald-100',
+      },
+    ],
+    [networkName]
+  )
 
   const currentStatus = voteStatusData?.status || VoteStatus.Pending
   const progress = statusToProgress[currentStatus]
@@ -250,8 +256,8 @@ export function VoteProgressTracker({ onVoteAgain, processId, voteId }: VoteProg
               <div className='flex-1'>
                 <h4 className='font-medium text-emerald-800 mb-1'>Vote Successfully Settled</h4>
                 <p className='text-sm text-emerald-700 mb-3'>
-                  Your vote has been finalized on the Ethereum blockchain. You can now cast a new vote if you wish to
-                  change your choice. Only your most recent vote will be counted.
+                  Your vote has been finalized on the {networkName} blockchain. You can now cast a new vote if you wish
+                  to change your choice. Only your most recent vote will be counted.
                 </p>
                 <div className='flex gap-2'>
                   <Button onClick={onVoteAgain} size='sm' className='bg-emerald-600 hover:bg-emerald-700 text-white'>
