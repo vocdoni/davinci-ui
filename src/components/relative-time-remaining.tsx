@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
-import { useProcess } from './process-context'
+import { useEffect, useState } from 'react'
+import { useProcess } from '~contexts/process-context'
 
 const RelativeTimeRemaining = () => {
   const { process } = useProcess()

@@ -43,6 +43,7 @@ import { Separator } from '~components/ui/separator'
 import { Textarea } from '~components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~components/ui/tooltip'
 import { useMiniApp } from '~contexts/MiniAppContext'
+import { useVocdoniApi } from '~contexts/vocdoni-api-context'
 import { useSnapshots, type Snapshot } from '~hooks/use-snapshots'
 import { useUnifiedProvider } from '~hooks/use-unified-provider'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
@@ -50,7 +51,6 @@ import { CustomAddressesManager } from './census-addresses'
 import { Snapshots } from './snapshots'
 import ConnectWalletButtonMiniApp from './ui/connect-wallet-button-miniapp'
 import { Link } from './ui/link'
-import { useVocdoniApi } from './vocdoni-api-context'
 
 interface Choice {
   id: string

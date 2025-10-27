@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import type { CensusProof, ElectionMetadata, GetProcessResponse } from '@vocdoni/davinci-sdk'
 import { createContext, useContext, useMemo, type FC, type PropsWithChildren } from 'react'
 import { up } from 'up-fetch'
+import { useVocdoniApi } from '~contexts/vocdoni-api-context'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
-import { useVocdoniApi } from './vocdoni-api-context'
 
 type Process = {
   process: GetProcessResponse

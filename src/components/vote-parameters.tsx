@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
 
 import type { ElectionMetadata, GetProcessResponse } from '@vocdoni/davinci-sdk'
 import { ElectionResultsTypeNames, ProcessStatus } from '@vocdoni/davinci-sdk'
+import { useProcess } from '~contexts/process-context'
 import { formatNanosecondsInterval } from '~lib/utils'
-import { useProcess } from './process-context'
 
 interface VoteParametersProps {
   voteData: ElectionMetadata

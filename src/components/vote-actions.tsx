@@ -3,7 +3,7 @@ import { ProcessRegistryService, ProcessStatus, VocdoniApiService } from '@vocdo
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { Cog, StopCircle } from 'lucide-react'
 import { useState } from 'react'
-import { useProcess } from './process-context'
+import { useProcess } from '~contexts/process-context'
 import { Button } from './ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 

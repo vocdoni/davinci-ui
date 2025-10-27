@@ -1,7 +1,7 @@
 import { useLoaderData } from 'react-router-dom'
-import { ProcessProvider } from '~components/process-context'
 import { VoteErrorBoundary } from '~components/vote-error-boundary'
 import VoteView from '~components/vote-view'
+import { ProcessProvider } from '~contexts/process-context'
 import useLoaderAutoRefresh from '~hooks/use-loader-autorefresh'
 import type { ProcessLoaderData } from '~src/types'
 

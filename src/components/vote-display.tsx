@@ -1,7 +1,7 @@
 import type { ElectionMetadata } from '@vocdoni/davinci-sdk'
 import {
-  DavinciCrypto,
   CircomProof,
+  DavinciCrypto,
   ElectionResultsTypeNames,
   ProcessStatus,
   VocdoniApiService,
@@ -9,19 +9,6 @@ import {
   type VoteBallot,
   type VoteRequest,
 } from '@vocdoni/davinci-sdk'
-
-// Define CensusProof type locally since it's not exported
-type CensusProof = {
-  root: string
-  address: string
-  weight: string
-  censusOrigin: number
-  value?: string
-  siblings?: string
-  processId?: string
-  publicKey?: string
-  signature?: string
-}
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { BarChart3, CheckCircle, Clock, Diamond, Lock, Minus, Plus, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -36,17 +23,30 @@ import { LinkifiedText } from '~components/ui/linkified-text'
 import { RadioGroup, RadioGroupItem } from '~components/ui/radio-group'
 import { VoteProgressTracker } from '~components/vote-progress-tracker'
 import { VotingModal } from '~components/voting-modal'
+import { useProcess } from '~contexts/process-context'
 import { usePersistedVote } from '~hooks/use-persisted-vote'
 import { useProcessQuery } from '~hooks/use-process-query'
 import { useUnifiedProvider } from '~hooks/use-unified-provider'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 import { truncateAddress } from '~lib/web3-utils'
 import { NetworkValidationBanner } from './network-validation-banner'
-import { useProcess } from './process-context'
 import RelativeTimeRemaining from './relative-time-remaining'
 import ConnectWalletButtonMiniApp from './ui/connect-wallet-button-miniapp'
 import { Spinner } from './ui/spinner'
 import VotingTimeRemaining from './voting-time-remaining'
+
+// Define CensusProof type locally since it's not exported
+type CensusProof = {
+  root: string
+  address: string
+  weight: string
+  censusOrigin: number
+  value?: string
+  siblings?: string
+  processId?: string
+  publicKey?: string
+  signature?: string
+}
 
 interface VotingMethod {
   type: ElectionResultsTypeNames

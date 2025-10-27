@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { Suspense, lazy } from 'react'
 import { RouterProvider as ReactRouterProvider, createBrowserRouter } from 'react-router-dom'
-import { useVocdoniApi } from '~components/vocdoni-api-context'
+import { useVocdoniApi } from '~contexts/vocdoni-api-context'
 import { getProcessQuery } from '~hooks/use-process-query'
 import ExplorePage from '~pages/Explore'
 import AppError from './AppError'

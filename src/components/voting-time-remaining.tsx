@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useProcess } from './process-context'
+import { useProcess } from '~contexts/process-context'
 
 const VotingTimeRemaining = () => {
   const { process } = useProcess()
