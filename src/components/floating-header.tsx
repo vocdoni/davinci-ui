@@ -48,7 +48,7 @@ export function FloatingHeader() {
     {
       value: 'sequencer',
       label: 'Sequencer',
-      href: 'https://sequencer1.davinci.vote/app',
+      href: `${import.meta.env.SEQUENCER_URL}/app`,
       external: true,
     },
     {
@@ -64,7 +64,6 @@ export function FloatingHeader() {
       external: true,
     },
   ]
-
 
   const isActiveLink = (href: string) => {
     const match = matchPath({ path: href, end: href === '/' }, pathname)
@@ -88,13 +87,13 @@ export function FloatingHeader() {
 
           <div className='hidden lg:block'>
             <nav className='flex items-center space-x-1'>
-              {navigationItems.map((item) => (
+              {navigationItems.map((item) =>
                 item.external ? (
                   <a
                     key={item.value}
                     href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    target='_blank'
+                    rel='noopener noreferrer'
                     className={`px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 flex items-center gap-1 ${
                       isActiveLink(item.href)
                         ? 'bg-davinci-soft-neutral text-davinci-black-alt'
@@ -120,7 +119,7 @@ export function FloatingHeader() {
                     {item.external && <ExternalLink className='w-3 h-3' />}
                   </Link>
                 )
-              ))}
+              )}
             </nav>
           </div>
 
@@ -133,13 +132,13 @@ export function FloatingHeader() {
               </SheetTrigger>
               <SheetContent className='bg-davinci-paper-base'>
                 <div className='flex flex-col space-y-4 mt-8'>
-                  {navigationItems.map((item) => (
+                  {navigationItems.map((item) =>
                     item.external ? (
                       <a
                         key={item.value}
                         href={item.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        target='_blank'
+                        rel='noopener noreferrer'
                         className={`flex items-center justify-start gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
                           isActiveLink(item.href)
                             ? 'bg-davinci-soft-neutral text-davinci-black-alt'
@@ -165,7 +164,7 @@ export function FloatingHeader() {
                         {item.external && <ExternalLink className='w-3 h-3' />}
                       </Link>
                     )
-                  ))}
+                  )}
                 </div>
               </SheetContent>
             </Sheet>
