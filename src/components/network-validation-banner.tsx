@@ -1,4 +1,4 @@
-import { AlertTriangle, Network } from 'lucide-react'
+import { AlertTriangle, Info, Network } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '~components/ui/alert'
 import { Button } from '~components/ui/button'
 import { Spinner } from '~components/ui/spinner'
@@ -7,6 +7,7 @@ import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 
 /**
  * Banner component that displays network validation status and allows switching networks
+ * Shows loading state while detecting sequencer network
  * Shows when wallet is connected to wrong network
  */
 export function NetworkValidationBanner() {
@@ -21,13 +22,24 @@ export function NetworkValidationBanner() {
     switchToCorrectNetwork,
   } = useNetworkValidation()
 
-  // Don't show if not connected
-  if (!isConnected) {
-    return null
+  // Show loading state while detecting sequencer network
+  if (isValidating && isConnected) {
+    return (
+      <Alert className='border-blue-200 bg-blue-50'>
+        <Info className='h-4 w-4 text-blue-600' />
+        <AlertTitle className='text-blue-800'>Detecting Network Configuration</AlertTitle>
+        <AlertDescription className='text-blue-700'>
+          <div className='flex items-center gap-2'>
+            <Spinner className='h-4 w-4' />
+            <span>Detecting sequencer network configuration...</span>
+          </div>
+        </AlertDescription>
+      </Alert>
+    )
   }
 
-  // Don't show if validating
-  if (isValidating) {
+  // Don't show if not connected
+  if (!isConnected) {
     return null
   }
 
@@ -43,8 +55,8 @@ export function NetworkValidationBanner() {
       <AlertDescription className='text-orange-700'>
         <div className='space-y-3'>
           <p>
-            Your wallet is connected to the wrong network. This vote requires the <strong>{requiredNetworkName}</strong>{' '}
-            network.
+            Your wallet is connected to the wrong network. The sequencer requires the{' '}
+            <strong>{requiredNetworkName}</strong> network.
             {currentChainId && (
               <>
                 {' '}

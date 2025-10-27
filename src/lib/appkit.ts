@@ -1,7 +1,7 @@
 import { EthersAdapter } from '@reown/appkit-adapter-ethers'
 import type { AppKitNetwork } from '@reown/appkit/networks'
 import { createAppKit } from '@reown/appkit/react'
-import { NETWORK_MAP } from './network-config'
+import { NETWORK_MAP } from '~contexts/sequencer-network'
 
 // 1. Get projectId from environment
 const projectId = import.meta.env.WALLETCONNECT_PROJECT_ID

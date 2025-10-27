@@ -1,8 +1,8 @@
 import { VocdoniApiService } from '@vocdoni/davinci-sdk'
 import type { SupportedNetwork } from './network-config'
 
-let cachedNetwork: SupportedNetwork | null = null
-let cachedChainId: number | null = null
+let cachedSequencerNetwork: SupportedNetwork | null = null
+let cachedSequencerChainId: number | null = null
 
 /**
  * Map chain ID to network name
@@ -25,8 +25,8 @@ function mapChainIdToNetwork(chainId: number): SupportedNetwork {
  * Caches the result to avoid repeated API calls
  */
 export async function detectSequencerNetwork(): Promise<SupportedNetwork> {
-  if (cachedNetwork) {
-    return cachedNetwork
+  if (cachedSequencerNetwork) {
+    return cachedSequencerNetwork
   }
 
   try {
@@ -42,24 +42,24 @@ export async function detectSequencerNetwork(): Promise<SupportedNetwork> {
 
     if (!chainId) {
       console.warn('⚠️ Sequencer info does not contain chain information, defaulting to Sepolia')
-      cachedNetwork = 'sepolia'
-      cachedChainId = 11155111
-      return cachedNetwork
+      cachedSequencerNetwork = 'sepolia'
+      cachedSequencerChainId = 11155111
+      return cachedSequencerNetwork
     }
 
     const parsedChainId = typeof chainId === 'string' ? parseInt(chainId, 10) : Number(chainId)
-    cachedChainId = parsedChainId
-    cachedNetwork = mapChainIdToNetwork(parsedChainId)
+    cachedSequencerChainId = parsedChainId
+    cachedSequencerNetwork = mapChainIdToNetwork(parsedChainId)
 
-    console.info(`🔗 Detected sequencer network: ${cachedNetwork} (chainId: ${cachedChainId})`)
+    console.info(`🔗 Detected sequencer network: ${cachedSequencerNetwork} (chainId: ${cachedSequencerChainId})`)
 
-    return cachedNetwork
+    return cachedSequencerNetwork
   } catch (error) {
     console.error('Failed to detect sequencer network:', error)
     console.warn('⚠️ Falling back to Sepolia network')
-    cachedNetwork = 'sepolia'
-    cachedChainId = 11155111
-    return cachedNetwork
+    cachedSequencerNetwork = 'sepolia'
+    cachedSequencerChainId = 11155111
+    return cachedSequencerNetwork
   }
 }
 
@@ -67,13 +67,13 @@ export async function detectSequencerNetwork(): Promise<SupportedNetwork> {
  * Get the cached chain ID from sequencer
  */
 export function getSequencerChainId(): number | null {
-  return cachedChainId
+  return cachedSequencerChainId
 }
 
 /**
  * Clear the cache (useful for testing)
  */
-export function clearNetworkCache(): void {
-  cachedNetwork = null
-  cachedChainId = null
+export function clearSequencerNetworkCache(): void {
+  cachedSequencerNetwork = null
+  cachedSequencerChainId = null
 }

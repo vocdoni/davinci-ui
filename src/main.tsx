@@ -6,6 +6,7 @@ import { InstallPrompt } from '~components/install-prompt'
 import { OfflineIndicator } from '~components/offline-indicator'
 import { VocdoniApiProvider } from '~components/vocdoni-api-context'
 import { MiniAppProvider } from '~contexts/MiniAppContext'
+import { SequencerNetworkProvider } from '~contexts/sequencer-network'
 import { RouterProvider } from '~router'
 // Initialize AppKit with all networks
 import '~lib/appkit'
@@ -27,13 +28,15 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <AppErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <MiniAppProvider>
-          <VocdoniApiProvider>
-            <InstallPrompt />
-            <RouterProvider />
-            <OfflineIndicator />
-          </VocdoniApiProvider>
-        </MiniAppProvider>
+        <SequencerNetworkProvider>
+          <MiniAppProvider>
+            <VocdoniApiProvider>
+              <InstallPrompt />
+              <RouterProvider />
+              <OfflineIndicator />
+            </VocdoniApiProvider>
+          </MiniAppProvider>
+        </SequencerNetworkProvider>
       </QueryClientProvider>
     </AppErrorBoundary>
   </React.StrictMode>

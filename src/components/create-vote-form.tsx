@@ -1058,7 +1058,7 @@ type LaunchVoteButtonProps = {
 const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVoteButtonProps) => {
   const { isConnected } = useUnifiedWallet()
   const { isMiniApp, isExternalWallet, supportedChains, getFarcasterEthereumProvider } = useMiniApp()
-  const { caipNetwork, switchNetwork } = useAppKitNetwork()
+  const { caipNetwork } = useAppKitNetwork()
 
   // All hooks must be at the top before any conditional returns
   const [actualChainId, setActualChainId] = useState<string | null>(null)
@@ -1133,54 +1133,6 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
             </ul>
           </div>
         </div>
-      </div>
-    )
-  }
-
-  // For miniapp users with external wallets: check actual Farcaster provider chain
-  if (isMiniApp && isExternalWallet && actualChainId && !isOnSepoliaActually) {
-    const chainName =
-      actualChainIdDecimal === 8453
-        ? 'Base'
-        : actualChainIdDecimal === 1
-          ? 'Ethereum Mainnet'
-          : actualChainIdDecimal === 84532
-            ? 'Base Sepolia'
-            : `Chain ${actualChainIdDecimal}`
-
-    return (
-      <div className='space-y-4'>
-        <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-4'>
-          <p className='text-sm text-yellow-800'>
-            <strong>Wrong Network:</strong> Please switch to Sepolia testnet in your wallet to create votes. Current
-            network: {chainName}
-          </p>
-        </div>
-        <div className='text-sm text-gray-600'>
-          <p>
-            You're currently on {chainName}. DAVINCI requires Sepolia testnet (Chain ID: 11155111) for creating votes.
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  // For non-miniapp (PWA) users: check AppKit network (this should rarely trigger due to auto-switching)
-  if (!isMiniApp && caipNetwork?.id !== sepolia.id && caipNetwork) {
-    return (
-      <div className='space-y-4'>
-        <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-4'>
-          <p className='text-sm text-yellow-800'>
-            <strong>Wrong Network:</strong> Please switch to Sepolia testnet to create votes. Current network:{' '}
-            {caipNetwork.name}
-          </p>
-        </div>
-        <Button
-          onClick={() => switchNetwork(sepolia)}
-          className='w-full bg-davinci-black-alt hover:bg-davinci-black-alt/90 text-davinci-text-base'
-        >
-          Switch to Sepolia Testnet
-        </Button>
       </div>
     )
   }

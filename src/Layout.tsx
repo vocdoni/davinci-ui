@@ -1,50 +1,34 @@
-import type { AppKitNetwork } from '@reown/appkit/networks'
 import { useAppKitNetwork } from '@reown/appkit/react'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Outlet, ScrollRestoration } from 'react-router-dom'
 import { FloatingHeader } from '~components/floating-header'
 import { Footer } from '~components/footer'
-import { getConfiguredNetworkAsync } from '~lib/network-config'
+import { useSequencerNetwork } from '~contexts/sequencer-network'
 
 export function Layout() {
   const { caipNetwork, switchNetwork } = useAppKitNetwork()
-  const [detectedNetwork, setDetectedNetwork] = useState<AppKitNetwork | null>(null)
-  const [shouldAutoSwitch, setShouldAutoSwitch] = useState(false)
+  const { sequencerNetwork, isLoadingSequencerNetwork, isManuallyConfigured } = useSequencerNetwork()
 
-  // Detect network once on mount and cache it
+  // Auto-switch to sequencer network if not manually configured
   useEffect(() => {
-    const initializeNetworkDetection = async () => {
-      try {
-        // Check if network is manually configured
-        const isManuallyConfigured = !!import.meta.env.ETHEREUM_NETWORK
-
-        // This will detect sequencer network and validate against env var
-        const network = await getConfiguredNetworkAsync()
-        setDetectedNetwork(network)
-
-        // Only auto-switch if network was NOT manually configured
-        setShouldAutoSwitch(!isManuallyConfigured)
-      } catch (error) {
-        console.error('Failed to initialize network detection:', error)
-      }
+    // Don't auto-switch if:
+    // - Still loading sequencer network
+    // - No sequencer network detected
+    // - Network is manually configured via env var
+    // - Wallet not connected yet
+    if (isLoadingSequencerNetwork || !sequencerNetwork || isManuallyConfigured || !caipNetwork) {
+      return
     }
 
-    initializeNetworkDetection()
-  }, [])
-
-  // Switch to detected network only if auto-detection is enabled
-  useEffect(() => {
-    if (!caipNetwork || !detectedNetwork || !shouldAutoSwitch) return
-
-    // Only switch if using auto-detection (no manual env var configuration)
-    if (caipNetwork.id !== detectedNetwork.id) {
+    // Switch wallet network to match sequencer if they differ
+    if (caipNetwork.id !== sequencerNetwork.id) {
       try {
-        switchNetwork(detectedNetwork)
+        switchNetwork(sequencerNetwork)
       } catch (error) {
-        console.error('Failed to switch to detected network:', error)
+        console.error('Failed to switch to sequencer network:', error)
       }
     }
-  }, [caipNetwork, switchNetwork, detectedNetwork, shouldAutoSwitch])
+  }, [caipNetwork, switchNetwork, sequencerNetwork, isLoadingSequencerNetwork, isManuallyConfigured])
 
   return (
     <div className='min-h-screen bg-davinci-paper-base/30 flex flex-col font-work-sans'>

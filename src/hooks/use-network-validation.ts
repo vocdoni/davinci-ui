@@ -1,11 +1,11 @@
 import { useAppKitNetwork } from '@reown/appkit/react'
 import { useEffect, useState } from 'react'
 import {
-  getConfiguredChainId,
-  getConfiguredNetwork,
-  getConfiguredNetworkName,
-  isCorrectNetwork,
-} from '~lib/network-config'
+  getSequencerNetworkChainId,
+  getSequencerNetworkName,
+  isMatchingSequencerNetwork,
+  useSequencerNetwork,
+} from '~contexts/sequencer-network'
 import { useUnifiedWallet } from './use-unified-wallet'
 
 export interface NetworkValidationState {
@@ -13,34 +13,32 @@ export interface NetworkValidationState {
   isValidating: boolean
   isSwitching: boolean
   error: Error | null
-  requiredChainId: number
-  requiredNetworkName: string
+  requiredChainId: number | null
+  requiredNetworkName: string | null
   currentChainId: number | undefined
   switchToCorrectNetwork: () => Promise<void>
 }
 
 /**
  * Hook to validate and manage network switching for the connected wallet
- * Ensures the wallet is connected to the correct network as configured
+ * Ensures the wallet is connected to the same network as the sequencer
  */
 export function useNetworkValidation(): NetworkValidationState {
   const { isConnected } = useUnifiedWallet()
   const { chainId, switchNetwork } = useAppKitNetwork()
-  const [isValidating, setIsValidating] = useState(false)
+  const { sequencerNetwork, isLoadingSequencerNetwork } = useSequencerNetwork()
   const [isSwitching, setIsSwitching] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
-  const requiredChainId = getConfiguredChainId()
-  const requiredNetworkName = getConfiguredNetworkName()
+  const requiredChainId = getSequencerNetworkChainId(sequencerNetwork)
+  const requiredNetworkName = getSequencerNetworkName(sequencerNetwork)
   const currentChainId = chainId ? Number(chainId) : undefined
-  const isOnCorrectNetwork = currentChainId ? isCorrectNetwork(currentChainId) : false
+  const isOnCorrectNetwork = isMatchingSequencerNetwork(currentChainId, sequencerNetwork)
 
   // Validate network when connection state changes
   useEffect(() => {
-    if (isConnected && currentChainId) {
-      setIsValidating(true)
-      const isValid = isCorrectNetwork(currentChainId)
-      setIsValidating(false)
+    if (isConnected && currentChainId && !isLoadingSequencerNetwork && sequencerNetwork) {
+      const isValid = isMatchingSequencerNetwork(currentChainId, sequencerNetwork)
 
       if (!isValid) {
         console.warn(
@@ -48,14 +46,18 @@ export function useNetworkValidation(): NetworkValidationState {
         )
       }
     }
-  }, [isConnected, currentChainId, requiredChainId, requiredNetworkName])
+  }, [isConnected, currentChainId, requiredChainId, requiredNetworkName, isLoadingSequencerNetwork, sequencerNetwork])
 
   /**
-   * Switch the wallet to the correct network
+   * Switch the wallet to the sequencer network
    */
   const switchToCorrectNetwork = async () => {
     if (!isConnected) {
       throw new Error('Wallet not connected')
+    }
+
+    if (!sequencerNetwork) {
+      throw new Error('Sequencer network not detected yet')
     }
 
     if (isOnCorrectNetwork) {
@@ -66,11 +68,8 @@ export function useNetworkValidation(): NetworkValidationState {
     setError(null)
 
     try {
-      // Get the configured network object
-      const network = getConfiguredNetwork()
-
       // Use AppKit's switchNetwork function
-      await switchNetwork(network)
+      await switchNetwork(sequencerNetwork)
 
       console.info(`Successfully switched to ${requiredNetworkName}`)
     } catch (err) {
@@ -98,7 +97,7 @@ export function useNetworkValidation(): NetworkValidationState {
 
   return {
     isCorrectNetwork: isOnCorrectNetwork,
-    isValidating,
+    isValidating: isLoadingSequencerNetwork,
     isSwitching,
     error,
     requiredChainId,
