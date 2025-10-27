@@ -49,7 +49,7 @@
     "@tanstack/react-query": "^5.81.2",
     "@uidotdev/usehooks": "^2.4.1",
     "@vocdoni/davinci-contracts": "0.0.14",
-    "@vocdoni/davinci-sdk": "~0.0.2",
+    "@vocdoni/davinci-sdk": "~0.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",

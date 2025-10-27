@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useAppKitProvider } from '@reown/appkit/react'
+import { useCallback } from 'react'
 import { useMiniApp } from '~contexts/MiniAppContext'
 import { useUnifiedWallet } from './use-unified-wallet'
 
@@ -29,7 +30,7 @@ export const useUnifiedProvider = (): UnifiedProviderState => {
   const isUsingFarcasterProvider = isMiniApp && isFarcasterConnected
 
   // Get the appropriate provider based on connection state
-  const getProvider = async () => {
+  const getProvider = useCallback(async () => {
     // In miniapp context, always use Farcaster provider
     // This handles both embedded (Warpcast) and external wallets selected through Farcaster client
     if (isMiniApp && isFarcasterConnected) {
@@ -50,16 +51,16 @@ export const useUnifiedProvider = (): UnifiedProviderState => {
     }
 
     return null
-  }
+  }, [isMiniApp, isFarcasterConnected, getFarcasterEthereumProvider, walletProvider])
 
   // Direct access to Farcaster provider
-  const getFarcasterProvider = async () => {
+  const getFarcasterProvider = useCallback(async () => {
     if (!isMiniApp) {
       throw new Error('Not in mini app environment')
     }
 
     return await getFarcasterEthereumProvider()
-  }
+  }, [isMiniApp, getFarcasterEthereumProvider])
 
   return {
     // Main provider getter

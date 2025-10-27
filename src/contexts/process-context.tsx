@@ -33,7 +33,7 @@ type ProcessProviderProps = PropsWithChildren<{ process: Process }>
 const upfetch = up(fetch)
 
 export const ProcessProvider: FC<ProcessProviderProps> = ({ children, process }) => {
-  const api = useVocdoniApi()
+  const { api } = useVocdoniApi()
   const { address } = useUnifiedWallet()
   const censusRoot = process.process.census.censusRoot
 

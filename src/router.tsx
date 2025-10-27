@@ -26,7 +26,7 @@ const Loading = () => (
 )
 
 export const RouterProvider = () => {
-  const api = useVocdoniApi()
+  const { api } = useVocdoniApi()
   const queryClient = useQueryClient()
 
   const router = createBrowserRouter([
