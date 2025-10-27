@@ -1,10 +1,11 @@
-import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk'
+import { ElectionResultsTypeNames, ProcessStatus } from '@vocdoni/davinci-sdk'
 import { BarChart2 } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { NewsletterCard } from '~components/newsletter-card'
 import { useProcessList, useProcessQuery } from '~hooks/use-process-query'
 import { useSortedProcesses, type ProcessSortData } from '~hooks/use-sorted-processes'
+import { enumToReverseObject } from '~lib/utils'
 import { Badge } from '~ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '~ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~ui/table'
@@ -23,6 +24,16 @@ const typesColors = {
   [ElectionResultsTypeNames.QUADRATIC]: 'yellow-200',
   [ElectionResultsTypeNames.BUDGET]: 'purple-200',
 } as Record<ElectionResultsTypeNames, string>
+
+const processStatusNames = enumToReverseObject(ProcessStatus)
+
+const statusColors = {
+  [ProcessStatus.READY]: 'blue-200',
+  [ProcessStatus.PAUSED]: 'yellow-200',
+  [ProcessStatus.CANCELED]: 'red-200',
+  [ProcessStatus.ENDED]: 'purple-200',
+  [ProcessStatus.RESULTS]: 'green-200',
+} as Record<number, string>
 
 function ProcessRow({ id, onDataLoaded }: { id: string; onDataLoaded?: (id: string, data: ProcessSortData) => void }) {
   const { data, isLoading } = useProcessQuery(id)
@@ -81,6 +92,13 @@ function ProcessRow({ id, onDataLoaded }: { id: string; onDataLoaded?: (id: stri
           {typesNames[data.meta?.type?.name] || 'Unknown'}
         </Badge>
       </TableCell>
+      <TableCell className='text-center'>
+        <Badge
+          className={`bg-${statusColors[data.process.status] || 'davinci-soft-neutral'} text-davinci-black-alt whitespace-nowrap capitalize`}
+        >
+          {processStatusNames[data.process.status].toLowerCase() || 'Unknown'}
+        </Badge>
+      </TableCell>
       <TableCell className='text-right text-davinci-black-alt'>{data.process.voteCount ?? 0}</TableCell>
     </TableRow>
   )
@@ -120,6 +138,7 @@ export default function ExplorePage() {
                               <TableHead className='min-w-[200px]'>Title</TableHead>
                               <TableHead className='min-w-[120px]'>Creator</TableHead>
                               <TableHead className='min-w-[120px] text-center'>Type</TableHead>
+                              <TableHead className='min-w-[80px] text-center'>Status</TableHead>
                               <TableHead className='min-w-[80px] text-right'>Votes</TableHead>
                             </TableRow>
                           </TableHeader>

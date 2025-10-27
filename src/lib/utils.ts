@@ -21,3 +21,16 @@ export const formatInterval = (miliseconds: number): string => {
   const duration = intervalToDuration({ start: 0, end: miliseconds })
   return formatDuration(duration)
 }
+
+export const enumToReverseObject = <T extends object>(enumObj: T): Record<number, string> =>
+  Object.keys(enumObj)
+    .filter((key) => isNaN(Number(key)))
+    .reduce(
+      (acc, key) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const value = (enumObj as any)[key]
+        acc[value as number] = key
+        return acc
+      },
+      {} as Record<number, string>
+    )
