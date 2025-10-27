@@ -37,11 +37,8 @@ export async function detectSequencerNetwork(): Promise<SupportedNetwork> {
 
     const info = await api.sequencer.getInfo()
 
-    // Extract chainId from info response
-    // The API returns 'network' field which contains the chain ID
-    // Using type assertion since the InfoResponse type may not include all fields
-    const infoData = info as unknown as { chainId?: number | string; network?: number | string }
-    const chainId = infoData.chainId || infoData.network
+    const { network } = info
+    const chainId = network[Object.keys(network)[0]]
 
     if (!chainId) {
       console.warn('⚠️ Sequencer info does not contain chain information, defaulting to Sepolia')

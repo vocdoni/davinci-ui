@@ -367,11 +367,11 @@ export function CreateVoteForm() {
       const provider = new BrowserProvider(walletProvider as Eip1193Provider)
       console.info('ℹ️ Browser provider initialized:', provider)
       const signer = await provider.getSigner()
-      
+
       // Get contract address from sequencer info
       const info = await api.sequencer.getInfo()
       const processRegistryAddress = info.contracts.process
-      
+
       const registry = new ProcessRegistryService(processRegistryAddress, signer)
       const address = await signer.getAddress()
       const pid = await registry.getNextProcessId(address)
@@ -1089,11 +1089,9 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
   useEffect(() => {
     console.info('🔍 Chain validation debug:', {
       caipNetwork,
-      sepoliaId: sepolia.id,
       appKitChainId: caipNetwork?.id,
       actualChainId,
       actualChainIdDecimal,
-      isOnSepoliaActually,
       isMiniApp,
       supportedChains,
       isExternalWallet,

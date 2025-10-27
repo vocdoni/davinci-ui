@@ -1,5 +1,5 @@
 import type { AppKitNetwork } from '@reown/appkit/networks'
-import { arbitrum, base, mainnet, optimism, polygon, sepolia, celo } from '@reown/appkit/networks'
+import { arbitrum, base, celo, mainnet, optimism, polygon, sepolia } from '@reown/appkit/networks'
 
 /**
  * Supported network identifiers that can be configured via environment variables
@@ -9,7 +9,7 @@ export type SupportedNetwork = 'mainnet' | 'sepolia' | 'arbitrum' | 'polygon' | 
 /**
  * Map of network identifiers to their AppKit network configurations
  */
-const NETWORK_MAP: Record<SupportedNetwork, AppKitNetwork> = {
+export const NETWORK_MAP: Record<SupportedNetwork, AppKitNetwork> = {
   mainnet,
   sepolia,
   arbitrum,

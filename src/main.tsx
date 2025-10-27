@@ -7,7 +7,7 @@ import { OfflineIndicator } from '~components/offline-indicator'
 import { VocdoniApiProvider } from '~components/vocdoni-api-context'
 import { MiniAppProvider } from '~contexts/MiniAppContext'
 import { RouterProvider } from '~router'
-// Initialize AppKit
+// Initialize AppKit with all networks
 import '~lib/appkit'
 
 import '@fontsource/averia-libre/400.css'

@@ -66,7 +66,7 @@ export const MiniAppProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     if (!isMiniApp || !isInitialized) return
 
-    let provider: Provider | null = null
+    let provider: Provider | undefined = undefined
     let pollInterval: NodeJS.Timeout
     let lastAccounts: string[] = []
     let lastChainId: string = ''
