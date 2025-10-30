@@ -1,7 +1,3 @@
-'use client'
-
-import type React from 'react'
-
 import { VoteStatus } from '@vocdoni/davinci-sdk'
 import { AlertTriangle, CheckCircle, Clock, Cpu, Info, Package, RefreshCw, Shield } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
@@ -11,8 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
 import { Progress } from '~components/ui/progress'
 import { getSequencerNetworkName, useSequencerNetwork } from '~contexts/sequencer-network'
 import { useVoteStatus } from '~hooks/use-vote-status'
-
-export { VoteStatus }
 
 interface VoteProgressTrackerProps {
   onVoteAgain: () => void
