@@ -1,6 +1,6 @@
 import { VoteStatus } from '@vocdoni/davinci-sdk'
-import { AlertTriangle, CheckCircle, Clock, Cpu, Info, Package, RefreshCw, Shield } from 'lucide-react'
-import { useEffect, useMemo } from 'react'
+import { AlertTriangle, CheckCircle, Clock, Copy, Cpu, Info, Package, RefreshCw, Shield } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '~components/ui/accordion'
 import { Badge } from '~components/ui/badge'
 import { Button } from '~components/ui/button'
@@ -37,6 +37,13 @@ export function VoteProgressTracker({ onVoteAgain, processId, voteId }: VoteProg
   const { data: voteStatusData, isLoading, error } = useVoteStatus(processId, voteId)
   const { sequencerNetwork } = useSequencerNetwork()
   const networkName = getSequencerNetworkName(sequencerNetwork) || 'Ethereum'
+  const [copied, setCopied] = useState(false)
+
+  const handleCopyVoteId = async () => {
+    await navigator.clipboard.writeText(voteId)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const progressSteps: ProgressStep[] = useMemo(
     () => [
@@ -140,6 +147,34 @@ export function VoteProgressTracker({ onVoteAgain, processId, voteId }: VoteProg
             </AccordionTrigger>
             <AccordionContent className='px-6 pb-6'>
               <div className='space-y-6'>
+                {/* Vote ID Section */}
+                <div className='bg-davinci-soft-neutral/30 p-4 rounded-lg border border-davinci-callout-border'>
+                  <div className='flex items-center justify-between gap-3'>
+                    <div className='flex-1 min-w-0'>
+                      <p className='text-xs font-medium text-davinci-black-alt/70 mb-1'>Vote ID</p>
+                      <p className='text-sm font-mono text-davinci-black-alt truncate'>{voteId}</p>
+                    </div>
+                    <Button
+                      onClick={handleCopyVoteId}
+                      variant='outline'
+                      size='sm'
+                      className='flex-shrink-0 border-davinci-callout-border'
+                    >
+                      {copied ? (
+                        <>
+                          <CheckCircle className='w-3 h-3 mr-1 text-green-600' />
+                          <span className='text-green-600'>Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className='w-3 h-3 mr-1' />
+                          Copy
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
                 {/* Current Status Display */}
                 <div className='flex items-center justify-between'>
                   <div className='flex items-center gap-3'>
