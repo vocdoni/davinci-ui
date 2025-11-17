@@ -1,14 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { VocdoniApiService, VoteStatus } from '@vocdoni/davinci-sdk'
+import { VoteStatus } from '@vocdoni/davinci-sdk'
+import { useVocdoniApi } from '~contexts/vocdoni-api-context'
 
 export function useVoteStatus(processId: string, voteId: string) {
+  const { api } = useVocdoniApi()
   return useQuery({
     queryKey: ['voteStatus', processId, voteId],
     queryFn: async () => {
-      const api = new VocdoniApiService({
-        sequencerURL: import.meta.env.SEQUENCER_URL,
-        censusURL: import.meta.env.SEQUENCER_URL,
-      })
       const status = await api.sequencer.getVoteStatus(processId, voteId)
       return status
     },

@@ -30,6 +30,8 @@ export async function detectSequencerNetwork(): Promise<SupportedNetwork> {
   }
 
   try {
+    // We can't use useVocdoniApi here since this is not a React hook and we
+    // need to detect the network before that hook is even initialized
     const api = new VocdoniApiService({
       sequencerURL: import.meta.env.SEQUENCER_URL,
       censusURL: import.meta.env.SEQUENCER_URL,

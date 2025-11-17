@@ -62,7 +62,7 @@ export const ElectionProvider: FC<ElectionProviderProps> = ({
   fetchCensus = false,
   children,
 }) => {
-  const api = useVocdoniApi()
+  const { api } = useVocdoniApi()
   const { address } = useUnifiedWallet()
 
   const {

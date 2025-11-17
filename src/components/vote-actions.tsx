@@ -1,19 +1,16 @@
 import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react'
-import { ProcessRegistryService, ProcessStatus, VocdoniApiService } from '@vocdoni/davinci-sdk'
+import { ProcessRegistryService, ProcessStatus } from '@vocdoni/davinci-sdk'
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { Cog, StopCircle } from 'lucide-react'
 import { useState } from 'react'
 import { useElection } from '~contexts/election-context'
+import { useVocdoniApi } from '~contexts/vocdoni-api-context'
 import { Button } from './ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 
 const VoteActions = () => {
-  const {
-    isCreator,
-    election,
-    isPaused,
-    isAcceptingVotes,
-  } = useElection()
+  const { api } = useVocdoniApi()
+  const { isCreator, election, isPaused, isAcceptingVotes } = useElection()
   const { isConnected } = useAppKitAccount()
   const { walletProvider } = useAppKitProvider('eip155')
   const [isLoading, setIsLoading] = useState(false)
@@ -26,10 +23,6 @@ const VoteActions = () => {
     setIsLoading(true)
     try {
       // Get contract address from sequencer info
-      const api = new VocdoniApiService({
-        sequencerURL: import.meta.env.SEQUENCER_URL,
-        censusURL: import.meta.env.SEQUENCER_URL,
-      })
       const info = await api.sequencer.getInfo()
       const processRegistryAddress = info.contracts.process
 

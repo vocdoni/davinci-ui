@@ -3,7 +3,6 @@ import {
   CircomProof,
   DavinciCrypto,
   ElectionResultsTypeNames,
-  VocdoniApiService,
   type GetProcessResponse,
   type VoteBallot,
   type VoteRequest,
@@ -23,6 +22,7 @@ import { RadioGroup, RadioGroupItem } from '~components/ui/radio-group'
 import { VoteProgressTracker } from '~components/vote-progress-tracker'
 import { VotingModal } from '~components/voting-modal'
 import { useElection } from '~contexts/election-context'
+import { useVocdoniApi } from '~contexts/vocdoni-api-context'
 import { usePersistedVote } from '~hooks/use-persisted-vote'
 import { useUnifiedProvider } from '~hooks/use-unified-provider'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
@@ -111,6 +111,7 @@ const electionResultsTypesNames: Record<string, string> = {
 export function VoteDisplay() {
   const { address, isConnected } = useUnifiedWallet()
   const { getProvider } = useUnifiedProvider()
+  const { api } = useVocdoniApi()
   const {
     censusProof,
     isInCensus,
@@ -209,11 +210,6 @@ export function VoteDisplay() {
       if (!censusProof) {
         throw new Error('Census proof is required to vote')
       }
-      // Initialize API service
-      const api = new VocdoniApiService({
-        sequencerURL: import.meta.env.SEQUENCER_URL,
-        censusURL: import.meta.env.SEQUENCER_URL,
-      })
 
       // Fetch circuit info
       const info = await api.sequencer.getInfo()

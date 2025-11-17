@@ -44,7 +44,6 @@ export const VocdoniApiProvider: FC<{ children: ReactNode }> = ({ children }) =>
               signer,
               sequencerUrl: import.meta.env.SEQUENCER_URL,
               censusUrl: import.meta.env.SEQUENCER_URL,
-              useSequencerAddresses: true,
             })
 
             await sdk.init()
