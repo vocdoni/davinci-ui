@@ -3,6 +3,7 @@ import { ProcessRegistryService, ProcessStatus, VocdoniApiService } from '@vocdo
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { Cog, StopCircle } from 'lucide-react'
 import { useState } from 'react'
+import { useElection } from '~contexts/election-context'
 import { useProcess } from '~contexts/process-context'
 import { Button } from './ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
@@ -12,11 +13,12 @@ const VoteActions = () => {
     isCreator,
     process: { process },
   } = useProcess()
+  const { isPaused, isAcceptingVotes } = useElection()
   const { isConnected } = useAppKitAccount()
   const { walletProvider } = useAppKitProvider('eip155')
   const [isLoading, setIsLoading] = useState(false)
 
-  if (!isConnected || !isCreator || ![ProcessStatus.PAUSED, ProcessStatus.READY].includes(process.status)) return null
+  if (!isConnected || !isCreator || (!isPaused && !isAcceptingVotes)) return null
 
   const handleEndProcess = async () => {
     if (!walletProvider) return

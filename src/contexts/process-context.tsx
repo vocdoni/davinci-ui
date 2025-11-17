@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { CensusProof, ElectionMetadata, GetProcessResponse } from '@vocdoni/davinci-sdk'
 import { createContext, useContext, useMemo, type FC, type PropsWithChildren } from 'react'
 import { up } from 'up-fetch'
+import { useElection } from '~contexts/election-context'
 import { useVocdoniApi } from '~contexts/vocdoni-api-context'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 
@@ -32,7 +33,12 @@ type ProcessProviderProps = PropsWithChildren<{ process: Process }>
 
 const upfetch = up(fetch)
 
-export const ProcessProvider: FC<ProcessProviderProps> = ({ children, process }) => {
+export const ProcessProvider: FC<ProcessProviderProps> = ({ children, process: initialProcess }) => {
+  // Get the latest election data from ElectionProvider
+  const { election } = useElection()
+
+  // Use election data if available and has meta, otherwise fall back to initial process data
+  const process: Process = election?.meta ? (election as Process) : initialProcess
   const { api } = useVocdoniApi()
   const { address } = useUnifiedWallet()
   const censusRoot = process.process.census.censusRoot

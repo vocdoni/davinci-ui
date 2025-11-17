@@ -1,12 +1,10 @@
-'use client'
-
 import { Calendar, Clock, Settings, Shield, User, Users } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import { Badge } from '~components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
 
 import type { ElectionMetadata, GetProcessResponse } from '@vocdoni/davinci-sdk'
-import { ElectionResultsTypeNames, ProcessStatus } from '@vocdoni/davinci-sdk'
+import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk'
+import { useElection } from '~contexts/election-context'
 import { useProcess } from '~contexts/process-context'
 import { formatNanosecondsInterval } from '~lib/utils'
 
@@ -16,23 +14,7 @@ interface VoteParametersProps {
 }
 
 export function VoteParameters({ voteData, processData }: VoteParametersProps) {
-  const [voteEnded, setVoteEnded] = useState(false)
-
-  // Update vote count and status
-  useEffect(() => {
-    const checkVoteStatus = () => {
-      const hasEnded = processData.status === ProcessStatus.ENDED
-      setVoteEnded(hasEnded)
-    }
-
-    // Check immediately
-    checkVoteStatus()
-
-    // Check every second
-    const interval = setInterval(checkVoteStatus, 1000)
-
-    return () => clearInterval(interval)
-  }, [processData.status])
+  const { voteHasEnded, voteStartTime, voteEndTime } = useElection()
 
   const formatDate = (date: Date) => {
     return date.toLocaleString('en-US', {
@@ -136,11 +118,10 @@ export function VoteParameters({ voteData, processData }: VoteParametersProps) {
             <h4 className='font-medium text-davinci-black-alt text-sm'>Timeline</h4>
             <div className='space-y-1'>
               <p className='text-xs text-davinci-black-alt/80'>
-                <span className='font-medium'>Started:</span> {formatDate(new Date(processData.startTime))}
+                <span className='font-medium'>Started:</span> {voteStartTime ? formatDate(voteStartTime) : 'N/A'}
               </p>
               <p className='text-xs text-davinci-black-alt/80'>
-                <span className='font-medium'>Ends:</span>{' '}
-                {formatDate(new Date(new Date(processData.startTime).getTime() + processData.duration / 1_000_000))}
+                <span className='font-medium'>Ends:</span> {voteEndTime ? formatDate(voteEndTime) : 'N/A'}
               </p>
             </div>
           </div>
@@ -148,8 +129,8 @@ export function VoteParameters({ voteData, processData }: VoteParametersProps) {
 
         {/* Status Badge */}
         <div className='text-center'>
-          <Badge className={`${voteEnded ? 'bg-gray-100 text-gray-800' : 'bg-green-100 text-green-800'}`}>
-            {voteEnded ? 'Vote Ended' : 'Vote Active'}
+          <Badge className={`${voteHasEnded ? 'bg-gray-100 text-gray-800' : 'bg-green-100 text-green-800'}`}>
+            {voteHasEnded ? 'Vote Ended' : 'Vote Active'}
           </Badge>
         </div>
       </CardContent>
@@ -161,7 +142,7 @@ export const TotalVotesCard = () => {
   const {
     process: { process },
   } = useProcess()
-  const voteEnded = [ProcessStatus.ENDED, ProcessStatus.CANCELED, ProcessStatus.RESULTS].includes(process.status)
+  const { voteHasEnded } = useElection()
 
   return (
     <Card className='border-davinci-callout-border mb-6'>
@@ -169,7 +150,7 @@ export const TotalVotesCard = () => {
         <div className='text-center'>
           <p className='text-3xl font-bold text-davinci-black-alt'>{process.voteCount.toLocaleString()}</p>
           <p className='text-sm text-davinci-black-alt/80 capitalize'>
-            {!voteEnded ? 'Votes cast so far' : 'Final vote count'}
+            {!voteHasEnded ? 'Votes cast so far' : 'Final vote count'}
           </p>
           <div className='border mt-4 p-2'>
             <p className='text-xs uppercase tracking-wide text-davinci-black-alt/60'>Sequencer stats</p>

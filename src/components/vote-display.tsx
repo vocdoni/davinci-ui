@@ -3,7 +3,6 @@ import {
   CircomProof,
   DavinciCrypto,
   ElectionResultsTypeNames,
-  ProcessStatus,
   VocdoniApiService,
   type GetProcessResponse,
   type VoteBallot,
@@ -23,9 +22,9 @@ import { LinkifiedText } from '~components/ui/linkified-text'
 import { RadioGroup, RadioGroupItem } from '~components/ui/radio-group'
 import { VoteProgressTracker } from '~components/vote-progress-tracker'
 import { VotingModal } from '~components/voting-modal'
+import { useElection } from '~contexts/election-context'
 import { useProcess } from '~contexts/process-context'
 import { usePersistedVote } from '~hooks/use-persisted-vote'
-import { useProcessQuery } from '~hooks/use-process-query'
 import { useUnifiedProvider } from '~hooks/use-unified-provider'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 import { truncateAddress } from '~lib/web3-utils'
@@ -121,7 +120,7 @@ export function VoteDisplay() {
     hasVoted,
     process: { meta, process },
   } = useProcess()
-  const processQuery = useProcessQuery(process.id)
+  const { refetch: refetchElection, voteHasEnded } = useElection()
   const [selectedChoice, setSelectedChoice] = useState('')
   const [selectedChoices, setSelectedChoices] = useState<string[]>([])
   const [quadraticVotes, setQuadraticVotes] = useState<QuadraticVote>({})
@@ -131,7 +130,6 @@ export function VoteDisplay() {
   const [isVoting, setIsVoting] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   const { voteId, trackVote, resetVote } = usePersistedVote(process.id, address)
-  const voteEnded = process.status === ProcessStatus.ENDED || process.status === ProcessStatus.RESULTS
 
   // Initialize quadratic and budget votes
   useEffect(() => {
@@ -294,7 +292,7 @@ export function VoteDisplay() {
       setShowPostVoteModal(true)
 
       // refetch process info
-      await processQuery.refetch()
+      await refetchElection()
     } catch (error) {
       setError(error as Error)
       console.error('Error during voting process:', error)
@@ -446,15 +444,15 @@ export function VoteDisplay() {
         <CardContent className='p-6'>
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
             <div className='flex items-center gap-3'>
-              <div className={`w-3 h-3 rounded-full ${!voteEnded ? 'bg-green-500' : 'bg-gray-500'}`} />
-              <span className='font-medium text-davinci-black-alt'>{!voteEnded ? 'Active Vote' : 'Vote Ended'}</span>
+              <div className={`w-3 h-3 rounded-full ${!voteHasEnded ? 'bg-green-500' : 'bg-gray-500'}`} />
+              <span className='font-medium text-davinci-black-alt'>{!voteHasEnded ? 'Active Vote' : 'Vote Ended'}</span>
               <Badge className='bg-davinci-soft-neutral text-davinci-black-alt'>
                 {electionResultsTypesNames[votingMethod.type] || 'Unknown Voting Method'}
               </Badge>
             </div>
             <div className='flex items-center gap-2 text-davinci-black-alt/80'>
               <Clock className='w-4 h-4' />
-              <span className='text-sm font-medium font-mono'>{!voteEnded ? <VotingTimeRemaining /> : 'Ended'}</span>
+              <span className='text-sm font-medium font-mono'>{!voteHasEnded ? <VotingTimeRemaining /> : 'Ended'}</span>
             </div>
           </div>
         </CardContent>
@@ -463,7 +461,7 @@ export function VoteDisplay() {
       {/* Vote Progress Tracker - moved inside voting interface */}
 
       {/* Results Display (when vote ended) */}
-      {voteEnded && (
+      {voteHasEnded && (
         <Card className='border-davinci-callout-border'>
           <CardHeader className='bg-davinci-paper-base'>
             <CardTitle className='flex items-center gap-2 text-davinci-black-alt'>
@@ -607,7 +605,7 @@ export function VoteDisplay() {
       )}
 
       {/* Voting Interface (when vote is active) */}
-      {!voteEnded && (
+      {!voteHasEnded && (
         <Card className='border-davinci-callout-border'>
           <CardHeader className='bg-davinci-paper-base'>
             <CardTitle className='flex items-center gap-2 text-davinci-black-alt'>
@@ -1061,7 +1059,7 @@ export function VoteDisplay() {
       )}
 
       {/* Results Encryption Notice (only when vote is active) */}
-      {!voteEnded && (
+      {!voteHasEnded && (
         <Card className='border-davinci-callout-border'>
           <CardContent className='p-6'>
             <div className='flex items-start gap-3'>
@@ -1105,20 +1103,16 @@ const hexStringToUint8Array = (hex: string) =>
 
 export const WalletEligibilityStatus = () => {
   const { address, isConnected } = useUnifiedWallet()
+  const { isNearingEnd } = useElection()
 
   const {
     isInCensus,
     isCensusProofLoading,
-    process: { process },
   } = useProcess()
 
   if (!isConnected) return null
 
   const bg = isInCensus ? 'bg-davinci-digital-highlight' : 'bg-yellow-100'
-
-  // estimate time left for the process to end and show and alert when 5 minutes are left
-  const votingEndTime = new Date(new Date(process.startTime).getTime() + process.duration / 1_000_000)
-  const timeLeft = votingEndTime.getTime() - Date.now()
 
   return (
     <div className={`${bg} p-4 rounded-lg border border-davinci-callout-border`}>
@@ -1134,7 +1128,7 @@ export const WalletEligibilityStatus = () => {
                 ? 'Eligible to vote'
                 : 'Not eligible to vote'}
           </p>
-          {timeLeft < 5 * 60 * 1000 && timeLeft > 0 && (
+          {isNearingEnd && (
             <p className='text-sm text-red-600 mt-2'>
               ⚠️ Voting ends in less than 5 minutes! Please cast your vote soon though it might not be validated anyway.
             </p>
