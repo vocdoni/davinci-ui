@@ -501,104 +501,113 @@ export function VoteDisplay() {
               </div>
 
               {/* Single Card with All Results */}
-              <Card className='border-davinci-callout-border bg-davinci-paper-base/30'>
-                <CardContent className='p-6'>
-                  <div className='space-y-6'>
-                    {meta.questions[0].choices
-                      .map((choice) => ({
-                        ...choice,
-                        result: results[choice.value] || 0,
-                      }))
-                      .sort((a, b) => (Number(b.result) || 0) - (Number(a.result) || 0))
-                      .map((choice, index) => {
-                        const result = results[choice.value] || '0'
-                        const percentage =
-                          votingMethod.type === ElectionResultsTypeNames.QUADRATIC ||
-                          votingMethod.type === ElectionResultsTypeNames.BUDGET ||
-                          (votingMethod.type === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION &&
-                            process.ballotMode.costFromWeight)
-                            ? (Number(result) / results.reduce((acc, val) => acc + (Number(val) || 0), 0)) * 100
-                            : (Number(result) / Number(process.voteCount)) * 100 || 0
-                        const votes = result || 0
+              {process.result === null ? (
+                <div className='flex row justify-center items-center gap-5'>
+                  <div className='w-6 h-6'>
+                    <Spinner />
+                  </div>
+                  Computing results
+                </div>
+              ) : (
+                <Card className='border-davinci-callout-border bg-davinci-paper-base/30'>
+                  <CardContent className='p-6'>
+                    <div className='space-y-6'>
+                      {meta.questions[0].choices
+                        .map((choice) => ({
+                          ...choice,
+                          result: results[choice.value] || 0,
+                        }))
+                        .sort((a, b) => (Number(b.result) || 0) - (Number(a.result) || 0))
+                        .map((choice, index) => {
+                          const result = results[choice.value] || '0'
+                          const percentage =
+                            votingMethod.type === ElectionResultsTypeNames.QUADRATIC ||
+                            votingMethod.type === ElectionResultsTypeNames.BUDGET ||
+                            (votingMethod.type === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION &&
+                              process.ballotMode.costFromWeight)
+                              ? (Number(result) / results.reduce((acc, val) => acc + (Number(val) || 0), 0)) * 100
+                              : (Number(result) / Number(process.voteCount)) * 100 || 0
+                          const votes = result || 0
 
-                        // Color scheme based on ranking
-                        const getBarColor = () => {
-                          switch (index) {
-                            case 0:
-                              return 'from-yellow-400 via-yellow-500 to-yellow-600'
-                            case 1:
-                              return 'from-davinci-secondary-accent via-davinci-secondary-accent/80 to-davinci-secondary-accent/60'
-                            case 2:
-                              return 'from-davinci-digital-highlight via-davinci-digital-highlight/80 to-davinci-digital-highlight/60'
-                            default:
-                              return 'from-davinci-soft-neutral via-davinci-soft-neutral/80 to-davinci-soft-neutral/60'
+                          // Color scheme based on ranking
+                          const getBarColor = () => {
+                            switch (index) {
+                              case 0:
+                                return 'from-yellow-400 via-yellow-500 to-yellow-600'
+                              case 1:
+                                return 'from-davinci-secondary-accent via-davinci-secondary-accent/80 to-davinci-secondary-accent/60'
+                              case 2:
+                                return 'from-davinci-digital-highlight via-davinci-digital-highlight/80 to-davinci-digital-highlight/60'
+                              default:
+                                return 'from-davinci-soft-neutral via-davinci-soft-neutral/80 to-davinci-soft-neutral/60'
+                            }
                           }
-                        }
 
-                        return (
-                          <div key={choice.value} className='space-y-3'>
-                            {/* Choice Header */}
-                            <div className='flex items-start justify-between'>
-                              <div className='flex-1 pr-4'>
-                                <p className='font-semibold text-lg leading-relaxed text-davinci-black-alt'>
-                                  <LinkifiedText text={choice.title.default} />
-                                </p>
-                              </div>
-                              <div className='text-right space-y-1'>
-                                <p className='text-2xl font-bold text-davinci-black-alt'>{votes.toLocaleString()}</p>
-                                <p className='text-sm text-davinci-black-alt/60'>votes</p>
-                              </div>
-                            </div>
-
-                            {/* Progress Bar Section */}
-                            <div className='space-y-2'>
-                              <div className='flex items-center justify-between text-sm'>
-                                <span className='font-medium text-davinci-black-alt/80'>
-                                  {percentage.toFixed(1)}% of total votes
-                                </span>
-                                <span className='text-davinci-black-alt/60'>Rank #{index + 1}</span>
+                          return (
+                            <div key={choice.value} className='space-y-3'>
+                              {/* Choice Header */}
+                              <div className='flex items-start justify-between'>
+                                <div className='flex-1 pr-4'>
+                                  <p className='font-semibold text-lg leading-relaxed text-davinci-black-alt'>
+                                    <LinkifiedText text={choice.title.default} />
+                                  </p>
+                                </div>
+                                <div className='text-right space-y-1'>
+                                  <p className='text-2xl font-bold text-davinci-black-alt'>{votes.toLocaleString()}</p>
+                                  <p className='text-sm text-davinci-black-alt/60'>votes</p>
+                                </div>
                               </div>
 
-                              {/* Custom Progress Bar */}
-                              <div className='relative'>
-                                <div className='w-full h-4 bg-davinci-soft-neutral/30 rounded-full overflow-hidden shadow-inner'>
-                                  <div
-                                    className={`h-full bg-gradient-to-r ${getBarColor()} rounded-full transition-all duration-1000 ease-out shadow-sm relative overflow-hidden`}
-                                    style={{
-                                      width: `${Math.max(percentage, 2)}%`,
-                                    }}
-                                  >
-                                    {/* Shimmer effect for top choice */}
-                                    {index === 0 && (
-                                      <div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse'></div>
-                                    )}
-                                  </div>
+                              {/* Progress Bar Section */}
+                              <div className='space-y-2'>
+                                <div className='flex items-center justify-between text-sm'>
+                                  <span className='font-medium text-davinci-black-alt/80'>
+                                    {percentage.toFixed(1)}% of total votes
+                                  </span>
+                                  <span className='text-davinci-black-alt/60'>Rank #{index + 1}</span>
                                 </div>
 
-                                {/* Percentage label on bar */}
-                                {percentage > 15 && (
-                                  <div
-                                    className='absolute top-0 h-4 flex items-center pr-2'
-                                    style={{ width: `${percentage}%` }}
-                                  >
-                                    <span className='ml-auto text-xs font-bold text-white drop-shadow-sm'>
-                                      {percentage.toFixed(1)}%
-                                    </span>
+                                {/* Custom Progress Bar */}
+                                <div className='relative'>
+                                  <div className='w-full h-4 bg-davinci-soft-neutral/30 rounded-full overflow-hidden shadow-inner'>
+                                    <div
+                                      className={`h-full bg-gradient-to-r ${getBarColor()} rounded-full transition-all duration-1000 ease-out shadow-sm relative overflow-hidden`}
+                                      style={{
+                                        width: `${Math.max(percentage, 2)}%`,
+                                      }}
+                                    >
+                                      {/* Shimmer effect for top choice */}
+                                      {index === 0 && (
+                                        <div className='absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse'></div>
+                                      )}
+                                    </div>
                                   </div>
-                                )}
-                              </div>
-                            </div>
 
-                            {/* Separator between choices (except last one) */}
-                            {index < meta.questions[0].choices.length - 1 && (
-                              <div className='border-t border-davinci-callout-border/30 pt-6'></div>
-                            )}
-                          </div>
-                        )
-                      })}
-                  </div>
-                </CardContent>
-              </Card>
+                                  {/* Percentage label on bar */}
+                                  {percentage > 15 && (
+                                    <div
+                                      className='absolute top-0 h-4 flex items-center pr-2'
+                                      style={{ width: `${percentage}%` }}
+                                    >
+                                      <span className='ml-auto text-xs font-bold text-white drop-shadow-sm'>
+                                        {percentage.toFixed(1)}%
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Separator between choices (except last one) */}
+                              {index < meta.questions[0].choices.length - 1 && (
+                                <div className='border-t border-davinci-callout-border/30 pt-6'></div>
+                              )}
+                            </div>
+                          )
+                        })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </CardContent>
         </Card>
