@@ -1,20 +1,21 @@
 'use client'
 
-import type { ElectionMetadata } from '@vocdoni/davinci-sdk'
 import { Check, Copy, Share2 } from 'lucide-react'
 import { useState } from 'react'
+import { useElection } from '~contexts/election-context'
 import { Button } from '~components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
 import { Input } from '~components/ui/input'
 import { truncateText } from '~lib/utils'
 
-interface ShareableLinkProps {
-  voteId: string
-  voteData: ElectionMetadata
-}
-
-export function ShareableLink({ voteId, voteData }: ShareableLinkProps) {
+export function ShareableLink() {
   const [copied, setCopied] = useState(false)
+  const { election } = useElection()
+
+  if (!election) return null
+
+  const voteId = election.process.id
+  const voteData = election.meta
 
   // Generate the shareable URL
   const shareUrl = `${window.location.origin}/vote/${voteId}`

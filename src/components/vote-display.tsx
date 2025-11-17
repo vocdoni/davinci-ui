@@ -23,7 +23,6 @@ import { RadioGroup, RadioGroupItem } from '~components/ui/radio-group'
 import { VoteProgressTracker } from '~components/vote-progress-tracker'
 import { VotingModal } from '~components/voting-modal'
 import { useElection } from '~contexts/election-context'
-import { useProcess } from '~contexts/process-context'
 import { usePersistedVote } from '~hooks/use-persisted-vote'
 import { useUnifiedProvider } from '~hooks/use-unified-provider'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
@@ -118,9 +117,12 @@ export function VoteDisplay() {
     isAbleToVote,
     isCensusProofLoading,
     hasVoted,
-    process: { meta, process },
-  } = useProcess()
-  const { refetch: refetchElection, voteHasEnded, uniqueVoters } = useElection()
+    election,
+    refetch: refetchElection,
+    voteHasEnded,
+    uniqueVoters,
+  } = useElection()
+
   const [selectedChoice, setSelectedChoice] = useState('')
   const [selectedChoices, setSelectedChoices] = useState<string[]>([])
   const [quadraticVotes, setQuadraticVotes] = useState<QuadraticVote>({})
@@ -129,10 +131,13 @@ export function VoteDisplay() {
   const [showPostVoteModal, setShowPostVoteModal] = useState(false)
   const [isVoting, setIsVoting] = useState(false)
   const [error, setError] = useState<Error | null>(null)
-  const { voteId, trackVote, resetVote } = usePersistedVote(process.id, address)
+  const { voteId, trackVote, resetVote } = usePersistedVote(election?.process.id ?? '', address)
 
   // Initialize quadratic and budget votes
   useEffect(() => {
+    if (!election) return
+    const meta = election.meta
+    const process = election.process
     const votingMethod = getVotingMethod(process, meta, censusProof)
     if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
       const initialVotes: QuadraticVote = {}
@@ -147,7 +152,12 @@ export function VoteDisplay() {
       })
       setBudgetVotes(initialVotes)
     }
-  }, [meta.questions, meta.type.name, meta, process, censusProof])
+  }, [election, censusProof])
+
+  if (!election) return null
+
+  const meta = election.meta
+  const process = election.process
 
   // Calculate quadratic cost
   const calculateQuadraticCost = (votes: number): number => {
@@ -1112,9 +1122,7 @@ const hexStringToUint8Array = (hex: string) =>
 
 export const WalletEligibilityStatus = () => {
   const { address, isConnected } = useUnifiedWallet()
-  const { isNearingEnd } = useElection()
-
-  const { isInCensus, isCensusProofLoading } = useProcess()
+  const { isNearingEnd, isInCensus, isCensusProofLoading } = useElection()
 
   if (!isConnected) return null
 

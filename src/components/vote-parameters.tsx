@@ -2,19 +2,17 @@ import { Calendar, Clock, Settings, Shield, User, Users } from 'lucide-react'
 import { Badge } from '~components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
 
-import type { ElectionMetadata, GetProcessResponse } from '@vocdoni/davinci-sdk'
 import { ElectionResultsTypeNames } from '@vocdoni/davinci-sdk'
 import { useElection } from '~contexts/election-context'
-import { useProcess } from '~contexts/process-context'
 import { formatNanosecondsInterval } from '~lib/utils'
 
-interface VoteParametersProps {
-  voteData: ElectionMetadata
-  processData: GetProcessResponse
-}
+export function VoteParameters() {
+  const { election, voteHasEnded, voteStartTime, voteEndTime } = useElection()
 
-export function VoteParameters({ voteData, processData }: VoteParametersProps) {
-  const { voteHasEnded, voteStartTime, voteEndTime } = useElection()
+  if (!election) return null
+
+  const voteData = election.meta
+  const processData = election.process
 
   const formatDate = (date: Date) => {
     return date.toLocaleString('en-US', {
@@ -139,10 +137,11 @@ export function VoteParameters({ voteData, processData }: VoteParametersProps) {
 }
 
 export const TotalVotesCard = () => {
-  const {
-    process: { process },
-  } = useProcess()
-  const { voteHasEnded, uniqueVoters } = useElection()
+  const { election, voteHasEnded, uniqueVoters } = useElection()
+
+  if (!election) return null
+
+  const process = election.process
 
   return (
     <Card className='border-davinci-callout-border mb-6'>

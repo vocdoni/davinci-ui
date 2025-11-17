@@ -42,6 +42,19 @@ DAVINCI UI is a React 18 + TypeScript Progressive Web App for decentralized voti
 - Uses `VocdoniApiService` with configurable sequencer URL
 - TanStack Query handles caching and data fetching
 
+**Context Providers**: Hierarchical provider structure for state management:
+- `VocdoniApiProvider` → `ElectionProvider`
+- **ElectionProvider** (src/contexts/election-context.tsx):
+  - Centralized election data management with 30-second auto-polling
+  - Provides computed status values: `voteHasEnded`, `isAcceptingVotes`, `isPaused`, `wasCanceled`, `hasResults`, `status`
+  - Provides time-related values: `voteStartTime`, `voteEndTime`, `timeRemainingMs`, `isNearingEnd`
+  - Provides vote counts: `uniqueVoters`, `totalVotesCast`, `overwrittenVotes`
+  - Vote count calculation: `uniqueVoters = totalVotesCast - overwrittenVotes` (accounts for vote overwrites)
+  - Optional census fetching via `fetchCensus` prop:
+    - When `fetchCensus={true}`: Fetches census proof and voting status for connected wallet
+    - Provides: `censusProof`, `hasVoted`, `isInCensus`, `isAbleToVote`, `isCreator`
+    - Use on Vote page for full functionality, omit on Explore page to avoid unnecessary queries
+
 **Wallet Integration**:
 - Reown AppKit handles wallet connections and Web3 interactions
 - Supports both regular web and Farcaster MiniApp environments

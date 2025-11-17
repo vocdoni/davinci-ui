@@ -56,7 +56,7 @@ export const RouterProvider = () => {
             const query = getProcessQuery(id, api)
 
             const data = await queryClient.ensureQueryData(query)
-            return { id, ...data }
+            return { id, election: data }
           },
         },
         {

@@ -4,16 +4,16 @@ import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { Cog, StopCircle } from 'lucide-react'
 import { useState } from 'react'
 import { useElection } from '~contexts/election-context'
-import { useProcess } from '~contexts/process-context'
 import { Button } from './ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 
 const VoteActions = () => {
   const {
     isCreator,
-    process: { process },
-  } = useProcess()
-  const { isPaused, isAcceptingVotes } = useElection()
+    election,
+    isPaused,
+    isAcceptingVotes,
+  } = useElection()
   const { isConnected } = useAppKitAccount()
   const { walletProvider } = useAppKitProvider('eip155')
   const [isLoading, setIsLoading] = useState(false)
@@ -37,7 +37,7 @@ const VoteActions = () => {
       const signer = await provider.getSigner()
       const registry = new ProcessRegistryService(processRegistryAddress, signer)
       // Use setProcessStatus to end the process
-      const txStream = registry.setProcessStatus(process.id, ProcessStatus.ENDED)
+      const txStream = registry.setProcessStatus(election!.process.id, ProcessStatus.ENDED)
       // Execute the transaction and wait for it to complete
       for await (const event of txStream) {
         if (event.status === 'completed') {

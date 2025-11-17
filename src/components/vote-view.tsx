@@ -1,18 +1,23 @@
 import { useCopyToClipboard } from '@uidotdev/usehooks'
-import { type GetProcessResponse } from '@vocdoni/davinci-sdk'
 import { LucideCheck, LucideCopy, LucideSearch } from 'lucide-react'
+import { useElection } from '~contexts/election-context'
 import { NewsletterCard } from '~components/newsletter-card'
 import { ShareableLink } from '~components/shareable-link'
 import { VoteDisplay } from '~components/vote-display'
 import { TotalVotesCard, VoteParameters } from '~components/vote-parameters'
 import { LinkifiedText } from '~components/ui/linkified-text'
 import { truncateAddress } from '~lib/web3-utils'
-import type { ProcessLoaderData } from '~src/types'
 import VoteActions from './vote-actions'
 
-const VoteView = ({ id, meta, process }: ProcessLoaderData) => {
+const VoteView = () => {
   const [copiedText, copyToClipboard] = useCopyToClipboard()
   const hasCopiedText = Boolean(copiedText)
+  const { election } = useElection()
+
+  if (!election) return null
+
+  const { meta, process } = election
+  const id = process.id
 
   return (
     <div className='px-4'>
@@ -59,9 +64,9 @@ const VoteView = ({ id, meta, process }: ProcessLoaderData) => {
           {/* Right Column - Info Cards */}
           <div className='lg:col-span-4 space-y-6'>
             <TotalVotesCard />
-            <ShareableLink voteId={id} voteData={meta} />
+            <ShareableLink />
             <VoteActions />
-            <VoteParameters voteData={meta} processData={process as GetProcessResponse} />
+            <VoteParameters />
             <NewsletterCard />
           </div>
         </div>
