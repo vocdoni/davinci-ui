@@ -288,18 +288,25 @@ export function CreateVoteForm() {
           break
         }
         default: {
-          if (data.customAddresses.length === 0) {
+          // Filter out empty addresses to ensure we only process valid ones
+          const validAddresses = data.customAddresses.filter(Boolean)
+
+          if (validAddresses.length === 0) {
             throw new Error('Please add at least one address to the custom addresses list')
           }
 
           // Step 1: Create census
           const censusId = await api.census.createCensus()
 
-          // Step 2: Add participants
-          const participants = data.customAddresses.map((address, index) => ({
-            key: address,
-            weight: data.useWeightedVoting && data.customAddressWeights[index] ? data.customAddressWeights[index] : '1',
-          }))
+          // Step 2: Add participants (only with valid addresses)
+          const participants = validAddresses.map((address) => {
+            // Find the original index to get the correct weight
+            const originalIndex = data.customAddresses.indexOf(address)
+            return {
+              key: address,
+              weight: data.useWeightedVoting && data.customAddressWeights[originalIndex] ? data.customAddressWeights[originalIndex] : '1',
+            }
+          })
           await api.census.addParticipants(censusId, participants)
           const censusRoot = await api.census.getCensusRoot(censusId)
           const censusSize = await api.census.getCensusSize(censusId)
