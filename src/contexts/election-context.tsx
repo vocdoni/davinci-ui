@@ -22,6 +22,10 @@ interface ElectionContextValue {
   voteEndTime: Date | null
   timeRemainingMs: number
   isNearingEnd: boolean
+  // Vote count computed values
+  uniqueVoters: number
+  totalVotesCast: number
+  overwrittenVotes: number
 }
 
 const ElectionContext = createContext<ElectionContextValue | undefined>(undefined)
@@ -81,6 +85,11 @@ export const ElectionProvider: FC<ElectionProviderProps> = ({ electionId, childr
     [timeRemainingMs]
   )
 
+  // Vote count values
+  const totalVotesCast = election ? Number(election.process.voteCount) : 0
+  const overwrittenVotes = election ? Number(election.process.voteOverwrittenCount) : 0
+  const uniqueVoters = totalVotesCast - overwrittenVotes
+
   const value: ElectionContextValue = {
     election,
     isLoading,
@@ -98,6 +107,10 @@ export const ElectionProvider: FC<ElectionProviderProps> = ({ electionId, childr
     voteEndTime,
     timeRemainingMs,
     isNearingEnd,
+    // Vote count values
+    uniqueVoters,
+    totalVotesCast,
+    overwrittenVotes,
   }
 
   return <ElectionContext.Provider value={value}>{children}</ElectionContext.Provider>

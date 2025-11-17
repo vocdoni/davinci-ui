@@ -120,7 +120,7 @@ export function VoteDisplay() {
     hasVoted,
     process: { meta, process },
   } = useProcess()
-  const { refetch: refetchElection, voteHasEnded } = useElection()
+  const { refetch: refetchElection, voteHasEnded, uniqueVoters } = useElection()
   const [selectedChoice, setSelectedChoice] = useState('')
   const [selectedChoices, setSelectedChoices] = useState<string[]>([])
   const [quadraticVotes, setQuadraticVotes] = useState<QuadraticVote>({})
@@ -475,12 +475,12 @@ export function VoteDisplay() {
               <h5 className='font-semibold text-davinci-black-alt mb-4'>Vote Summary</h5>
               <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                 <div className='text-center'>
-                  <p className='text-2xl font-bold text-davinci-black-alt'>{process.voteCount}</p>
+                  <p className='text-2xl font-bold text-davinci-black-alt'>{uniqueVoters}</p>
                   <p className='text-xs text-davinci-black-alt/60'>Total Votes</p>
                 </div>
                 <div className='text-center'>
                   <p className='text-2xl font-bold text-davinci-black-alt'>
-                    {((Number(process.voteCount) / (Number(process?.census.maxVotes) || 5000)) * 100).toFixed(1)}%
+                    {((uniqueVoters / (Number(process?.census.maxVotes) || 5000)) * 100).toFixed(1)}%
                   </p>
                   <p className='text-xs text-davinci-black-alt/60'>Turnout</p>
                 </div>
@@ -497,7 +497,7 @@ export function VoteDisplay() {
             <div className='space-y-6'>
               <div className='flex items-center justify-between'>
                 <h4 className='text-xl font-bold text-davinci-black-alt'>Detailed Results</h4>
-                <div className='text-sm text-davinci-black-alt/60'>Total: {process.voteCount} votes</div>
+                <div className='text-sm text-davinci-black-alt/60'>Total: {uniqueVoters} votes</div>
               </div>
 
               {/* Single Card with All Results */}
@@ -1105,10 +1105,7 @@ export const WalletEligibilityStatus = () => {
   const { address, isConnected } = useUnifiedWallet()
   const { isNearingEnd } = useElection()
 
-  const {
-    isInCensus,
-    isCensusProofLoading,
-  } = useProcess()
+  const { isInCensus, isCensusProofLoading } = useProcess()
 
   if (!isConnected) return null
 

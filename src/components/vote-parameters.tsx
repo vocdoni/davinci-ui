@@ -142,13 +142,13 @@ export const TotalVotesCard = () => {
   const {
     process: { process },
   } = useProcess()
-  const { voteHasEnded } = useElection()
+  const { voteHasEnded, uniqueVoters } = useElection()
 
   return (
     <Card className='border-davinci-callout-border mb-6'>
       <CardContent className='p-6'>
         <div className='text-center'>
-          <p className='text-3xl font-bold text-davinci-black-alt'>{process.voteCount.toLocaleString()}</p>
+          <p className='text-3xl font-bold text-davinci-black-alt'>{uniqueVoters.toLocaleString()}</p>
           <p className='text-sm text-davinci-black-alt/80 capitalize'>
             {!voteHasEnded ? 'Votes cast so far' : 'Final vote count'}
           </p>
