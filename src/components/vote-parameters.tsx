@@ -148,8 +148,8 @@ export const TotalVotesCard = () => {
       <CardContent className='p-6'>
         <div className='text-center'>
           <p className='text-3xl font-bold text-davinci-black-alt'>{uniqueVoters.toLocaleString()}</p>
-          <p className='text-sm text-davinci-black-alt/80 capitalize'>
-            {!voteHasEnded ? 'Votes cast so far' : 'Final vote count'}
+          <p className='text-sm text-davinci-black-alt/80'>
+            {!voteHasEnded ? 'Votes settled so far' : 'Final vote count'}
           </p>
           <div className='border mt-4 p-2'>
             <p className='text-xs uppercase tracking-wide text-davinci-black-alt/60'>Sequencer stats</p>
