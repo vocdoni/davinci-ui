@@ -103,6 +103,13 @@ interface BudgetVote {
   [choiceId: string]: number
 }
 
+const electionResultsTypesNames: Record<string, string> = {
+  [ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION]: 'Single Choice',
+  [ElectionResultsTypeNames.MULTIPLE_CHOICE]: 'Multiple Choice',
+  [ElectionResultsTypeNames.QUADRATIC]: 'Quadratic Voting',
+  [ElectionResultsTypeNames.BUDGET]: 'Budget Voting',
+}
+
 export function VoteDisplay() {
   const { address, isConnected } = useUnifiedWallet()
   const { getProvider } = useUnifiedProvider()
@@ -442,11 +449,7 @@ export function VoteDisplay() {
               <div className={`w-3 h-3 rounded-full ${!voteEnded ? 'bg-green-500' : 'bg-gray-500'}`} />
               <span className='font-medium text-davinci-black-alt'>{!voteEnded ? 'Active Vote' : 'Vote Ended'}</span>
               <Badge className='bg-davinci-soft-neutral text-davinci-black-alt'>
-                {votingMethod.type === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION
-                  ? 'Single Choice'
-                  : votingMethod.type === ElectionResultsTypeNames.MULTIPLE_CHOICE
-                    ? 'Multiple Choice'
-                    : 'Quadratic Voting'}
+                {electionResultsTypesNames[votingMethod.type] || 'Unknown Voting Method'}
               </Badge>
             </div>
             <div className='flex items-center gap-2 text-davinci-black-alt/80'>
