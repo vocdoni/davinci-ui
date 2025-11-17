@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { DavinciSDK, VocdoniApiService } from '@vocdoni/davinci-sdk'
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { createContext, useContext, useEffect, useMemo, useState, type FC, type ReactNode } from 'react'
@@ -16,6 +17,7 @@ const VocdoniApiContext = createContext<VocdoniApiContextValue | undefined>(unde
 export const VocdoniApiProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { address, isConnected } = useUnifiedWallet()
   const { getProvider } = useUnifiedProvider()
+  const queryClient = useQueryClient()
 
   // Old API instance (backwards compatible)
   const apiInstance = useMemo(() => {
@@ -63,6 +65,31 @@ export const VocdoniApiProvider: FC<{ children: ReactNode }> = ({ children }) =>
 
     initializeSdk()
   }, [address, isConnected, getProvider])
+
+  // Set up onProcessResultsSet event listener
+  useEffect(() => {
+    if (sdkInstance) {
+      console.log('[onProcessResultsSet] Listener registered')
+
+      sdkInstance.processes.onProcessResultsSet((processID: string, sender: string, results: bigint[]) => {
+        console.log('[onProcessResultsSet] Event fired:', {
+          processID,
+          sender,
+          results: results.map((r) => r.toString()),
+        })
+        console.log('[onProcessResultsSet] Invalidating queries for:', processID)
+
+        // Invalidate the process query to trigger a refetch
+        queryClient.invalidateQueries({ queryKey: ['process', processID] })
+      })
+
+      // Cleanup function to remove listeners when SDK changes or component unmounts
+      return () => {
+        console.log('[onProcessResultsSet] Removing listeners')
+        sdkInstance.processes.removeAllListeners()
+      }
+    }
+  }, [sdkInstance, queryClient])
 
   return (
     <VocdoniApiContext.Provider value={{ api: apiInstance, sdk: sdkInstance }}>{children}</VocdoniApiContext.Provider>
