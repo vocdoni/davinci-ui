@@ -536,7 +536,7 @@ export function VoteDisplay() {
                             (votingMethod.type === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION &&
                               process.ballotMode.costFromWeight)
                               ? (Number(result) / results.reduce((acc, val) => acc + (Number(val) || 0), 0)) * 100
-                              : (Number(result) / Number(process.voteCount)) * 100 || 0
+                              : (Number(result) / uniqueVoters) * 100 || 0
                           const votes = result || 0
 
                           // Color scheme based on ranking
