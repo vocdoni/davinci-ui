@@ -1138,8 +1138,13 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
         </div>
       )}
       <div className='ml-6 text-left text-davinci-black-alt/80 text-sm'>
-        Creating a vote requires a tx on the {sequencerNetwork?.name} network. If you need ETH to run a vote, you can
-        get some from <Link href='https://cloud.google.com/application/web3/faucet/ethereum/sepolia'>this faucet</Link>.
+        Creating a vote requires a tx on the {sequencerNetwork?.name} network.{' '}
+        {sequencerNetwork?.name === 'Sepolia' && (
+          <>
+            If you need ETH to run a vote, you can get some from{' '}
+            <Link href='https://cloud.google.com/application/web3/faucet/ethereum/sepolia'>this faucet</Link>.
+          </>
+        )}{' '}
         The tx is only needed to create the vote, <span className='font-medium'>casting votes is gasless.</span>
       </div>
     </>
