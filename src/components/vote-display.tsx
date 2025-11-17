@@ -10,7 +10,6 @@ import {
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { BarChart3, CheckCircle, Clock, Diamond, Lock, Minus, Plus, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { PostVoteModal } from '~components/post-vote-modal'
 import { Badge } from '~components/ui/badge'
 import { Button } from '~components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~components/ui/card'
@@ -19,7 +18,7 @@ import { Input } from '~components/ui/input'
 import { Label } from '~components/ui/label'
 import { LinkifiedText } from '~components/ui/linkified-text'
 import { RadioGroup, RadioGroupItem } from '~components/ui/radio-group'
-import { VoteProgressTracker } from '~components/vote-progress-tracker'
+import { VoteProgressTracker, VoteReceivedMessage } from '~components/vote-progress-tracker'
 import { VotingModal } from '~components/voting-modal'
 import { useElection } from '~contexts/election-context'
 import { useVocdoniApi } from '~contexts/vocdoni-api-context'
@@ -129,7 +128,6 @@ export function VoteDisplay() {
   const [quadraticVotes, setQuadraticVotes] = useState<QuadraticVote>({})
   const [budgetVotes, setBudgetVotes] = useState<BudgetVote>({})
   const [showVotingModal, setShowVotingModal] = useState(false)
-  const [showPostVoteModal, setShowPostVoteModal] = useState(false)
   const [isVoting, setIsVoting] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   const { voteId, trackVote, resetVote } = usePersistedVote(election?.process.id ?? '', address)
@@ -293,9 +291,6 @@ export function VoteDisplay() {
       trackVote(out.voteId)
 
       console.info('✅ Vote submitted successfully:', out.voteId)
-
-      // Show post-vote modal
-      setShowPostVoteModal(true)
 
       // refetch process info
       await refetchElection()
@@ -634,8 +629,12 @@ export function VoteDisplay() {
             {/* Network Validation Banner */}
             <NetworkValidationBanner />
 
-            {/* Vote Progress Tracker */}
-            {voteId && <VoteProgressTracker onVoteAgain={handleVoteAgain} processId={process.id} voteId={voteId} />}
+            {/* Vote Progress Tracker or Simple Vote Received Message */}
+            {voteId ? (
+              <VoteProgressTracker onVoteAgain={handleVoteAgain} processId={process.id} voteId={voteId} />
+            ) : hasVoted ? (
+              <VoteReceivedMessage />
+            ) : null}
 
             {/* Voting Method Instructions - always visible */}
             {votingMethod.type === ElectionResultsTypeNames.MULTIPLE_CHOICE && (
@@ -1101,9 +1100,6 @@ export function VoteDisplay() {
         isRevote={Boolean(hasVoted)}
         votingMethod={votingMethod.type}
       />
-
-      {/* Post Vote Modal */}
-      <PostVoteModal isOpen={showPostVoteModal} onClose={() => setShowPostVoteModal(false)} />
     </div>
   )
 }
