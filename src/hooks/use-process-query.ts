@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import type { ElectionMetadata, VocdoniApiService } from '@vocdoni/davinci-sdk'
+import type { ElectionMetadata } from '@vocdoni/davinci-sdk'
 import { useEffect } from 'react'
 import { up } from 'up-fetch'
 import { useVocdoniApi } from '~contexts/vocdoni-api-context'
@@ -7,7 +7,7 @@ import type { Process } from '~src/types'
 
 const upfetch = up(fetch)
 
-export const getProcessQuery = (id: string, api: VocdoniApiService) => ({
+export const getProcessQuery = (id: string, api: ReturnType<typeof useVocdoniApi>) => ({
   queryKey: ['process', id],
   queryFn: async (): Promise<Process> => {
     const process = await api.sequencer.getProcess(id)
@@ -27,7 +27,7 @@ export const getProcessQuery = (id: string, api: VocdoniApiService) => ({
 })
 
 export const useProcessQuery = (id: string) => {
-  const { api } = useVocdoniApi()
+  const api = useVocdoniApi()
   const query = useQuery(getProcessQuery(id, api))
 
   const isAcceptingVotes = query.data?.process.isAcceptingVotes
@@ -58,7 +58,7 @@ export const useProcessQuery = (id: string) => {
  * This hook will directly return `string[]`, not the wrapped object.
  */
 export const useProcessList = () => {
-  const { api } = useVocdoniApi()
+  const api = useVocdoniApi()
 
   return useQuery<string[]>({
     queryKey: ['processList'],

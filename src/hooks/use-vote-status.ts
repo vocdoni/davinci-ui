@@ -3,7 +3,7 @@ import { VoteStatus } from '@vocdoni/davinci-sdk'
 import { useVocdoniApi } from '~contexts/vocdoni-api-context'
 
 export function useVoteStatus(processId: string, voteId: string) {
-  const { api } = useVocdoniApi()
+  const api = useVocdoniApi()
   return useQuery({
     queryKey: ['voteStatus', processId, voteId],
     queryFn: async () => {

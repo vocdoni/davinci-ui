@@ -1,6 +1,6 @@
 import { sdk } from '@farcaster/miniapp-sdk'
 import type { Provider } from 'ethers'
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState } from 'react'
 
 export interface FarcasterUser {
   fid: number
@@ -373,7 +373,7 @@ export const MiniAppProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }
 
   // Get Farcaster Ethereum provider
-  const getFarcasterEthereumProvider = useCallback(async () => {
+  const getFarcasterEthereumProvider = async () => {
     if (!isMiniApp) {
       return null
     }
@@ -384,7 +384,7 @@ export const MiniAppProvider: React.FC<{ children: React.ReactNode }> = ({ child
       console.error('Error getting Farcaster Ethereum provider:', error)
       return null
     }
-  }, [isMiniApp])
+  }
 
   const contextValue: MiniAppContextType = {
     // State
