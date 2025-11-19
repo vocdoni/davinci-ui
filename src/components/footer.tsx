@@ -1,4 +1,5 @@
 import { Globe, Github } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 export function Footer() {
   const socialLinks = [
@@ -63,7 +64,7 @@ export function Footer() {
           </div>
 
           {/* Copyright */}
-          <div className='text-center text-sm text-davinci-black-alt/60'>
+          <div className='text-center text-sm text-davinci-black-alt/60 space-y-2'>
             <p>
               2024 DAVINCI. Built by{' '}
               <a
@@ -76,6 +77,12 @@ export function Footer() {
               </a>
               .
             </p>
+            <Link
+              to='/support/storage-reset'
+              className='text-davinci-black-alt underline hover:text-davinci-black-alt/80 transition-colors'
+            >
+              Emergency storage reset
+            </Link>
           </div>
         </div>
       </div>

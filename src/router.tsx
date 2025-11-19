@@ -13,6 +13,7 @@ const VotePage = lazy(() => import('./pages/VotePage'))
 const ImplementPage = lazy(() => import('./pages/ImplementPage'))
 const NewsletterPage = lazy(() => import('./pages/NewsletterPage'))
 const ParticipatePage = lazy(() => import('./pages/ParticipatePage'))
+const StorageResetPage = lazy(() => import('./pages/StorageResetPage'))
 
 const Loading = () => (
   <div className='px-4'>
@@ -88,6 +89,14 @@ export const RouterProvider = () => {
           element: (
             <Suspense fallback={<Loading />}>
               <ExplorePage />
+            </Suspense>
+          ),
+        },
+        {
+          path: 'support/storage-reset',
+          element: (
+            <Suspense fallback={<Loading />}>
+              <StorageResetPage />
             </Suspense>
           ),
         },
