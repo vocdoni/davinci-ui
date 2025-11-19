@@ -365,7 +365,7 @@ export function VoteReceivedMessage() {
             <CheckCircle className='w-5 h-5 text-green-600' />
           </div>
           <div>
-            <p className='font-semibold text-davinci-black-alt'>Vote successfully received</p>
+            <p className='font-semibold text-davinci-black-alt'>Vote verified and accepted by the sequencer</p>
             <p className='text-sm text-davinci-black-alt/70'>Your vote has been registered</p>
           </div>
         </div>
