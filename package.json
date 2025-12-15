@@ -48,8 +48,7 @@
     "@reown/appkit-adapter-ethers": "^1.7.13",
     "@tanstack/react-query": "^5.81.2",
     "@uidotdev/usehooks": "^2.4.1",
-    "@vocdoni/davinci-contracts": "0.0.14",
-    "@vocdoni/davinci-sdk": "~0.0.2",
+    "@vocdoni/davinci-sdk": "~0.0.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "1.0.4",
@@ -97,8 +96,5 @@
     "vite-tsconfig-paths": "^5.1.2",
     "workbox-window": "^7.3.0"
   },
-  "packageManager": "pnpm@10.12.1",
-  "resolutions": {
-    "@vocdoni/davinci-contracts": "0.0.18"
-  }
+  "packageManager": "pnpm@10.12.1"
 }

@@ -29,7 +29,6 @@ interface ElectionContextValue {
   isNearingEnd: boolean
   // Vote count computed values
   uniqueVoters: number
-  totalVotesCast: number
   overwrittenVotes: number
   // Census and voting status (only when fetchCensus=true)
   censusProof: CensusProof | null
@@ -62,7 +61,7 @@ export const ElectionProvider: FC<ElectionProviderProps> = ({
   fetchCensus = false,
   children,
 }) => {
-  const api = useVocdoniApi()
+  const { api } = useVocdoniApi()
   const { address } = useUnifiedWallet()
 
   const {
@@ -106,9 +105,8 @@ export const ElectionProvider: FC<ElectionProviderProps> = ({
   const isNearingEnd = useMemo(() => timeRemainingMs > 0 && timeRemainingMs < 5 * 60 * 1000, [timeRemainingMs])
 
   // Vote count values
-  const totalVotesCast = election ? Number(election.process.voteCount) : 0
-  const overwrittenVotes = election ? Number(election.process.voteOverwrittenCount) : 0
-  const uniqueVoters = totalVotesCast - overwrittenVotes
+  const uniqueVoters = election ? Number(election.process.votersCount) : 0
+  const overwrittenVotes = election ? Number(election.process.overwrittenVotesCount) : 0
 
   // Census-related queries (only when fetchCensus=true)
   const censusRoot = election?.process.census.censusRoot
@@ -172,7 +170,6 @@ export const ElectionProvider: FC<ElectionProviderProps> = ({
     isNearingEnd,
     // Vote count values
     uniqueVoters,
-    totalVotesCast,
     overwrittenVotes,
     // Census and voting status
     censusProof: censusProof ?? null,

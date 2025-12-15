@@ -35,7 +35,7 @@ jobs:
         run: pnpm build
         env:
           WALLETCONNECT_PROJECT_ID: f9218b6e0683d202d047f1c60de2d681
-          BIGQUERY_URL: https://c3.davinci.vote
+          BIGQUERY_URL: https://c3-dev.davinci.vote
           SEQUENCER_URL: https://sequencer-dev.davinci.vote
 
       - name: Deploy to Netlify

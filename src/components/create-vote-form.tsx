@@ -14,20 +14,18 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { sepolia } from '@reown/appkit/networks'
 import { useAppKitNetwork } from '@reown/appkit/react'
 import {
-  createProcessSignatureMessage,
+  CensusOrigin,
   ElectionResultsTypeNames,
-  ProcessRegistryService,
-  ProcessStatus,
-  SmartContractService,
+  PlainCensus,
+  TxStatus,
+  WeightedCensus,
   type BallotMode,
   type ElectionMetadata,
   type ElectionResultsType,
   type ProtocolVersion,
 } from '@vocdoni/davinci-sdk'
-import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { CheckCircle, Clock, GripVertical, HelpCircle, Plus, Rocket, Users, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Controller, useFieldArray, useForm, type Control } from 'react-hook-form'
@@ -43,9 +41,9 @@ import { Separator } from '~components/ui/separator'
 import { Textarea } from '~components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~components/ui/tooltip'
 import { useMiniApp } from '~contexts/MiniAppContext'
+import { useSequencerNetwork } from '~contexts/sequencer-network'
 import { useVocdoniApi } from '~contexts/vocdoni-api-context'
 import { useSnapshots, type Snapshot } from '~hooks/use-snapshots'
-import { useUnifiedProvider } from '~hooks/use-unified-provider'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 import { CustomAddressesManager } from './census-addresses'
 import { Snapshots } from './snapshots'
@@ -159,7 +157,6 @@ export function CreateVoteForm() {
   const [isLaunching, setIsLaunching] = useState(false)
   const [launchSuccess, setLaunchSuccess] = useState(false)
   const { address, isConnected } = useUnifiedWallet()
-  const { getProvider } = useUnifiedProvider()
   const [error, setError] = useState<Error | null>(null)
 
   const form = useForm<FormData>({
@@ -190,7 +187,7 @@ export function CreateVoteForm() {
   })
 
   const formData = watch()
-  const api = useVocdoniApi()
+  const { api, sdk } = useVocdoniApi()
   const { data: snapshots, isLoading: isLoadingSnapshot, isError: isSnapshotError } = useSnapshots()
 
   // Reset weighted voting when switching to non-proportional snapshots
@@ -272,11 +269,13 @@ export function CreateVoteForm() {
           : snapshots[0]
       }
 
-      const census = {
-        censusURI: '',
-        censusRoot: '',
-        censusSize: 0,
+      let census: WeightedCensus | PlainCensus | { type: CensusOrigin; size: number; root: string; uri: string } = {
+        type: CensusOrigin.CensusOriginMerkleTree,
+        size: 0,
+        root: '',
+        uri: '',
       }
+
       switch (data.censusType) {
         case 'ethereum-wallets': {
           if (!snapshots || snapshots.length === 0) {
@@ -287,9 +286,9 @@ export function CreateVoteForm() {
             throw new Error('Selected snapshot not found')
           }
 
-          census.censusSize = selectedSnapshot.participantCount
-          census.censusRoot = selectedSnapshot.censusRoot
-          census.censusURI = `${import.meta.env.BIGQUERY_URL}/censuses/${selectedSnapshot.censusRoot}`
+          census.size = selectedSnapshot.participantCount
+          census.root = selectedSnapshot.censusRoot
+          census.uri = `${import.meta.env.BIGQUERY_URL}/censuses/${selectedSnapshot.censusRoot}`
           break
         }
         default: {
@@ -300,35 +299,37 @@ export function CreateVoteForm() {
             throw new Error('Please add at least one address to the custom addresses list')
           }
 
-          // Step 1: Create census
-          const censusId = await api.census.createCensus()
+          if (data.useWeightedVoting) {
+            census = new WeightedCensus()
+            const participants = validAddresses.map((address) => {
+              // Find the original index to get the correct weight
+              const originalIndex = data.customAddresses.indexOf(address)
+              return {
+                key: address,
+                weight:
+                  data.useWeightedVoting && data.customAddressWeights[originalIndex]
+                    ? data.customAddressWeights[originalIndex]
+                    : '1',
+              }
+            })
+            census.add(participants)
+          } else {
+            census = new PlainCensus()
+            census.add(validAddresses)
+          }
 
-          // Step 2: Add participants (only with valid addresses)
-          const participants = validAddresses.map((address) => {
-            // Find the original index to get the correct weight
-            const originalIndex = data.customAddresses.indexOf(address)
-            return {
-              key: address,
-              weight:
-                data.useWeightedVoting && data.customAddressWeights[originalIndex]
-                  ? data.customAddressWeights[originalIndex]
-                  : '1',
-            }
-          })
-          await api.census.addParticipants(censusId, participants)
-          const censusRoot = await api.census.getCensusRoot(censusId)
-          const censusSize = await api.census.getCensusSize(censusId)
-
-          census.censusURI = censusId
-          census.censusRoot = censusRoot
-          census.censusSize = censusSize
           break
         }
       }
 
       console.info('Census created:', census)
 
-      // Step 7: Create and push metadata
+      // Check if SDK is available
+      if (!sdk) {
+        throw new Error('SDK not initialized. Please ensure your wallet is connected.')
+      }
+
+      // Build metadata for ballot mode generation
       const metadata: ElectionMetadata = {
         title: { default: data.question },
         description: { default: '' },
@@ -365,79 +366,56 @@ export function CreateVoteForm() {
         }
       }
 
-      const metadataHash = await api.sequencer.pushMetadata(metadata)
-      const metadataUrl = api.sequencer.getMetadataUrl(metadataHash)
-      console.info('ℹ️ Metadata URL:', metadataUrl)
-
-      // Use provider for process creation (check wallet capabilities)
-      const walletProvider = await getProvider()
-      if (!walletProvider) {
-        throw new Error('Wallet provider not available.')
-      }
-      const provider = new BrowserProvider(walletProvider as Eip1193Provider)
-      console.info('ℹ️ Browser provider initialized:', provider)
-      const signer = await provider.getSigner()
-
-      // Get contract address from sequencer info
-      const info = await api.sequencer.getInfo()
-      const processRegistryAddress = info.contracts.process
-
-      const registry = new ProcessRegistryService(processRegistryAddress, signer)
-      const address = await signer.getAddress()
-      const pid = await registry.getNextProcessId(address)
-      console.info('ℹ️ Process ID:', pid)
-
-      const message = await createProcessSignatureMessage(pid)
-      const signature = await signer.signMessage(message)
-
       const ballotMode = generateBallotMode(metadata, data)
       console.info('ℹ️ Ballot mode:', ballotMode)
 
-      const { processId, encryptionPubKey, stateRoot } = await api.sequencer.createProcess({
-        processId: pid,
-        censusRoot: census.censusRoot,
-        ballotMode,
-        signature,
-        censusOrigin: data.censusType === 'custom-addresses' ? 1 : 1, // CensusOrigin.CensusOriginMerkleTree
-      })
-      console.info('✅ Process created with ID:', processId, stateRoot)
-
-      console.info('ℹ️ Creating new process with data:', [
-        ProcessStatus.READY,
-        Math.floor(Date.now() / 1000) + 60,
-        getDurationInSeconds(data.duration, data.durationUnit),
-        ballotMode,
-        {
-          censusOrigin: 1,
-          maxVotes: census.censusSize.toString(),
-          censusRoot: census.censusRoot,
-          censusURI: census.censusURI,
+      // Create process using SDK stream API
+      const stream = sdk.createProcessStream({
+        title: data.question,
+        description: '',
+        census,
+        ballot: ballotMode,
+        timing: {
+          startDate: new Date(Date.now() + 60000), // +1 minute
+          duration: getDurationInSeconds(data.duration, data.durationUnit),
         },
-        metadataUrl,
-        { x: encryptionPubKey[0], y: encryptionPubKey[1] },
-        BigInt(stateRoot),
-      ])
-
-      // Step 10: Submit newProcess on-chain
-      await SmartContractService.executeTx(
-        registry.newProcess(
-          ProcessStatus.READY,
-          Math.floor(Date.now() / 1000) + 60,
-          getDurationInSeconds(data.duration, data.durationUnit),
-          ballotMode,
+        questions: [
           {
-            censusOrigin: 1,
-            maxVotes: census.censusSize.toString(),
-            censusRoot: census.censusRoot,
-            censusURI: census.censusURI,
+            title: data.question,
+            description: '',
+            choices: data.choices
+              .filter((choice) => choice.text.trim() !== '')
+              .map((choice, index) => ({
+                title: choice.text,
+                value: index,
+              })),
           },
-          metadataUrl,
-          { x: encryptionPubKey[0], y: encryptionPubKey[1] },
-          BigInt(stateRoot)
-        )
-      )
+        ],
+      })
 
-      setLaunchSuccess(true)
+      // Handle transaction status events
+      let processId = ''
+      for await (const event of stream) {
+        console.info('📡 Transaction event:', event.status, event)
+
+        switch (event.status) {
+          case TxStatus.Pending:
+            console.info('⏳ Transaction pending:', event.hash)
+            break
+          case TxStatus.Completed:
+            processId = event.response.processId
+            console.info('✅ Process created with ID:', processId)
+            setLaunchSuccess(true)
+            break
+          case TxStatus.Failed:
+            console.error('❌ Transaction failed:', event.error)
+            throw new Error(event.error?.message || 'Transaction failed')
+          case TxStatus.Reverted:
+            console.error('↩️ Transaction reverted:', event.reason)
+            throw new Error(event.reason || 'Transaction reverted')
+        }
+      }
+
       console.info('ℹ️ Vote launched successfully with process ID:', processId)
 
       // Wait to navigate
@@ -1068,6 +1046,7 @@ type LaunchVoteButtonProps = {
 const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVoteButtonProps) => {
   const { isConnected } = useUnifiedWallet()
   const { isMiniApp, isExternalWallet, supportedChains, getFarcasterEthereumProvider } = useMiniApp()
+  const { sequencerNetwork } = useSequencerNetwork()
   const { caipNetwork } = useAppKitNetwork()
 
   // All hooks must be at the top before any conditional returns
@@ -1094,7 +1073,6 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
   // PRIORITY 2: Check chain compatibility (only for external wallets)
   // Convert hex chain ID to decimal for comparison
   const actualChainIdDecimal = actualChainId ? parseInt(actualChainId, 16) : null
-  const isOnSepoliaActually = actualChainIdDecimal === sepolia.id
 
   useEffect(() => {
     console.info('🔍 Chain validation debug:', {
@@ -1106,15 +1084,7 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
       supportedChains,
       isExternalWallet,
     })
-  }, [
-    caipNetwork,
-    actualChainId,
-    isMiniApp,
-    supportedChains,
-    isExternalWallet,
-    actualChainIdDecimal,
-    isOnSepoliaActually,
-  ])
+  }, [caipNetwork, actualChainId, isMiniApp, supportedChains, isExternalWallet, actualChainIdDecimal])
 
   if (!isConnected) {
     return <ConnectWalletButtonMiniApp />
@@ -1174,9 +1144,14 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
         </div>
       )}
       <div className='ml-6 text-left text-davinci-black-alt/80 text-sm'>
-        Creating a vote requires a tx on the Sepolia testnet. If you need ETH to run a vote, you can get some from{' '}
-        <Link href='https://cloud.google.com/application/web3/faucet/ethereum/sepolia'>this faucet</Link>. The tx is
-        only needed to create the vote, <span className='font-medium'>casting votes is gasless.</span>
+        Creating a vote requires a tx on the {sequencerNetwork?.name} network.{' '}
+        {sequencerNetwork?.name === 'Sepolia' && (
+          <>
+            If you need ETH to run a vote, you can get some from{' '}
+            <Link href='https://cloud.google.com/application/web3/faucet/ethereum/sepolia'>this faucet</Link>.
+          </>
+        )}{' '}
+        The tx is only needed to create the vote, <span className='font-medium'>casting votes is gasless.</span>
       </div>
     </>
   )

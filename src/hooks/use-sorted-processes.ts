@@ -3,12 +3,12 @@ import { useCallback, useMemo, useState } from 'react'
 
 export interface ProcessSortData {
   createdAt?: number
-  voteCount?: number
+  votersCount?: number
   title?: string
   organizationId?: string
 }
 
-export type SortBy = 'createdAt' | 'voteCount' | 'title'
+export type SortBy = 'createdAt' | 'votersCount' | 'title'
 
 export const useSortedProcesses = (processIds: string[], sortBy: SortBy = 'createdAt') => {
   const [processDataMap, setProcessDataMap] = useState<Map<string, ProcessSortData>>(new Map())
@@ -46,10 +46,10 @@ export const useSortedProcesses = (processIds: string[], sortBy: SortBy = 'creat
           const timeB = b.data.createdAt || 0
           return timeB - timeA
 
-        case 'voteCount':
+        case 'votersCount':
           // Sort by vote count (highest first)
-          const votesA = a.data.voteCount || 0
-          const votesB = b.data.voteCount || 0
+          const votesA = a.data.votersCount || 0
+          const votesB = b.data.votersCount || 0
           return votesB - votesA
 
         case 'title':

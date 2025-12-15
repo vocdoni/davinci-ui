@@ -9,7 +9,7 @@ import { Button } from './ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 
 const VoteActions = () => {
-  const api = useVocdoniApi()
+  const { api } = useVocdoniApi()
   const { isCreator, election, isPaused, isAcceptingVotes } = useElection()
   const { isConnected } = useAppKitAccount()
   const { walletProvider } = useAppKitProvider('eip155')

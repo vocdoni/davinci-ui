@@ -110,7 +110,7 @@ const electionResultsTypesNames: Record<string, string> = {
 export function VoteDisplay() {
   const { address, isConnected } = useUnifiedWallet()
   const { getProvider } = useUnifiedProvider()
-  const api = useVocdoniApi()
+  const { api } = useVocdoniApi()
   const {
     censusProof,
     isInCensus,
