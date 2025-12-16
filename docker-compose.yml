@@ -13,7 +13,7 @@ services:
       # pass your app envs if you need them in dev.
       # or use env_file: .env
       SEQUENCER_URL: "https://sequencer1.davinci.vote"
-      BIGQUERY_URL: "https://c3.davinci.vote"
+      CENSUS3_URL: "https://c3.davinci.vote"
       ETHEREUM_NETWORK: "sepolia"
       SHARE_TEXT: "🗳️ Just launched a vote with DAVINCI!"
     volumes:

@@ -45,7 +45,7 @@ export const VocdoniApiProvider: FC<{ children: ReactNode }> = ({ children }) =>
             const sdk = new DavinciSDK({
               signer,
               sequencerUrl: import.meta.env.SEQUENCER_URL,
-              censusUrl: import.meta.env.SEQUENCER_URL,
+              censusUrl: import.meta.env.CENSUS3_URL,
             })
 
             await sdk.init()

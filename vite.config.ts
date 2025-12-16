@@ -110,7 +110,7 @@ const viteconfig = defineConfig(({ mode }) => {
     ],
     define: {
       'import.meta.env.SEQUENCER_URL': JSON.stringify(process.env.SEQUENCER_URL || 'https://sequencer1.davinci.vote'),
-      'import.meta.env.BIGQUERY_URL': JSON.stringify(process.env.BIGQUERY_URL || 'https://c3.davinci.vote'),
+      'import.meta.env.CENSUS3_URL': JSON.stringify(process.env.CENSUS3_URL || 'https://c3.davinci.vote'),
       'import.meta.env.WALLETCONNECT_PROJECT_ID': JSON.stringify(
         process.env.WALLETCONNECT_PROJECT_ID || 'c3b0f8d1e2a4b5c6d7e8f9a0b1c2d3e4'
       ),

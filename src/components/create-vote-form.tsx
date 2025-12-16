@@ -288,7 +288,7 @@ export function CreateVoteForm() {
 
           census.size = selectedSnapshot.participantCount
           census.root = selectedSnapshot.censusRoot
-          census.uri = `${import.meta.env.BIGQUERY_URL}/censuses/${selectedSnapshot.censusRoot}`
+          census.uri = `${import.meta.env.CENSUS3_URL}/censuses/${selectedSnapshot.censusRoot}`
           break
         }
         default: {

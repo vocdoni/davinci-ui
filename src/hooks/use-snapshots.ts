@@ -28,7 +28,7 @@ export function useSnapshots() {
   return useQuery({
     queryKey: ['snapshots'],
     queryFn: async () => {
-      const response = await upfetch<SnapshotsResponse>(`${import.meta.env.BIGQUERY_URL}/snapshots`)
+      const response = await upfetch<SnapshotsResponse>(`${import.meta.env.CENSUS3_URL}/snapshots`)
       return response.snapshots || []
     },
   })

@@ -76,7 +76,7 @@ DAVINCI UI is a React 18 + TypeScript Progressive Web App for decentralized voti
 
 The app uses Vite's environment system with these key variables:
 - `SEQUENCER_URL` - DAVINCI API endpoint (default: https://sequencer1.davinci.vote)
-- `BIGQUERY_URL` - Analytics endpoint (default: https://c3.davinci.vote)
+- `CENSUS3_URL` - Analytics endpoint (default: https://c3.davinci.vote)
 - `WALLETCONNECT_PROJECT_ID` - WalletConnect configuration
 - `PUBLIC_MAILCHIMP_URL` - Newsletter integration
 - `SHARE_TEXT` - Social sharing template
