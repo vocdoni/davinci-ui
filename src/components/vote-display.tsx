@@ -1,13 +1,6 @@
+import { useQuery } from '@tanstack/react-query'
 import type { ElectionMetadata } from '@vocdoni/davinci-sdk'
-import {
-  CircomProof,
-  DavinciCrypto,
-  ElectionResultsTypeNames,
-  type GetProcessResponse,
-  type VoteBallot,
-  type VoteRequest,
-} from '@vocdoni/davinci-sdk'
-import { BrowserProvider, type Eip1193Provider } from 'ethers'
+import { ElectionResultsTypeNames, type GetProcessResponse } from '@vocdoni/davinci-sdk'
 import { BarChart3, CheckCircle, Clock, Diamond, Lock, Minus, Plus, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Badge } from '~components/ui/badge'
@@ -23,7 +16,6 @@ import { VotingModal } from '~components/voting-modal'
 import { useElection } from '~contexts/election-context'
 import { useVocdoniApi } from '~contexts/vocdoni-api-context'
 import { usePersistedVote } from '~hooks/use-persisted-vote'
-import { useUnifiedProvider } from '~hooks/use-unified-provider'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 import { truncateAddress } from '~lib/web3-utils'
 import { NetworkValidationBanner } from './network-validation-banner'
@@ -31,19 +23,6 @@ import RelativeTimeRemaining from './relative-time-remaining'
 import ConnectWalletButtonMiniApp from './ui/connect-wallet-button-miniapp'
 import { Spinner } from './ui/spinner'
 import VotingTimeRemaining from './voting-time-remaining'
-
-// Define CensusProof type locally since it's not exported
-type CensusProof = {
-  root: string
-  address: string
-  weight: string
-  censusOrigin: number
-  value?: string
-  siblings?: string
-  processId?: string
-  publicKey?: string
-  signature?: string
-}
 
 interface VotingMethod {
   type: ElectionResultsTypeNames
@@ -55,7 +34,7 @@ interface VotingMethod {
 function getVotingMethod(
   process: GetProcessResponse,
   meta: ElectionMetadata,
-  censusProof?: CensusProof | null
+  voterWeight?: string | null
 ): VotingMethod {
   const { type } = meta
   switch (type.name) {
@@ -68,8 +47,8 @@ function getVotingMethod(
     case ElectionResultsTypeNames.QUADRATIC: {
       // For weighted quadratic voting, use the user's census proof weight as total credits
       const credits =
-        process.ballotMode.costFromWeight && censusProof
-          ? Number(censusProof.weight)
+        process.ballotMode.costFromWeight && voterWeight
+          ? Number(voterWeight)
           : Number(process.ballotMode.maxValueSum) || 100
       return {
         type: type.name,
@@ -79,8 +58,8 @@ function getVotingMethod(
     case ElectionResultsTypeNames.BUDGET: {
       // For weighted budget voting, use the user's census proof weight as total credits
       const credits =
-        process.ballotMode.costFromWeight && censusProof
-          ? Number(censusProof.weight)
+        process.ballotMode.costFromWeight && voterWeight
+          ? Number(voterWeight)
           : Number(process.ballotMode.maxValueSum) || 100
       return {
         type: type.name,
@@ -109,10 +88,8 @@ const electionResultsTypesNames: Record<string, string> = {
 
 export function VoteDisplay() {
   const { address, isConnected } = useUnifiedWallet()
-  const { getProvider } = useUnifiedProvider()
-  const { api } = useVocdoniApi()
+  const { api, sdk } = useVocdoniApi()
   const {
-    censusProof,
     isInCensus,
     isAbleToVote,
     isCensusProofLoading,
@@ -132,12 +109,23 @@ export function VoteDisplay() {
   const [error, setError] = useState<Error | null>(null)
   const { voteId, trackVote, resetVote } = usePersistedVote(election?.process.id ?? '', address)
 
+  const processId = election?.process.id
+  const shouldFetchWeight = Boolean(processId && address && isInCensus && election?.process.ballotMode.costFromWeight)
+
+  const { data: voterWeight } = useQuery({
+    enabled: shouldFetchWeight,
+    queryKey: ['address-weight', processId, address],
+    queryFn: async () => await api.sequencer.getAddressWeight(processId!, address!),
+    staleTime: 1000 * 60 * 5,
+    retry: false,
+  })
+
   // Initialize quadratic and budget votes
   useEffect(() => {
     if (!election) return
     const meta = election.meta
     const process = election.process
-    const votingMethod = getVotingMethod(process, meta, censusProof)
+    const votingMethod = getVotingMethod(process, meta, voterWeight)
     if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
       const initialVotes: QuadraticVote = {}
       meta.questions[0].choices.forEach((choice) => {
@@ -151,7 +139,7 @@ export function VoteDisplay() {
       })
       setBudgetVotes(initialVotes)
     }
-  }, [election, censusProof])
+  }, [election, voterWeight])
 
   if (!election) return null
 
@@ -170,7 +158,7 @@ export function VoteDisplay() {
 
   // Calculate total credits used
   const getTotalCreditsUsed = (): number => {
-    const votingMethod = getVotingMethod(process, meta, censusProof)
+    const votingMethod = getVotingMethod(process, meta, voterWeight)
     if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
       return Object.values(quadraticVotes).reduce((total, votes) => total + calculateQuadraticCost(votes), 0)
     } else if (votingMethod.type === ElectionResultsTypeNames.BUDGET) {
@@ -181,7 +169,7 @@ export function VoteDisplay() {
 
   // Get remaining credits
   const getRemainingCredits = (): number => {
-    const votingMethod = getVotingMethod(process, meta, censusProof)
+    const votingMethod = getVotingMethod(process, meta, voterWeight)
     return (votingMethod.credits || 100) - getTotalCreditsUsed()
   }
 
@@ -195,9 +183,8 @@ export function VoteDisplay() {
       throw new Error('Wallet not connected')
     }
 
-    const walletProvider = await getProvider()
-    if (!walletProvider) {
-      throw new Error('Wallet provider not available')
+    if (!sdk) {
+      throw new Error('SDK not initialized')
     }
 
     setShowVotingModal(false)
@@ -205,92 +192,25 @@ export function VoteDisplay() {
     setError(null)
 
     try {
-      if (!censusProof) {
-        throw new Error('Census proof is required to vote')
-      }
+      const weightValue = process.ballotMode.costFromWeight ? Number(voterWeight ?? 1) : 1
 
-      // Fetch circuit info
-      const info = await api.sequencer.getInfo()
-
-      const davinciCrypto = new DavinciCrypto({
-        wasmExecUrl: info.ballotProofWasmHelperExecJsUrl,
-        wasmUrl: info.ballotProofWasmHelperUrl,
-        initTimeoutMs: 20000,
-      })
-      await davinciCrypto.init()
-      console.info('ℹ️ DavinciCrypto initialized', info)
-
-      const kHex = Array.from(crypto.getRandomValues(new Uint8Array(8)))
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('')
-      const kStr = BigInt('0x' + kHex).toString()
-
-      const fieldValues =
+      const choices =
         meta.type.name === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION
-          ? getBinaryArray([selectedChoice], process.ballotMode.costFromWeight ? censusProof.weight : '1')
+          ? getBinaryArray([selectedChoice], weightValue)
           : meta.type.name === ElectionResultsTypeNames.QUADRATIC
             ? padTo(Object.values(quadraticVotes))
             : meta.type.name === ElectionResultsTypeNames.BUDGET
               ? padTo(Object.values(budgetVotes))
-              : getBinaryArray(selectedChoices, process.ballotMode.costFromWeight ? censusProof.weight : '1')
+              : getBinaryArray(selectedChoices, weightValue)
 
-      const inputs = {
-        address: address,
-        processID: process.id,
-        ballotMode: process.ballotMode,
-        encryptionKey: [process.encryptionKey.x, process.encryptionKey.y] as [string, string],
-        k: kStr,
-        fieldValues,
-        weight: censusProof.weight,
-      }
-      console.info('ℹ️ Ballot proof inputs:', inputs)
-
-      const out = await davinciCrypto.proofInputs(inputs)
-
-      console.info('✅ Ballot proof inputs generated:', out, info)
-
-      const pg = new CircomProof({
-        wasmUrl: info.circuitUrl,
-        zkeyUrl: info.provingKeyUrl,
-        vkeyUrl: info.verificationKeyUrl,
-      })
-      console.info('ℹ️ CircomProof SDK initialized', pg)
-
-      const { proof, publicSignals } = await pg.generate(out.circomInputs)
-      console.info('✅ Proof generated:', proof)
-      const ok = await pg.verify(proof, publicSignals)
-
-      if (!ok) throw new Error(`Proof verification failed`)
-
-      const voteBallot: VoteBallot = {
-        curveType: out.ballot.curveType,
-        ciphertexts: out.ballot.ciphertexts,
-      }
-
-      // Use the unified provider (automatically handles Farcaster vs regular wallet)
-      const provider = new BrowserProvider(walletProvider as Eip1193Provider)
-      const signer = await provider.getSigner()
-      console.info('ℹ️ census proof:', censusProof)
-      console.info('ℹ️ voteid:', out.voteId)
-      const signature = await signer.signMessage(hexStringToUint8Array(out.voteId))
-
-      const voteRequest: VoteRequest = {
-        address: address,
-        ballot: voteBallot,
-        ballotInputsHash: out.ballotInputsHash,
-        ballotProof: proof,
-        censusProof,
+      const voteResult = await sdk.submitVote({
         processId: process.id,
-        signature,
-        voteId: out.voteId,
-      }
-
-      await api.sequencer.submitVote(voteRequest)
+        choices,
+      })
 
       // Track the vote
-      trackVote(out.voteId)
-
-      console.info('✅ Vote submitted successfully:', out.voteId)
+      trackVote(voteResult.voteId)
+      console.info('✅ Vote submitted successfully:', voteResult.voteId)
 
       // refetch process info
       await refetchElection()
@@ -306,7 +226,7 @@ export function VoteDisplay() {
     // Clear selections after voting
     setSelectedChoice('')
     setSelectedChoices([])
-    const votingMethod = getVotingMethod(process, meta, censusProof)
+    const votingMethod = getVotingMethod(process, meta, voterWeight)
     if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
       const resetVotes: QuadraticVote = {}
       meta.questions[0].choices.forEach((choice) => {
@@ -327,7 +247,7 @@ export function VoteDisplay() {
     // Reset form to allow voting again
     setSelectedChoice('')
     setSelectedChoices([])
-    const votingMethod = getVotingMethod(process, meta, censusProof)
+    const votingMethod = getVotingMethod(process, meta, voterWeight)
     if (votingMethod.type === ElectionResultsTypeNames.QUADRATIC) {
       const resetVotes: QuadraticVote = {}
       meta.questions[0].choices.forEach((choice) => {
@@ -339,7 +259,7 @@ export function VoteDisplay() {
 
   // Validation for different voting methods
   const isVoteValid = (): boolean => {
-    const votingMethod = getVotingMethod(process, meta, censusProof)
+    const votingMethod = getVotingMethod(process, meta, voterWeight)
     switch (votingMethod.type) {
       case ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION:
         return selectedChoice !== ''
@@ -374,7 +294,7 @@ export function VoteDisplay() {
         (total, votes) => total + calculateQuadraticCost(votes),
         0
       )
-      const votingMethod = getVotingMethod(process, meta, censusProof)
+      const votingMethod = getVotingMethod(process, meta, voterWeight)
       const totalCredits = votingMethod.credits || 100
 
       if (totalCost <= totalCredits) {
@@ -393,7 +313,7 @@ export function VoteDisplay() {
 
       // Check if this would exceed available credits
       const totalCost = Object.values(newBudgetVotes).reduce((total, votes) => total + calculateBudgetCost(votes), 0)
-      const votingMethod = getVotingMethod(process, meta, censusProof)
+      const votingMethod = getVotingMethod(process, meta, voterWeight)
       const totalCredits = votingMethod.credits || 100
 
       if (totalCost <= totalCredits) {
@@ -406,7 +326,7 @@ export function VoteDisplay() {
 
   const getVoteSelectionSummary = () => {
     const choices = meta.questions[0].choices
-    const votingMethod = getVotingMethod(process, meta, censusProof)
+    const votingMethod = getVotingMethod(process, meta, voterWeight)
     switch (votingMethod.type) {
       case ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION:
         return choices.find((choice) => choice.value.toString() === selectedChoice)?.title.default || ''
@@ -435,7 +355,7 @@ export function VoteDisplay() {
     }
   }
 
-  const votingMethod = getVotingMethod(process, meta, censusProof)
+  const votingMethod = getVotingMethod(process, meta, voterWeight)
   const results = process.result || []
 
   return (
@@ -1105,14 +1025,6 @@ export function VoteDisplay() {
   )
 }
 
-const hexStringToUint8Array = (hex: string) =>
-  new Uint8Array(
-    hex
-      .replace(/^0x/, '')
-      .match(/.{1,2}/g)!
-      .map((byte) => parseInt(byte, 16))
-  )
-
 export const WalletEligibilityStatus = () => {
   const { address, isConnected } = useUnifiedWallet()
   const { isNearingEnd, isInCensus, isCensusProofLoading } = useElection()
@@ -1146,8 +1058,8 @@ export const WalletEligibilityStatus = () => {
   )
 }
 
-export function getBinaryArray(positions: string[], value = '1'): string[] {
-  const result = Array(8).fill('0')
+export function getBinaryArray(positions: string[], value: number = 1): number[] {
+  const result = Array(8).fill(0)
   positions.forEach((posStr) => {
     const pos = parseInt(posStr, 10)
     if (!isNaN(pos) && pos >= 0 && pos < 8) {
@@ -1157,8 +1069,5 @@ export function getBinaryArray(positions: string[], value = '1'): string[] {
   return result
 }
 
-const padTo = (arr: number[] | string[], length: number = 8): string[] =>
-  arr
-    .concat(Array(length - arr.length).fill(0))
-    .slice(0, length)
-    .map((v) => v.toString())
+const padTo = (arr: number[], length: number = 8): number[] =>
+  arr.concat(Array(length - arr.length).fill(0)).slice(0, length)
