@@ -10,42 +10,6 @@ import { useVocdoniApi } from './vocdoni-api-context'
 
 const upfetch = up(fetch)
 
-interface ElectionContextValue {
-  election: Process | undefined
-  isLoading: boolean
-  error: Error | null
-  refetch: () => Promise<QueryObserverResult<Process, Error>>
-  // Status-related computed values
-  voteHasEnded: boolean
-  isAcceptingVotes: boolean
-  isPaused: boolean
-  wasCanceled: boolean
-  hasResults: boolean
-  status: ProcessStatus | null
-  // Time-related computed values
-  voteStartTime: Date | null
-  voteEndTime: Date | null
-  timeRemainingMs: number
-  isNearingEnd: boolean
-  // Vote count computed values
-  uniqueVoters: number
-  overwrittenVotes: number
-  // Census and voting status (only when fetchCensus=true)
-  censusProof: CensusProof | null
-  hasVoted: boolean | null
-  isHasVotedLoading: boolean
-  isHasVotedError: boolean
-  hasVotedError: Error | null
-  isAbleToVote: boolean
-  isCreator: boolean
-  isInCensus: boolean | null
-  isCensusProofLoading: boolean
-  isCensusProofError: boolean
-  censusProofError: Error | null
-}
-
-const ElectionContext = createContext<ElectionContextValue | undefined>(undefined)
-
 interface ElectionProviderProps {
   electionId: string
   election?: Process
@@ -55,12 +19,9 @@ interface ElectionProviderProps {
 
 const ENDED_STATUSES = [ProcessStatus.ENDED, ProcessStatus.CANCELED, ProcessStatus.RESULTS] as const
 
-export const ElectionProvider: FC<ElectionProviderProps> = ({
-  electionId,
-  election: process,
-  fetchCensus = false,
-  children,
-}) => {
+type ElectionContextArgs = Omit<ElectionProviderProps, 'children'>
+
+const useElectionProvider = ({ electionId, election: process, fetchCensus = false }: ElectionContextArgs) => {
   const { api } = useVocdoniApi()
   const { address } = useUnifiedWallet()
 
@@ -151,7 +112,7 @@ export const ElectionProvider: FC<ElectionProviderProps> = ({
   const isInCensus = fetchCensus && address ? (isCensusProofLoading ? null : !isCensusProofError) : null
   const isCreator = election?.process.organizationId === address
 
-  const value: ElectionContextValue = {
+  return {
     election,
     isLoading,
     error,
@@ -184,6 +145,21 @@ export const ElectionProvider: FC<ElectionProviderProps> = ({
     isCensusProofError,
     censusProofError,
   }
+}
+
+export interface ElectionContextValue extends ReturnType<typeof useElectionProvider> {
+  refetch: () => Promise<QueryObserverResult<Process, Error>>
+}
+
+const ElectionContext = createContext<ElectionContextValue | undefined>(undefined)
+
+export const ElectionProvider: FC<ElectionProviderProps> = ({
+  electionId,
+  election: process,
+  fetchCensus = false,
+  children,
+}) => {
+  const value = useElectionProvider({ electionId, election: process, fetchCensus })
 
   return <ElectionContext.Provider value={value}>{children}</ElectionContext.Provider>
 }
