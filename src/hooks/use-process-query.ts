@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import type { ElectionMetadata, VocdoniApiService } from '@vocdoni/davinci-sdk'
+import { getElectionMetadataTemplate } from '@vocdoni/davinci-sdk'
 import { useEffect } from 'react'
 import { up } from 'up-fetch'
 import { useVocdoniApi } from '~contexts/vocdoni-api-context'
@@ -13,7 +14,7 @@ export const getProcessQuery = (id: string, api: VocdoniApiService) => ({
     const process = await api.sequencer.getProcess(id)
     if (!process) throw new Error('Vote not found')
 
-    let meta
+    let meta: ElectionMetadata = getElectionMetadataTemplate()
     try {
       meta = await upfetch<ElectionMetadata>(process.metadataURI)
     } catch (err) {

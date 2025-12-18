@@ -6,15 +6,15 @@ import * as React from 'react'
 
 import { cn } from '~lib/utils'
 
-const MenubarMenu = MenubarPrimitive.Menu
+const MenubarMenu: typeof MenubarPrimitive.Menu = MenubarPrimitive.Menu
 
-const MenubarGroup = MenubarPrimitive.Group
+const MenubarGroup: typeof MenubarPrimitive.Group = MenubarPrimitive.Group
 
-const MenubarPortal = MenubarPrimitive.Portal
+const MenubarPortal: typeof MenubarPrimitive.Portal = MenubarPrimitive.Portal
 
-const MenubarSub = MenubarPrimitive.Sub
+const MenubarSub: typeof MenubarPrimitive.Sub = MenubarPrimitive.Sub
 
-const MenubarRadioGroup = MenubarPrimitive.RadioGroup
+const MenubarRadioGroup: typeof MenubarPrimitive.RadioGroup = MenubarPrimitive.RadioGroup
 
 const Menubar = React.forwardRef<
   React.ElementRef<typeof MenubarPrimitive.Root>,
@@ -187,7 +187,7 @@ MenubarSeparator.displayName = MenubarPrimitive.Separator.displayName
 const MenubarShortcut = ({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) => {
   return <span className={cn('ml-auto text-xs tracking-widest text-muted-foreground', className)} {...props} />
 }
-MenubarShortcut.displayname = 'MenubarShortcut'
+MenubarShortcut.displayName = 'MenubarShortcut'
 
 export {
   Menubar,

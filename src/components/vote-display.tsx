@@ -481,7 +481,8 @@ export function VoteDisplay() {
                 </div>
                 <div className='text-center'>
                   <p className='text-2xl font-bold text-davinci-black-alt'>
-                    {((uniqueVoters / (Number(process?.census.maxVotes) || 5000)) * 100).toFixed(1)}%
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    {((uniqueVoters / (process as any).maxVoters) * 100).toFixed(1)}%
                   </p>
                   <p className='text-xs text-davinci-black-alt/60'>Turnout</p>
                 </div>

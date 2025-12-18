@@ -1,5 +1,5 @@
 import { sdk } from '@farcaster/miniapp-sdk'
-import type { Provider } from 'ethers'
+import type { Eip1193Provider } from 'ethers'
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
 
 export interface FarcasterUser {
@@ -22,8 +22,7 @@ export interface MiniAppLocationContext {
 
 export interface WalletConnection {
   address: string
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  provider: any
+  provider: Eip1193Provider
 }
 
 interface MiniAppContextType {
@@ -45,8 +44,7 @@ interface MiniAppContextType {
   isExternalWallet: boolean
 
   // Utility functions
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getFarcasterEthereumProvider: () => Promise<any>
+  getFarcasterEthereumProvider: () => Promise<Eip1193Provider | null>
 }
 
 const MiniAppContext = createContext<MiniAppContextType | null>(null)
@@ -66,15 +64,15 @@ export const MiniAppProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     if (!isMiniApp || !isInitialized) return
 
-    let provider: Provider | undefined = undefined
-    let pollInterval: NodeJS.Timeout
+    let provider: Eip1193Provider | null = null
+    let pollInterval: ReturnType<typeof setInterval> | undefined
     let lastAccounts: string[] = []
     let lastChainId: string = ''
 
     const setupAccountPolling = async () => {
       try {
         console.log('🔍 Setting up Farcaster wallet polling...')
-        provider = await sdk.wallet.getEthereumProvider()
+        provider = (await sdk.wallet.getEthereumProvider()) ?? null
         if (!provider) {
           console.log('❌ No Farcaster provider available for polling')
           return
@@ -96,6 +94,7 @@ export const MiniAppProvider: React.FC<{ children: React.ReactNode }> = ({ child
         // Poll for changes every 2 seconds
         pollInterval = setInterval(async () => {
           try {
+            if (!provider) return
             const currentAccounts = await provider.request({ method: 'eth_accounts' })
             const currentChainId = await provider.request({ method: 'eth_chainId' })
 
@@ -143,6 +142,7 @@ export const MiniAppProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
             if (hasEthereumProvider && supportsSepoliaChain && accounts.length > 0) {
               try {
+                if (!provider) return
                 await provider.request({
                   method: 'eth_call',
                   params: [
@@ -379,7 +379,7 @@ export const MiniAppProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
 
     try {
-      return await sdk.wallet.getEthereumProvider()
+      return (await sdk.wallet.getEthereumProvider()) ?? null
     } catch (error) {
       console.error('Error getting Farcaster Ethereum provider:', error)
       return null
