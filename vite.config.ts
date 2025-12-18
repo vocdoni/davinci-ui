@@ -16,8 +16,8 @@ const viteconfig = defineConfig(({ mode }) => {
       coverage: {
         provider: 'v8',
         reporter: ['text', 'html'],
-        include: ['src/lib/**/*.ts'],
-        exclude: ['src/lib/**/*.d.ts'],
+        include: ['src/**/*.{ts,tsx}'],
+        exclude: ['src/**/*.d.ts', 'src/**/*.test.{ts,tsx}', 'src/main.tsx', 'src/vite-env.d.ts'],
       },
     },
     plugins: [
