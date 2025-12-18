@@ -108,7 +108,8 @@ const useElectionProvider = ({ electionId, election: process, fetchCensus = fals
           ? false
           : Boolean(isAddressAbleToVote)
       : null
-  const isCreator = election?.process.organizationId === address
+
+  const isCreator = election?.process.organizationId?.toLowerCase() === address?.toLowerCase()
 
   return {
     election,
