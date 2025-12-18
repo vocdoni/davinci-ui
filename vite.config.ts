@@ -9,6 +9,17 @@ const viteconfig = defineConfig(({ mode }) => {
   process.env = { ...process.env, ...loadEnv(mode, process.cwd(), '') }
 
   return {
+    test: {
+      environment: 'jsdom',
+      globals: true,
+      include: ['src/**/*.test.{ts,tsx}'],
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'html'],
+        include: ['src/lib/**/*.ts'],
+        exclude: ['src/lib/**/*.d.ts'],
+      },
+    },
     plugins: [
       react(),
       tsconfigPaths(),

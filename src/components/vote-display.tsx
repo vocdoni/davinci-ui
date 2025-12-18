@@ -17,6 +17,7 @@ import { useElection } from '~contexts/election-context'
 import { useVocdoniApi } from '~contexts/vocdoni-api-context'
 import { usePersistedVote } from '~hooks/use-persisted-vote'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
+import { getBinaryArray, padTo } from '~lib/vote-utils'
 import { truncateAddress } from '~lib/web3-utils'
 import { NetworkValidationBanner } from './network-validation-banner'
 import RelativeTimeRemaining from './relative-time-remaining'
@@ -1057,17 +1058,3 @@ export const WalletEligibilityStatus = () => {
     </div>
   )
 }
-
-export function getBinaryArray(positions: string[], value: number = 1): number[] {
-  const result = Array(8).fill(0)
-  positions.forEach((posStr) => {
-    const pos = parseInt(posStr, 10)
-    if (!isNaN(pos) && pos >= 0 && pos < 8) {
-      result[pos] = value
-    }
-  })
-  return result
-}
-
-const padTo = (arr: number[], length: number = 8): number[] =>
-  arr.concat(Array(length - arr.length).fill(0)).slice(0, length)
