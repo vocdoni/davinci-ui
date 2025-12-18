@@ -3,7 +3,6 @@ import { VoteErrorBoundary } from '~components/vote-error-boundary'
 import VoteView from '~components/vote-view'
 import { ElectionProvider } from '~contexts/election-context'
 import useLoaderAutoRefresh from '~hooks/use-loader-autorefresh'
-import type { ProcessLoaderData } from '~src/types'
 
 const VotePage = () => {
   const { election, id } = useLoaderData() as ProcessLoaderData

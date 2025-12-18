@@ -4,7 +4,6 @@ import { ProcessStatus } from '@vocdoni/davinci-sdk'
 import { createContext, useContext, useMemo, type FC, type ReactNode } from 'react'
 import { getProcessQuery } from '~hooks/use-process-query'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
-import type { Process } from '~src/types'
 import { useVocdoniApi } from './vocdoni-api-context'
 
 interface ElectionProviderProps {

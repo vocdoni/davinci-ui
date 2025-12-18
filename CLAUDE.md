@@ -18,9 +18,12 @@ pnpm preview
 
 # Linting (run after code changes)
 pnpm lint
+
+# Unit testing
+pnpm test
 ```
 
-**Important**: Always run `pnpm lint` after making code changes to ensure code quality and catch TypeScript errors.
+**Important**: Always run `pnpm lint && pnpm test` after making code changes to ensure code quality and catch TypeScript errors.
 
 ## Architecture Overview
 

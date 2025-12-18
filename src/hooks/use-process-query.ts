@@ -4,7 +4,6 @@ import { getElectionMetadataTemplate } from '@vocdoni/davinci-sdk'
 import { useEffect } from 'react'
 import { up } from 'up-fetch'
 import { useVocdoniApi } from '~contexts/vocdoni-api-context'
-import type { Process } from '~src/types'
 
 const upfetch = up(fetch)
 

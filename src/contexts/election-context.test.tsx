@@ -2,7 +2,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { Process } from '~src/types'
 import { ElectionProvider, useElection } from './election-context'
 
 let walletAddress: string | undefined = '0x0000000000000000000000000000000000000001'
