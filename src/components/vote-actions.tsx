@@ -1,44 +1,43 @@
-import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react'
-import { ProcessRegistryService, ProcessStatus } from '@vocdoni/davinci-sdk'
-import { BrowserProvider, type Eip1193Provider } from 'ethers'
+import { TxStatus } from '@vocdoni/davinci-sdk'
 import { Cog, StopCircle } from 'lucide-react'
 import { useState } from 'react'
 import { useElection } from '~contexts/election-context'
 import { useVocdoniApi } from '~contexts/vocdoni-api-context'
+import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 import { Button } from './ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 
 const VoteActions = () => {
-  const { api } = useVocdoniApi()
-  const { isCreator, election, isPaused, isAcceptingVotes } = useElection()
-  const { isConnected } = useAppKitAccount()
-  const { walletProvider } = useAppKitProvider('eip155')
+  const { sdk } = useVocdoniApi()
+  const { isCreator, election, isPaused, isAcceptingVotes, refetch } = useElection()
+  const { isConnected } = useUnifiedWallet()
   const [isLoading, setIsLoading] = useState(false)
 
   if (!isConnected || !isCreator || (!isPaused && !isAcceptingVotes)) return null
 
   const handleEndProcess = async () => {
-    if (!walletProvider) return
+    if (!sdk || !election) return
 
     setIsLoading(true)
     try {
-      // Get contract address from sequencer info
-      const info = await api.sequencer.getInfo()
-      const processRegistryAddress = info.contracts.process
+      const stream = sdk.endProcessStream(election.process.id)
 
-      const provider = new BrowserProvider(walletProvider as Eip1193Provider)
-      const signer = await provider.getSigner()
-      const registry = new ProcessRegistryService(processRegistryAddress, signer)
-      // Use setProcessStatus to end the process
-      const txStream = registry.setProcessStatus(election!.process.id, ProcessStatus.ENDED)
-      // Execute the transaction and wait for it to complete
-      for await (const event of txStream) {
-        if (event.status === 'completed') {
-          console.log('Process ended successfully')
-        } else if (event.status === 'failed' || event.status === 'reverted') {
-          throw new Error('Transaction failed')
+      for await (const event of stream) {
+        switch (event.status) {
+          case TxStatus.Pending:
+            console.log('End process tx pending:', event.hash)
+            break
+          case TxStatus.Completed:
+            console.log('Process ended successfully')
+            break
+          case TxStatus.Failed:
+            throw event.error
+          case TxStatus.Reverted:
+            throw new Error(event.reason || 'Transaction reverted')
         }
       }
+
+      await refetch()
     } catch (error) {
       console.error('Error ending process:', error)
     } finally {

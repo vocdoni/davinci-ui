@@ -66,10 +66,22 @@ export const VocdoniApiProvider: FC<{ children: ReactNode }> = ({ children }) =>
     initializeSdk()
   }, [address, isConnected, getProvider])
 
-  // Set up onProcessResultsSet event listener
+  // Set up process event listeners to keep React Query cache in sync
   useEffect(() => {
     if (sdkInstance) {
-      console.log('[onProcessResultsSet] Listener registered')
+      const invalidateProcessQuery = (processId: string) => {
+        const targetId = processId.toLowerCase()
+
+        queryClient.invalidateQueries({
+          predicate: (query) => {
+            if (query.queryKey[0] !== 'process') return false
+            const keyId = query.queryKey[1]
+            return typeof keyId === 'string' && keyId.toLowerCase() === targetId
+          },
+        })
+      }
+
+      console.log('[process events] Listeners registered')
 
       sdkInstance.processes.onProcessResultsSet((processID: string, sender: string, results: bigint[]) => {
         console.log('[onProcessResultsSet] Event fired:', {
@@ -77,15 +89,23 @@ export const VocdoniApiProvider: FC<{ children: ReactNode }> = ({ children }) =>
           sender,
           results: results.map((r) => r.toString()),
         })
-        console.log('[onProcessResultsSet] Invalidating queries for:', processID)
+        console.log('[onProcessResultsSet] Invalidating process query for:', processID)
+        invalidateProcessQuery(processID)
+      })
 
-        // Invalidate the process query to trigger a refetch
-        queryClient.invalidateQueries({ queryKey: ['process', processID] })
+      sdkInstance.processes.onProcessStatusChanged((processID: string, oldStatus: bigint, newStatus: bigint) => {
+        console.log('[onProcessStatusChanged] Event fired:', {
+          processID,
+          oldStatus: oldStatus.toString(),
+          newStatus: newStatus.toString(),
+        })
+        console.log('[onProcessStatusChanged] Invalidating process query for:', processID)
+        invalidateProcessQuery(processID)
       })
 
       // Cleanup function to remove listeners when SDK changes or component unmounts
       return () => {
-        console.log('[onProcessResultsSet] Removing listeners')
+        console.log('[process events] Removing listeners')
         sdkInstance.processes.removeAllListeners()
       }
     }
