@@ -366,31 +366,25 @@ export function CreateVoteForm() {
         }
       }
 
+      console.info('ℹ️ Election metadata:', metadata)
+
       const ballotMode = generateBallotMode(metadata, data)
       console.info('ℹ️ Ballot mode:', ballotMode)
 
+      const hash = await api.sequencer.pushMetadata(metadata)
+      const metadataUri = api.sequencer.getMetadataUrl(hash)
+
+      console.info('ℹ️ Metadata URI:', metadataUri)
+
       // Create process using SDK stream API
       const stream = sdk.createProcessStream({
-        title: data.question,
-        description: '',
+        metadataUri,
         census,
         ballot: ballotMode,
         timing: {
           startDate: new Date(Date.now() + 60000), // +1 minute
           duration: getDurationInSeconds(data.duration, data.durationUnit),
         },
-        questions: [
-          {
-            title: data.question,
-            description: '',
-            choices: data.choices
-              .filter((choice) => choice.text.trim() !== '')
-              .map((choice, index) => ({
-                title: choice.text,
-                value: index,
-              })),
-          },
-        ],
       })
 
       // Handle transaction status events
