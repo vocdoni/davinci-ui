@@ -92,6 +92,10 @@ type FormData = {
   customAddresses: string[]
   customAddressWeights: string[]
   selectedCensusRoot?: string
+  advancedCensusOrigin?: string
+  advancedCensusRoot?: string
+  advancedCensusUri?: string
+  advancedCensusSize?: string
 }
 
 // Sortable Choice Item Component
@@ -158,6 +162,14 @@ export function CreateVoteForm() {
   const [launchSuccess, setLaunchSuccess] = useState(false)
   const { address, isConnected } = useUnifiedWallet()
   const [error, setError] = useState<Error | null>(null)
+  const censusOriginOptions = Object.entries(CensusOrigin)
+    .filter((entry): entry is [string, number] => typeof entry[1] === 'number')
+    .map(([name, value]) => ({
+      name,
+      value,
+      valueString: String(value),
+    }))
+  const defaultCensusOrigin = censusOriginOptions[0]?.valueString ?? ''
 
   const form = useForm<FormData>({
     defaultValues: {
@@ -177,6 +189,10 @@ export function CreateVoteForm() {
       durationUnit: 'minutes',
       customAddresses: address ? [address] : [],
       customAddressWeights: address ? ['1'] : [],
+      advancedCensusOrigin: defaultCensusOrigin,
+      advancedCensusRoot: '',
+      advancedCensusUri: '',
+      advancedCensusSize: '',
     },
   })
 
@@ -289,6 +305,28 @@ export function CreateVoteForm() {
           census.size = selectedSnapshot.participantCount
           census.root = selectedSnapshot.censusRoot
           census.uri = `${import.meta.env.CENSUS3_URL}/censuses/${selectedSnapshot.censusRoot}/dump`
+          break
+        }
+        case 'advanced': {
+          const censusSize = Number(data.advancedCensusSize)
+          const censusOriginValue = Number.parseInt(data.advancedCensusOrigin ?? '', 10)
+          if (!Number.isFinite(censusOriginValue) || !CensusOrigin[censusOriginValue]) {
+            throw new Error('Please select a census origin')
+          }
+          if (!data.advancedCensusRoot?.trim()) {
+            throw new Error('Please enter a census root')
+          }
+          if (!data.advancedCensusUri?.trim()) {
+            throw new Error('Please enter a census URI')
+          }
+          if (!Number.isFinite(censusSize) || censusSize <= 0) {
+            throw new Error('Please enter a valid census size')
+          }
+
+          census.type = censusOriginValue as CensusOrigin
+          census.size = censusSize
+          census.root = data.advancedCensusRoot.trim()
+          census.uri = data.advancedCensusUri.trim()
           break
         }
         default: {
@@ -442,8 +480,25 @@ export function CreateVoteForm() {
     const hasDuration = currentData.duration !== '' && Number.parseInt(currentData.duration) > 0
     const hasAddresses =
       currentData.censusType !== 'custom-addresses' || currentData.customAddresses.filter(Boolean).length > 0
+    const hasAdvancedCensus =
+      currentData.censusType !== 'advanced' ||
+      Boolean(
+        currentData.advancedCensusOrigin &&
+          currentData.advancedCensusRoot?.trim() &&
+          currentData.advancedCensusUri?.trim() &&
+          currentData.advancedCensusSize &&
+          Number.parseInt(currentData.advancedCensusSize) > 0
+      )
 
-    return hasQuestion && hasValidChoices && hasVotingMethod && hasCensusType && hasDuration && hasAddresses
+    return (
+      hasQuestion &&
+      hasValidChoices &&
+      hasVotingMethod &&
+      hasCensusType &&
+      hasDuration &&
+      hasAddresses &&
+      hasAdvancedCensus
+    )
   }
 
   // Show success state
@@ -574,6 +629,9 @@ export function CreateVoteForm() {
                   if (value !== 'ethereum-wallets') {
                     setValue('useWeightedVoting', false)
                   }
+                  if (value === 'advanced' && !formData.advancedCensusOrigin) {
+                    setValue('advancedCensusOrigin', defaultCensusOrigin)
+                  }
                 }}
               >
                 <div className='space-y-2'>
@@ -618,6 +676,71 @@ export function CreateVoteForm() {
                       selectedCensusRoot={formData.selectedCensusRoot}
                       onSnapshotSelect={(censusRoot) => setValue('selectedCensusRoot', censusRoot)}
                     />
+                  )}
+
+                  <div className='flex items-center space-x-2'>
+                    <RadioGroupItem value='advanced' id='advanced-census' className='border-davinci-callout-border' />
+                    <Label htmlFor='advanced-census' className='text-davinci-black-alt'>
+                      Advanced
+                    </Label>
+                  </div>
+                  {formData.censusType === 'advanced' && (
+                    <div className='ml-6 bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border space-y-4'>
+                      <div className='space-y-2'>
+                        <Label htmlFor='advanced-census-origin' className='text-davinci-black-alt'>
+                          Census origin
+                        </Label>
+                        <Select
+                          value={formData.advancedCensusOrigin}
+                          onValueChange={(value) => setValue('advancedCensusOrigin', value)}
+                        >
+                          <SelectTrigger id='advanced-census-origin' className='border-davinci-callout-border'>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className='bg-davinci-paper-base border-davinci-callout-border'>
+                            {censusOriginOptions.map((origin) => (
+                              <SelectItem key={origin.name} value={origin.valueString}>
+                                {origin.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='advanced-census-root' className='text-davinci-black-alt'>
+                          Census root
+                        </Label>
+                        <Input
+                          id='advanced-census-root'
+                          placeholder='0x...'
+                          {...form.register('advancedCensusRoot')}
+                          className='border-davinci-callout-border'
+                        />
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='advanced-census-uri' className='text-davinci-black-alt'>
+                          Census URI
+                        </Label>
+                        <Input
+                          id='advanced-census-uri'
+                          placeholder='https://'
+                          {...form.register('advancedCensusUri')}
+                          className='border-davinci-callout-border'
+                        />
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='advanced-census-size' className='text-davinci-black-alt'>
+                          Census size
+                        </Label>
+                        <Input
+                          id='advanced-census-size'
+                          type='number'
+                          min='1'
+                          {...form.register('advancedCensusSize')}
+                          className='border-davinci-callout-border'
+                        />
+                      </div>
+                    </div>
                   )}
                 </div>
               </RadioGroup>
