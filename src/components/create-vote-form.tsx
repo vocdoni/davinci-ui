@@ -95,7 +95,7 @@ type FormData = {
   advancedCensusOrigin?: string
   advancedCensusRoot?: string
   advancedCensusUri?: string
-  advancedCensusSize?: string
+  maxVoters?: string
 }
 
 // Sortable Choice Item Component
@@ -192,7 +192,7 @@ export function CreateVoteForm() {
       advancedCensusOrigin: defaultCensusOrigin,
       advancedCensusRoot: '',
       advancedCensusUri: '',
-      advancedCensusSize: '',
+      maxVoters: '',
     },
   })
 
@@ -277,6 +277,16 @@ export function CreateVoteForm() {
     console.info('ℹ️ form data:', data)
 
     try {
+      const maxVotersValue = data.maxVoters?.trim()
+      let maxVoters: number | undefined
+      if (maxVotersValue) {
+        const parsedMaxVoters = Number.parseInt(maxVotersValue, 10)
+        if (!Number.isFinite(parsedMaxVoters) || parsedMaxVoters <= 0) {
+          throw new Error('Please enter a valid max voters limit')
+        }
+        maxVoters = parsedMaxVoters
+      }
+
       let selectedSnapshot: Snapshot | undefined
       if (snapshots?.length) {
         // Find the selected snapshot by censusRoot, or use the first one if none selected
@@ -308,25 +318,38 @@ export function CreateVoteForm() {
           break
         }
         case 'advanced': {
-          const censusSize = Number(data.advancedCensusSize)
           const censusOriginValue = Number.parseInt(data.advancedCensusOrigin ?? '', 10)
           if (!Number.isFinite(censusOriginValue) || !CensusOrigin[censusOriginValue]) {
             throw new Error('Please select a census origin')
           }
-          if (!data.advancedCensusRoot?.trim()) {
+          const censusRoot = data.advancedCensusRoot?.trim()
+          if (!censusRoot) {
             throw new Error('Please enter a census root')
           }
-          if (!data.advancedCensusUri?.trim()) {
+          const censusUri = data.advancedCensusUri?.trim()
+          if (!censusUri) {
             throw new Error('Please enter a census URI')
           }
+
+          let censusSize = 0
+          try {
+            censusSize = await api.census.getCensusSizeByRoot(censusRoot)
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          } catch (e) {
+            censusSize = 0
+          }
+
           if (!Number.isFinite(censusSize) || censusSize <= 0) {
-            throw new Error('Please enter a valid census size')
+            censusSize = maxVoters ?? 0
+          }
+          if (censusSize <= 0) {
+            throw new Error('Unable to fetch census size. Please enter a max voters limit.')
           }
 
           census.type = censusOriginValue as CensusOrigin
           census.size = censusSize
-          census.root = data.advancedCensusRoot.trim()
-          census.uri = data.advancedCensusUri.trim()
+          census.root = censusRoot
+          census.uri = censusUri
           break
         }
         default: {
@@ -423,6 +446,7 @@ export function CreateVoteForm() {
           startDate: new Date(Date.now() + 60000), // +1 minute
           duration: getDurationInSeconds(data.duration, data.durationUnit),
         },
+        maxVoters,
       })
 
       // Handle transaction status events
@@ -480,14 +504,15 @@ export function CreateVoteForm() {
     const hasDuration = currentData.duration !== '' && Number.parseInt(currentData.duration) > 0
     const hasAddresses =
       currentData.censusType !== 'custom-addresses' || currentData.customAddresses.filter(Boolean).length > 0
+    const maxVotersValue = currentData.maxVoters?.trim()
+    const maxVotersNumber = maxVotersValue ? Number.parseInt(maxVotersValue, 10) : null
+    const hasValidMaxVoters = maxVotersNumber === null || (Number.isFinite(maxVotersNumber) && maxVotersNumber > 0)
     const hasAdvancedCensus =
       currentData.censusType !== 'advanced' ||
       Boolean(
         currentData.advancedCensusOrigin &&
           currentData.advancedCensusRoot?.trim() &&
-          currentData.advancedCensusUri?.trim() &&
-          currentData.advancedCensusSize &&
-          Number.parseInt(currentData.advancedCensusSize) > 0
+          currentData.advancedCensusUri?.trim()
       )
 
     return (
@@ -497,6 +522,7 @@ export function CreateVoteForm() {
       hasCensusType &&
       hasDuration &&
       hasAddresses &&
+      hasValidMaxVoters &&
       hasAdvancedCensus
     )
   }
@@ -625,6 +651,7 @@ export function CreateVoteForm() {
                 value={formData.censusType}
                 onValueChange={(value) => {
                   setValue('censusType', value)
+                  setValue('maxVoters', '')
                   // Reset weighted voting when switching away from ethereum-wallets
                   if (value !== 'ethereum-wallets') {
                     setValue('useWeightedVoting', false)
@@ -669,13 +696,27 @@ export function CreateVoteForm() {
                     </Label>
                   </div>
                   {formData.censusType === 'ethereum-wallets' && (
-                    <Snapshots
-                      snapshots={snapshots || []}
-                      isLoading={isLoadingSnapshot}
-                      isError={isSnapshotError}
-                      selectedCensusRoot={formData.selectedCensusRoot}
-                      onSnapshotSelect={(censusRoot) => setValue('selectedCensusRoot', censusRoot)}
-                    />
+                    <div className='ml-6 bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border space-y-4'>
+                      <Snapshots
+                        snapshots={snapshots || []}
+                        isLoading={isLoadingSnapshot}
+                        isError={isSnapshotError}
+                        selectedCensusRoot={formData.selectedCensusRoot}
+                        onSnapshotSelect={(censusRoot) => setValue('selectedCensusRoot', censusRoot)}
+                      />
+                      <div className='space-y-2'>
+                        <Label htmlFor='max-voters' className='text-davinci-black-alt'>
+                          Max voters (leave empty for census size)
+                        </Label>
+                        <Input
+                          id='max-voters'
+                          type='number'
+                          min='1'
+                          {...form.register('maxVoters')}
+                          className='border-davinci-callout-border'
+                        />
+                      </div>
+                    </div>
                   )}
 
                   <div className='flex items-center space-x-2'>
@@ -729,14 +770,14 @@ export function CreateVoteForm() {
                         />
                       </div>
                       <div className='space-y-2'>
-                        <Label htmlFor='advanced-census-size' className='text-davinci-black-alt'>
-                          Census size
+                        <Label htmlFor='max-voters' className='text-davinci-black-alt'>
+                          Max voters (leave empty for census size)
                         </Label>
                         <Input
-                          id='advanced-census-size'
+                          id='max-voters'
                           type='number'
                           min='1'
-                          {...form.register('advancedCensusSize')}
+                          {...form.register('maxVoters')}
                           className='border-davinci-callout-border'
                         />
                       </div>

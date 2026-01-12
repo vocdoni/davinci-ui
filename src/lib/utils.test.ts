@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-
 import { cn, enumToReverseObject, formatInterval, formatNanosecondsInterval, truncateText } from './utils'
 
 describe('utils', () => {
