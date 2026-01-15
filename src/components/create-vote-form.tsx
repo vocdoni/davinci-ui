@@ -18,9 +18,8 @@ import { useAppKitNetwork } from '@reown/appkit/react'
 import {
   CensusOrigin,
   ElectionResultsTypeNames,
-  PlainCensus,
+  OffchainCensus,
   TxStatus,
-  WeightedCensus,
   type BallotMode,
   type ElectionMetadata,
   type ElectionResultsType,
@@ -87,6 +86,7 @@ type FormData = {
   budgetCredits: string
   useWeightedVoting: boolean
   censusType: string
+  maxVoters: string
   duration: string
   durationUnit: DurationUnit
   customAddresses: string[]
@@ -185,6 +185,7 @@ export function CreateVoteForm() {
       budgetCredits: '100',
       useWeightedVoting: false,
       censusType: '',
+      maxVoters: '',
       duration: '',
       durationUnit: 'minutes',
       customAddresses: address ? [address] : [],
@@ -285,8 +286,8 @@ export function CreateVoteForm() {
           : snapshots[0]
       }
 
-      let census: WeightedCensus | PlainCensus | { type: CensusOrigin; size: number; root: string; uri: string } = {
-        type: CensusOrigin.CensusOriginMerkleTree,
+      let census: OffchainCensus | { type: CensusOrigin; size: number; root: string; uri: string } = {
+        type: CensusOrigin.OffchainStatic,
         size: 0,
         root: '',
         uri: '',
@@ -337,8 +338,8 @@ export function CreateVoteForm() {
             throw new Error('Please add at least one address to the custom addresses list')
           }
 
+          census = new OffchainCensus()
           if (data.useWeightedVoting) {
-            census = new WeightedCensus()
             const participants = validAddresses.map((address) => {
               // Find the original index to get the correct weight
               const originalIndex = data.customAddresses.indexOf(address)
@@ -352,7 +353,6 @@ export function CreateVoteForm() {
             })
             census.add(participants)
           } else {
-            census = new PlainCensus()
             census.add(validAddresses)
           }
 
@@ -415,7 +415,7 @@ export function CreateVoteForm() {
       console.info('ℹ️ Metadata URI:', metadataUri)
 
       // Create process using SDK stream API
-      const stream = sdk.createProcessStream({
+      const processConfig: any = {
         metadataUri,
         census,
         ballot: ballotMode,
@@ -423,7 +423,14 @@ export function CreateVoteForm() {
           startDate: new Date(Date.now() + 60000), // +1 minute
           duration: getDurationInSeconds(data.duration, data.durationUnit),
         },
-      })
+      }
+
+      // Add maxVoters only for non-custom-addresses census types
+      if (data.censusType !== 'custom-addresses' && data.maxVoters) {
+        processConfig.maxVoters = Number.parseInt(data.maxVoters)
+      }
+
+      const stream = sdk.createProcessStream(processConfig)
 
       // Handle transaction status events
       let processId = ''
@@ -489,6 +496,10 @@ export function CreateVoteForm() {
           currentData.advancedCensusSize &&
           Number.parseInt(currentData.advancedCensusSize) > 0
       )
+    // maxVoters is required for non-custom-addresses census types
+    const hasMaxVoters =
+      currentData.censusType === 'custom-addresses' ||
+      (currentData.maxVoters !== '' && Number.parseInt(currentData.maxVoters) > 0)
 
     return (
       hasQuestion &&
@@ -497,7 +508,8 @@ export function CreateVoteForm() {
       hasCensusType &&
       hasDuration &&
       hasAddresses &&
-      hasAdvancedCensus
+      hasAdvancedCensus &&
+      hasMaxVoters
     )
   }
 
@@ -1061,6 +1073,52 @@ export function CreateVoteForm() {
             </div>
 
             <Separator className='bg-davinci-callout-border' />
+
+            {/* Max Voters Configuration - only for non-custom-addresses census */}
+            {formData.censusType !== '' && formData.censusType !== 'custom-addresses' && (
+              <div className='space-y-4'>
+                <div className='flex items-center gap-2'>
+                  <Label htmlFor='max-voters' className='text-davinci-black-alt'>
+                    Maximum Number of Voters
+                  </Label>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <HelpCircle className='w-4 h-4 text-davinci-black-alt/60' />
+                    </TooltipTrigger>
+                    <TooltipContent className='bg-davinci-paper-base text-davinci-black-alt border-davinci-callout-border max-w-xs'>
+                      <p>
+                        The maximum number of voters who can participate in this vote. This helps allocate the right
+                        amount of resources for the process.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <Input
+                  id='max-voters'
+                  type='number'
+                  min='1'
+                  placeholder='Enter maximum number of voters'
+                  {...form.register('maxVoters')}
+                  className='border-davinci-callout-border'
+                />
+                {formData.censusType === 'ethereum-wallets' && (() => {
+                  const selectedSnapshot = formData.selectedCensusRoot
+                    ? snapshots?.find((s) => s.censusRoot === formData.selectedCensusRoot)
+                    : snapshots?.[0]
+                  return selectedSnapshot ? (
+                    <div className='bg-davinci-digital-highlight p-3 rounded-lg border border-davinci-callout-border'>
+                      <p className='text-sm text-davinci-black-alt/70'>
+                        The selected snapshot has {selectedSnapshot.participantCount.toLocaleString()} participants. Consider setting maxVoters to this value or higher.
+                      </p>
+                    </div>
+                  ) : null
+                })()}
+              </div>
+            )}
+
+            {formData.censusType !== '' && formData.censusType !== 'custom-addresses' && (
+              <Separator className='bg-davinci-callout-border' />
+            )}
 
             <div className='space-y-4'>
               <Label className='text-davinci-black-alt'>Voting Duration</Label>
