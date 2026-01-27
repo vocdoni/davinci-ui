@@ -18,9 +18,8 @@ import { useAppKitNetwork } from '@reown/appkit/react'
 import {
   CensusOrigin,
   ElectionResultsTypeNames,
-  PlainCensus,
+  OffchainCensus,
   TxStatus,
-  WeightedCensus,
   type BallotMode,
   type ElectionMetadata,
   type ElectionResultsType,
@@ -295,8 +294,8 @@ export function CreateVoteForm() {
           : snapshots[0]
       }
 
-      let census: WeightedCensus | PlainCensus | { type: CensusOrigin; size: number; root: string; uri: string } = {
-        type: CensusOrigin.CensusOriginMerkleTree,
+      let census: OffchainCensus | { type: CensusOrigin; size: number; root: string; uri: string } = {
+        type: CensusOrigin.OffchainStatic,
         size: 0,
         root: '',
         uri: '',
@@ -360,8 +359,9 @@ export function CreateVoteForm() {
             throw new Error('Please add at least one address to the custom addresses list')
           }
 
+          census = new OffchainCensus()
+          
           if (data.useWeightedVoting) {
-            census = new WeightedCensus()
             const participants = validAddresses.map((address) => {
               // Find the original index to get the correct weight
               const originalIndex = data.customAddresses.indexOf(address)
@@ -375,7 +375,6 @@ export function CreateVoteForm() {
             })
             census.add(participants)
           } else {
-            census = new PlainCensus()
             census.add(validAddresses)
           }
 
