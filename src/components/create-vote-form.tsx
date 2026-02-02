@@ -18,9 +18,9 @@ import { useAppKitNetwork } from '@reown/appkit/react'
 import {
   CensusOrigin,
   ElectionResultsTypeNames,
-  PlainCensus,
+  OffchainCensus,
+  OnchainCensus,
   TxStatus,
-  WeightedCensus,
   type BallotMode,
   type ElectionMetadata,
   type ElectionResultsType,
@@ -94,6 +94,7 @@ type FormData = {
   selectedCensusRoot?: string
   advancedCensusOrigin?: string
   advancedCensusRoot?: string
+  advancedContractAddress?: string
   advancedCensusUri?: string
   maxVoters?: string
 }
@@ -295,8 +296,8 @@ export function CreateVoteForm() {
           : snapshots[0]
       }
 
-      let census: WeightedCensus | PlainCensus | { type: CensusOrigin; size: number; root: string; uri: string } = {
-        type: CensusOrigin.CensusOriginMerkleTree,
+      let census: OffchainCensus | OnchainCensus | { type: CensusOrigin; size: number; root: string; uri: string } = {
+        type: CensusOrigin.OffchainStatic,
         size: 0,
         root: '',
         uri: '',
@@ -322,13 +323,33 @@ export function CreateVoteForm() {
           if (!Number.isFinite(censusOriginValue) || !CensusOrigin[censusOriginValue]) {
             throw new Error('Please select a census origin')
           }
-          const censusRoot = data.advancedCensusRoot?.trim()
-          if (!censusRoot) {
-            throw new Error('Please enter a census root')
-          }
+          
           const censusUri = data.advancedCensusUri?.trim()
           if (!censusUri) {
             throw new Error('Please enter a census URI')
+          }
+
+          // Handle Onchain census differently
+          if (censusOriginValue === CensusOrigin.Onchain) {
+            const contractAddress = data.advancedContractAddress?.trim()
+            if (!contractAddress) {
+              throw new Error('Please enter a contract address')
+            }
+            
+            // For Onchain census, maxVoters is required
+            if (!maxVoters || maxVoters <= 0) {
+              throw new Error('Max voters is required for onchain census')
+            }
+            
+            // Create OnchainCensus instance
+            census = new OnchainCensus(contractAddress, censusUri)
+            break
+          }
+          
+          // For other census types, use the manual config approach
+          const censusRoot = data.advancedCensusRoot?.trim()
+          if (!censusRoot) {
+            throw new Error('Please enter a census root')
           }
 
           let censusSize = 0
@@ -360,8 +381,9 @@ export function CreateVoteForm() {
             throw new Error('Please add at least one address to the custom addresses list')
           }
 
+          census = new OffchainCensus()
+          
           if (data.useWeightedVoting) {
-            census = new WeightedCensus()
             const participants = validAddresses.map((address) => {
               // Find the original index to get the correct weight
               const originalIndex = data.customAddresses.indexOf(address)
@@ -375,7 +397,6 @@ export function CreateVoteForm() {
             })
             census.add(participants)
           } else {
-            census = new PlainCensus()
             census.add(validAddresses)
           }
 
@@ -504,15 +525,23 @@ export function CreateVoteForm() {
     const hasDuration = currentData.duration !== '' && Number.parseInt(currentData.duration) > 0
     const hasAddresses =
       currentData.censusType !== 'custom-addresses' || currentData.customAddresses.filter(Boolean).length > 0
+    
     const maxVotersValue = currentData.maxVoters?.trim()
     const maxVotersNumber = maxVotersValue ? Number.parseInt(maxVotersValue, 10) : null
     const hasValidMaxVoters = maxVotersNumber === null || (Number.isFinite(maxVotersNumber) && maxVotersNumber > 0)
+    
+    // For Onchain census, maxVoters is required
+    const isOnchainCensus = currentData.censusType === 'advanced' && currentData.advancedCensusOrigin === String(CensusOrigin.Onchain)
+    const hasMaxVotersWhenRequired = !isOnchainCensus || (maxVotersNumber !== null && maxVotersNumber > 0)
+    
     const hasAdvancedCensus =
       currentData.censusType !== 'advanced' ||
       Boolean(
         currentData.advancedCensusOrigin &&
-          currentData.advancedCensusRoot?.trim() &&
-          currentData.advancedCensusUri?.trim()
+          currentData.advancedCensusUri?.trim() &&
+          (isOnchainCensus
+            ? currentData.advancedContractAddress?.trim()
+            : currentData.advancedCensusRoot?.trim())
       )
 
     return (
@@ -523,6 +552,7 @@ export function CreateVoteForm() {
       hasDuration &&
       hasAddresses &&
       hasValidMaxVoters &&
+      hasMaxVotersWhenRequired &&
       hasAdvancedCensus
     )
   }
@@ -747,17 +777,34 @@ export function CreateVoteForm() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className='space-y-2'>
-                        <Label htmlFor='advanced-census-root' className='text-davinci-black-alt'>
-                          Census root
-                        </Label>
-                        <Input
-                          id='advanced-census-root'
-                          placeholder='0x...'
-                          {...form.register('advancedCensusRoot')}
-                          className='border-davinci-callout-border'
-                        />
-                      </div>
+                      
+                      {/* Show contract address for Onchain census, census root for others */}
+                      {formData.advancedCensusOrigin === String(CensusOrigin.Onchain) ? (
+                        <div className='space-y-2'>
+                          <Label htmlFor='advanced-contract-address' className='text-davinci-black-alt'>
+                            Contract Address (ERC20/ERC721)
+                          </Label>
+                          <Input
+                            id='advanced-contract-address'
+                            placeholder='0x...'
+                            {...form.register('advancedContractAddress')}
+                            className='border-davinci-callout-border'
+                          />
+                        </div>
+                      ) : (
+                        <div className='space-y-2'>
+                          <Label htmlFor='advanced-census-root' className='text-davinci-black-alt'>
+                            Census root
+                          </Label>
+                          <Input
+                            id='advanced-census-root'
+                            placeholder='0x...'
+                            {...form.register('advancedCensusRoot')}
+                            className='border-davinci-callout-border'
+                          />
+                        </div>
+                      )}
+                      
                       <div className='space-y-2'>
                         <Label htmlFor='advanced-census-uri' className='text-davinci-black-alt'>
                           Census URI
@@ -771,7 +818,7 @@ export function CreateVoteForm() {
                       </div>
                       <div className='space-y-2'>
                         <Label htmlFor='max-voters' className='text-davinci-black-alt'>
-                          Max voters (leave empty for census size)
+                          Max voters {formData.advancedCensusOrigin === String(CensusOrigin.Onchain) ? '(required)' : '(leave empty for census size)'}
                         </Label>
                         <Input
                           id='max-voters'
