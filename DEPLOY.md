@@ -43,4 +43,5 @@ Just change `YOUR_APP_NAME_HERE` with your app name.
     SEQUENCER_URL=<davinci-sequencer-url>
     CENSUS3_URL=<census3-service-url>
     ```
-4. Set the component `Custom Page` in `Settings` tab to `Catchall` option, and set the `Page Name` to `index.html`.
+    > These variables **must** be defined in build time.
+4. Set the component `Custom Page` in the `Settings` tab to the `Catchall` option, and set the `Page Name` to `index.html`. This is required for client-side routing in this Single Page Application: all paths (for example `/vote/123`) must serve `index.html` so that React Router's `BrowserRouter` can handle navigation in the browser.
