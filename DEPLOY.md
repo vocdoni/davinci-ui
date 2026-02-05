@@ -2,6 +2,36 @@
 
 ## Digital Ocean
 
+### App spec
+
+Use the following template to define the deploy service and components:
+```yaml
+- buildpack-stack=ubuntu-22
+ingress:
+  rules:
+  - component:
+      name: react-ui
+    match:
+      authority:
+        exact: ""
+      path:
+        prefix: /
+name: YOUR_APP_NAME_HERE
+region: fra
+static_sites:
+- catchall_document: index.html
+  environment_slug: node-js
+  github:
+    branch: main
+    deploy_on_push: true
+    repo: vocdoni/davinci-ui
+  name: davinci-ui
+  source_dir: /
+```
+
+Just change `YOUR_APP_NAME_HERE` with your app name.
+
+### Manual configuration
 1. Create a new `App Platform` service using this repository as source code: 
     ```
     https://github.com/vocdoni/davinci-ui.git
