@@ -442,7 +442,7 @@ export function CreateVoteForm() {
         ;(metadata.meta as any) = {
           census: {
             type: 'bigquery',
-            name: selectedSnapshot.displayName,
+            name: selectedSnapshot.displayName || selectedSnapshot.queryName,
             query: selectedSnapshot.queryName,
           },
         }
