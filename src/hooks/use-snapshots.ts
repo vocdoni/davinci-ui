@@ -8,8 +8,8 @@ export type Snapshot = {
   censusRoot: string
   participantCount: number
   minBalance: number
-  displayName: string
-  displayAvatar: string
+  displayName?: string
+  displayAvatar?: string
   queryName: string
   createdAt: string // ISO date string
   weightStrategy: string
