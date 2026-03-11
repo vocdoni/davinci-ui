@@ -42,7 +42,7 @@ function ProcessRow({ id, onDataLoaded }: { id: string; onDataLoaded?: (id: stri
     if (data && onDataLoaded) {
       onDataLoaded(id, {
         createdAt: data.process.startTime ? new Date(data.process.startTime).getTime() : Date.now(),
-        voteCount: Number(data.process.voteCount) || 0,
+        votersCount: Number(data.process.votersCount) || 0,
         title: data.meta?.title?.default || 'Untitled Process',
         organizationId: data.process.organizationId,
       })
@@ -99,7 +99,7 @@ function ProcessRow({ id, onDataLoaded }: { id: string; onDataLoaded?: (id: stri
           {processStatusNames[data.process.status].toLowerCase() || 'Unknown'}
         </Badge>
       </TableCell>
-      <TableCell className='text-right text-davinci-black-alt'>{data.process.voteCount ?? 0}</TableCell>
+      <TableCell className='text-right text-davinci-black-alt'>{data.process.votersCount}</TableCell>
     </TableRow>
   )
 }

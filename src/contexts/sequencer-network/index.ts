@@ -1,16 +1,16 @@
 // Context and hooks
 export {
-  SequencerNetworkProvider,
-  useSequencerNetwork,
   getSequencerNetworkChainId,
   getSequencerNetworkName,
   isMatchingSequencerNetwork,
+  SequencerNetworkProvider,
+  useSequencerNetwork,
   type SequencerNetworkContextValue,
   type SequencerNetworkProviderProps,
 } from './sequencer-network-context'
 
 // Network configuration
-export { NETWORK_MAP, getSequencerNetworkAsync, getNetworkExplorerUrl, type SupportedNetwork } from './network-config'
+export { getNetworkExplorerUrl, getSequencerNetworkAsync, NETWORK_MAP, type SupportedNetwork } from './network-config'
 
 // Detection utilities
-export { detectSequencerNetwork, getSequencerChainId, clearSequencerNetworkCache } from './sequencer-network-detection'
+export { clearSequencerNetworkCache, detectSequencerNetwork, getSequencerChainId } from './sequencer-network-detection'

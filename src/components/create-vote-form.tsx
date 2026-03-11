@@ -14,20 +14,18 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { sepolia } from '@reown/appkit/networks'
 import { useAppKitNetwork } from '@reown/appkit/react'
 import {
-  createProcessSignatureMessage,
+  CensusOrigin,
   ElectionResultsTypeNames,
-  ProcessRegistryService,
-  ProcessStatus,
-  SmartContractService,
+  OffchainCensus,
+  OnchainCensus,
+  TxStatus,
   type BallotMode,
   type ElectionMetadata,
   type ElectionResultsType,
   type ProtocolVersion,
 } from '@vocdoni/davinci-sdk'
-import { BrowserProvider, type Eip1193Provider } from 'ethers'
 import { CheckCircle, Clock, GripVertical, HelpCircle, Plus, Rocket, Users, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Controller, useFieldArray, useForm, type Control } from 'react-hook-form'
@@ -43,9 +41,9 @@ import { Separator } from '~components/ui/separator'
 import { Textarea } from '~components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~components/ui/tooltip'
 import { useMiniApp } from '~contexts/MiniAppContext'
+import { useSequencerNetwork } from '~contexts/sequencer-network'
 import { useVocdoniApi } from '~contexts/vocdoni-api-context'
 import { useSnapshots, type Snapshot } from '~hooks/use-snapshots'
-import { useUnifiedProvider } from '~hooks/use-unified-provider'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 import { CustomAddressesManager } from './census-addresses'
 import { Snapshots } from './snapshots'
@@ -94,6 +92,11 @@ type FormData = {
   customAddresses: string[]
   customAddressWeights: string[]
   selectedCensusRoot?: string
+  advancedCensusOrigin?: string
+  advancedCensusRoot?: string
+  advancedContractAddress?: string
+  advancedCensusUri?: string
+  maxVoters?: string
 }
 
 // Sortable Choice Item Component
@@ -159,8 +162,15 @@ export function CreateVoteForm() {
   const [isLaunching, setIsLaunching] = useState(false)
   const [launchSuccess, setLaunchSuccess] = useState(false)
   const { address, isConnected } = useUnifiedWallet()
-  const { getProvider } = useUnifiedProvider()
   const [error, setError] = useState<Error | null>(null)
+  const censusOriginOptions = Object.entries(CensusOrigin)
+    .filter((entry): entry is [string, number] => typeof entry[1] === 'number')
+    .map(([name, value]) => ({
+      name,
+      value,
+      valueString: String(value),
+    }))
+  const defaultCensusOrigin = censusOriginOptions[0]?.valueString ?? ''
 
   const form = useForm<FormData>({
     defaultValues: {
@@ -180,6 +190,10 @@ export function CreateVoteForm() {
       durationUnit: 'minutes',
       customAddresses: address ? [address] : [],
       customAddressWeights: address ? ['1'] : [],
+      advancedCensusOrigin: defaultCensusOrigin,
+      advancedCensusRoot: '',
+      advancedCensusUri: '',
+      maxVoters: '',
     },
   })
 
@@ -190,7 +204,7 @@ export function CreateVoteForm() {
   })
 
   const formData = watch()
-  const api = useVocdoniApi()
+  const { api, sdk } = useVocdoniApi()
   const { data: snapshots, isLoading: isLoadingSnapshot, isError: isSnapshotError } = useSnapshots()
 
   // Reset weighted voting when switching to non-proportional snapshots
@@ -264,6 +278,16 @@ export function CreateVoteForm() {
     console.info('ℹ️ form data:', data)
 
     try {
+      const maxVotersValue = data.maxVoters?.trim()
+      let maxVoters: number | undefined
+      if (maxVotersValue) {
+        const parsedMaxVoters = Number.parseInt(maxVotersValue, 10)
+        if (!Number.isFinite(parsedMaxVoters) || parsedMaxVoters <= 0) {
+          throw new Error('Please enter a valid max voters limit')
+        }
+        maxVoters = parsedMaxVoters
+      }
+
       let selectedSnapshot: Snapshot | undefined
       if (snapshots?.length) {
         // Find the selected snapshot by censusRoot, or use the first one if none selected
@@ -272,11 +296,13 @@ export function CreateVoteForm() {
           : snapshots[0]
       }
 
-      const census = {
-        censusURI: '',
-        censusRoot: '',
-        censusSize: 0,
+      let census: OffchainCensus | OnchainCensus | { type: CensusOrigin; size: number; root: string; uri: string } = {
+        type: CensusOrigin.OffchainStatic,
+        size: 0,
+        root: '',
+        uri: '',
       }
+
       switch (data.censusType) {
         case 'ethereum-wallets': {
           if (!snapshots || snapshots.length === 0) {
@@ -287,9 +313,64 @@ export function CreateVoteForm() {
             throw new Error('Selected snapshot not found')
           }
 
-          census.censusSize = selectedSnapshot.participantCount
-          census.censusRoot = selectedSnapshot.censusRoot
-          census.censusURI = `${import.meta.env.BIGQUERY_URL}/censuses/${selectedSnapshot.censusRoot}`
+          census.size = selectedSnapshot.participantCount
+          census.root = selectedSnapshot.censusRoot
+          census.uri = `${import.meta.env.CENSUS3_URL}/censuses/${selectedSnapshot.censusRoot}/dump`
+          break
+        }
+        case 'advanced': {
+          const censusOriginValue = Number.parseInt(data.advancedCensusOrigin ?? '', 10)
+          if (!Number.isFinite(censusOriginValue) || !CensusOrigin[censusOriginValue]) {
+            throw new Error('Please select a census origin')
+          }
+          
+          const censusUri = data.advancedCensusUri?.trim()
+          if (!censusUri) {
+            throw new Error('Please enter a census URI')
+          }
+
+          // Handle Onchain census differently
+          if (censusOriginValue === CensusOrigin.Onchain) {
+            const contractAddress = data.advancedContractAddress?.trim()
+            if (!contractAddress) {
+              throw new Error('Please enter a contract address')
+            }
+            
+            // For Onchain census, maxVoters is required
+            if (!maxVoters || maxVoters <= 0) {
+              throw new Error('Max voters is required for onchain census')
+            }
+            
+            // Create OnchainCensus instance
+            census = new OnchainCensus(contractAddress, censusUri)
+            break
+          }
+          
+          // For other census types, use the manual config approach
+          const censusRoot = data.advancedCensusRoot?.trim()
+          if (!censusRoot) {
+            throw new Error('Please enter a census root')
+          }
+
+          let censusSize = 0
+          try {
+            censusSize = await api.census.getCensusSizeByRoot(censusRoot)
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          } catch (e) {
+            censusSize = 0
+          }
+
+          if (!Number.isFinite(censusSize) || censusSize <= 0) {
+            censusSize = maxVoters ?? 0
+          }
+          if (censusSize <= 0) {
+            throw new Error('Unable to fetch census size. Please enter a max voters limit.')
+          }
+
+          census.type = censusOriginValue as CensusOrigin
+          census.size = censusSize
+          census.root = censusRoot
+          census.uri = censusUri
           break
         }
         default: {
@@ -300,35 +381,37 @@ export function CreateVoteForm() {
             throw new Error('Please add at least one address to the custom addresses list')
           }
 
-          // Step 1: Create census
-          const censusId = await api.census.createCensus()
+          census = new OffchainCensus()
+          
+          if (data.useWeightedVoting) {
+            const participants = validAddresses.map((address) => {
+              // Find the original index to get the correct weight
+              const originalIndex = data.customAddresses.indexOf(address)
+              return {
+                key: address,
+                weight:
+                  data.useWeightedVoting && data.customAddressWeights[originalIndex]
+                    ? data.customAddressWeights[originalIndex]
+                    : '1',
+              }
+            })
+            census.add(participants)
+          } else {
+            census.add(validAddresses)
+          }
 
-          // Step 2: Add participants (only with valid addresses)
-          const participants = validAddresses.map((address) => {
-            // Find the original index to get the correct weight
-            const originalIndex = data.customAddresses.indexOf(address)
-            return {
-              key: address,
-              weight:
-                data.useWeightedVoting && data.customAddressWeights[originalIndex]
-                  ? data.customAddressWeights[originalIndex]
-                  : '1',
-            }
-          })
-          await api.census.addParticipants(censusId, participants)
-          const censusRoot = await api.census.getCensusRoot(censusId)
-          const censusSize = await api.census.getCensusSize(censusId)
-
-          census.censusURI = censusId
-          census.censusRoot = censusRoot
-          census.censusSize = censusSize
           break
         }
       }
 
       console.info('Census created:', census)
 
-      // Step 7: Create and push metadata
+      // Check if SDK is available
+      if (!sdk) {
+        throw new Error('SDK not initialized. Please ensure your wallet is connected.')
+      }
+
+      // Build metadata for ballot mode generation
       const metadata: ElectionMetadata = {
         title: { default: data.question },
         description: { default: '' },
@@ -359,85 +442,57 @@ export function CreateVoteForm() {
         ;(metadata.meta as any) = {
           census: {
             type: 'bigquery',
-            name: selectedSnapshot.displayName,
+            name: selectedSnapshot.displayName || selectedSnapshot.queryName,
             query: selectedSnapshot.queryName,
           },
         }
       }
 
-      const metadataHash = await api.sequencer.pushMetadata(metadata)
-      const metadataUrl = api.sequencer.getMetadataUrl(metadataHash)
-      console.info('ℹ️ Metadata URL:', metadataUrl)
-
-      // Use provider for process creation (check wallet capabilities)
-      const walletProvider = await getProvider()
-      if (!walletProvider) {
-        throw new Error('Wallet provider not available.')
-      }
-      const provider = new BrowserProvider(walletProvider as Eip1193Provider)
-      console.info('ℹ️ Browser provider initialized:', provider)
-      const signer = await provider.getSigner()
-
-      // Get contract address from sequencer info
-      const info = await api.sequencer.getInfo()
-      const processRegistryAddress = info.contracts.process
-
-      const registry = new ProcessRegistryService(processRegistryAddress, signer)
-      const address = await signer.getAddress()
-      const pid = await registry.getNextProcessId(address)
-      console.info('ℹ️ Process ID:', pid)
-
-      const message = await createProcessSignatureMessage(pid)
-      const signature = await signer.signMessage(message)
+      console.info('ℹ️ Election metadata:', metadata)
 
       const ballotMode = generateBallotMode(metadata, data)
       console.info('ℹ️ Ballot mode:', ballotMode)
 
-      const { processId, encryptionPubKey, stateRoot } = await api.sequencer.createProcess({
-        processId: pid,
-        censusRoot: census.censusRoot,
-        ballotMode,
-        signature,
-        censusOrigin: data.censusType === 'custom-addresses' ? 1 : 1, // CensusOrigin.CensusOriginMerkleTree
-      })
-      console.info('✅ Process created with ID:', processId, stateRoot)
+      const hash = await api.sequencer.pushMetadata(metadata)
+      const metadataUri = api.sequencer.getMetadataUrl(hash)
 
-      console.info('ℹ️ Creating new process with data:', [
-        ProcessStatus.READY,
-        Math.floor(Date.now() / 1000) + 60,
-        getDurationInSeconds(data.duration, data.durationUnit),
-        ballotMode,
-        {
-          censusOrigin: 1,
-          maxVotes: census.censusSize.toString(),
-          censusRoot: census.censusRoot,
-          censusURI: census.censusURI,
+      console.info('ℹ️ Metadata URI:', metadataUri)
+
+      // Create process using SDK stream API
+      const stream = sdk.createProcessStream({
+        metadataUri,
+        census,
+        ballot: ballotMode,
+        timing: {
+          startDate: new Date(Date.now() + 60000), // +1 minute
+          duration: getDurationInSeconds(data.duration, data.durationUnit),
         },
-        metadataUrl,
-        { x: encryptionPubKey[0], y: encryptionPubKey[1] },
-        BigInt(stateRoot),
-      ])
+        maxVoters,
+      })
 
-      // Step 10: Submit newProcess on-chain
-      await SmartContractService.executeTx(
-        registry.newProcess(
-          ProcessStatus.READY,
-          Math.floor(Date.now() / 1000) + 60,
-          getDurationInSeconds(data.duration, data.durationUnit),
-          ballotMode,
-          {
-            censusOrigin: 1,
-            maxVotes: census.censusSize.toString(),
-            censusRoot: census.censusRoot,
-            censusURI: census.censusURI,
-          },
-          metadataUrl,
-          { x: encryptionPubKey[0], y: encryptionPubKey[1] },
-          BigInt(stateRoot)
-        )
-      )
+      // Handle transaction status events
+      let processId = ''
+      for await (const event of stream) {
+        console.info('📡 Transaction event:', event.status, event)
 
-      setLaunchSuccess(true)
+        switch (event.status) {
+          case TxStatus.Pending:
+            console.info('⏳ Transaction pending:', event.hash)
+            break
+          case TxStatus.Completed:
+            processId = event.response.processId
+            console.info('✅ Process created with ID:', processId)
+            setLaunchSuccess(true)
+            break
+          case TxStatus.Failed:
+            console.error('❌ Transaction failed:', event.error)
+            throw new Error(event.error?.message || 'Transaction failed')
+          case TxStatus.Reverted:
+            console.error('↩️ Transaction reverted:', event.reason)
+            throw new Error(event.reason || 'Transaction reverted')
+        }
+      }
+
       console.info('ℹ️ Vote launched successfully with process ID:', processId)
 
       // Wait to navigate
@@ -470,8 +525,36 @@ export function CreateVoteForm() {
     const hasDuration = currentData.duration !== '' && Number.parseInt(currentData.duration) > 0
     const hasAddresses =
       currentData.censusType !== 'custom-addresses' || currentData.customAddresses.filter(Boolean).length > 0
+    
+    const maxVotersValue = currentData.maxVoters?.trim()
+    const maxVotersNumber = maxVotersValue ? Number.parseInt(maxVotersValue, 10) : null
+    const hasValidMaxVoters = maxVotersNumber === null || (Number.isFinite(maxVotersNumber) && maxVotersNumber > 0)
+    
+    // For Onchain census, maxVoters is required
+    const isOnchainCensus = currentData.censusType === 'advanced' && currentData.advancedCensusOrigin === String(CensusOrigin.Onchain)
+    const hasMaxVotersWhenRequired = !isOnchainCensus || (maxVotersNumber !== null && maxVotersNumber > 0)
+    
+    const hasAdvancedCensus =
+      currentData.censusType !== 'advanced' ||
+      Boolean(
+        currentData.advancedCensusOrigin &&
+          currentData.advancedCensusUri?.trim() &&
+          (isOnchainCensus
+            ? currentData.advancedContractAddress?.trim()
+            : currentData.advancedCensusRoot?.trim())
+      )
 
-    return hasQuestion && hasValidChoices && hasVotingMethod && hasCensusType && hasDuration && hasAddresses
+    return (
+      hasQuestion &&
+      hasValidChoices &&
+      hasVotingMethod &&
+      hasCensusType &&
+      hasDuration &&
+      hasAddresses &&
+      hasValidMaxVoters &&
+      hasMaxVotersWhenRequired &&
+      hasAdvancedCensus
+    )
   }
 
   // Show success state
@@ -598,9 +681,13 @@ export function CreateVoteForm() {
                 value={formData.censusType}
                 onValueChange={(value) => {
                   setValue('censusType', value)
+                  setValue('maxVoters', '')
                   // Reset weighted voting when switching away from ethereum-wallets
                   if (value !== 'ethereum-wallets') {
                     setValue('useWeightedVoting', false)
+                  }
+                  if (value === 'advanced' && !formData.advancedCensusOrigin) {
+                    setValue('advancedCensusOrigin', defaultCensusOrigin)
                   }
                 }}
               >
@@ -639,13 +726,109 @@ export function CreateVoteForm() {
                     </Label>
                   </div>
                   {formData.censusType === 'ethereum-wallets' && (
-                    <Snapshots
-                      snapshots={snapshots || []}
-                      isLoading={isLoadingSnapshot}
-                      isError={isSnapshotError}
-                      selectedCensusRoot={formData.selectedCensusRoot}
-                      onSnapshotSelect={(censusRoot) => setValue('selectedCensusRoot', censusRoot)}
-                    />
+                    <div className='ml-6 bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border space-y-4'>
+                      <Snapshots
+                        snapshots={snapshots || []}
+                        isLoading={isLoadingSnapshot}
+                        isError={isSnapshotError}
+                        selectedCensusRoot={formData.selectedCensusRoot}
+                        onSnapshotSelect={(censusRoot) => setValue('selectedCensusRoot', censusRoot)}
+                      />
+                      <div className='space-y-2'>
+                        <Label htmlFor='max-voters' className='text-davinci-black-alt'>
+                          Max voters (leave empty for census size)
+                        </Label>
+                        <Input
+                          id='max-voters'
+                          type='number'
+                          min='1'
+                          {...form.register('maxVoters')}
+                          className='border-davinci-callout-border'
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className='flex items-center space-x-2'>
+                    <RadioGroupItem value='advanced' id='advanced-census' className='border-davinci-callout-border' />
+                    <Label htmlFor='advanced-census' className='text-davinci-black-alt'>
+                      Advanced
+                    </Label>
+                  </div>
+                  {formData.censusType === 'advanced' && (
+                    <div className='ml-6 bg-davinci-digital-highlight p-4 rounded-lg border border-davinci-callout-border space-y-4'>
+                      <div className='space-y-2'>
+                        <Label htmlFor='advanced-census-origin' className='text-davinci-black-alt'>
+                          Census origin
+                        </Label>
+                        <Select
+                          value={formData.advancedCensusOrigin}
+                          onValueChange={(value) => setValue('advancedCensusOrigin', value)}
+                        >
+                          <SelectTrigger id='advanced-census-origin' className='border-davinci-callout-border'>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className='bg-davinci-paper-base border-davinci-callout-border'>
+                            {censusOriginOptions.map((origin) => (
+                              <SelectItem key={origin.name} value={origin.valueString}>
+                                {origin.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      {/* Show contract address for Onchain census, census root for others */}
+                      {formData.advancedCensusOrigin === String(CensusOrigin.Onchain) ? (
+                        <div className='space-y-2'>
+                          <Label htmlFor='advanced-contract-address' className='text-davinci-black-alt'>
+                            Contract Address (ERC20/ERC721)
+                          </Label>
+                          <Input
+                            id='advanced-contract-address'
+                            placeholder='0x...'
+                            {...form.register('advancedContractAddress')}
+                            className='border-davinci-callout-border'
+                          />
+                        </div>
+                      ) : (
+                        <div className='space-y-2'>
+                          <Label htmlFor='advanced-census-root' className='text-davinci-black-alt'>
+                            Census root
+                          </Label>
+                          <Input
+                            id='advanced-census-root'
+                            placeholder='0x...'
+                            {...form.register('advancedCensusRoot')}
+                            className='border-davinci-callout-border'
+                          />
+                        </div>
+                      )}
+                      
+                      <div className='space-y-2'>
+                        <Label htmlFor='advanced-census-uri' className='text-davinci-black-alt'>
+                          Census URI
+                        </Label>
+                        <Input
+                          id='advanced-census-uri'
+                          placeholder='https://'
+                          {...form.register('advancedCensusUri')}
+                          className='border-davinci-callout-border'
+                        />
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='max-voters' className='text-davinci-black-alt'>
+                          Max voters {formData.advancedCensusOrigin === String(CensusOrigin.Onchain) ? '(required)' : '(leave empty for census size)'}
+                        </Label>
+                        <Input
+                          id='max-voters'
+                          type='number'
+                          min='1'
+                          {...form.register('maxVoters')}
+                          className='border-davinci-callout-border'
+                        />
+                      </div>
+                    </div>
                   )}
                 </div>
               </RadioGroup>
@@ -1068,6 +1251,7 @@ type LaunchVoteButtonProps = {
 const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVoteButtonProps) => {
   const { isConnected } = useUnifiedWallet()
   const { isMiniApp, isExternalWallet, supportedChains, getFarcasterEthereumProvider } = useMiniApp()
+  const { sequencerNetwork } = useSequencerNetwork()
   const { caipNetwork } = useAppKitNetwork()
 
   // All hooks must be at the top before any conditional returns
@@ -1094,7 +1278,6 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
   // PRIORITY 2: Check chain compatibility (only for external wallets)
   // Convert hex chain ID to decimal for comparison
   const actualChainIdDecimal = actualChainId ? parseInt(actualChainId, 16) : null
-  const isOnSepoliaActually = actualChainIdDecimal === sepolia.id
 
   useEffect(() => {
     console.info('🔍 Chain validation debug:', {
@@ -1106,15 +1289,7 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
       supportedChains,
       isExternalWallet,
     })
-  }, [
-    caipNetwork,
-    actualChainId,
-    isMiniApp,
-    supportedChains,
-    isExternalWallet,
-    actualChainIdDecimal,
-    isOnSepoliaActually,
-  ])
+  }, [caipNetwork, actualChainId, isMiniApp, supportedChains, isExternalWallet, actualChainIdDecimal])
 
   if (!isConnected) {
     return <ConnectWalletButtonMiniApp />
@@ -1174,9 +1349,14 @@ const LaunchVoteButton = ({ handleLaunch, isLaunching, isFormValid }: LaunchVote
         </div>
       )}
       <div className='ml-6 text-left text-davinci-black-alt/80 text-sm'>
-        Creating a vote requires a tx on the Sepolia testnet. If you need ETH to run a vote, you can get some from{' '}
-        <Link href='https://cloud.google.com/application/web3/faucet/ethereum/sepolia'>this faucet</Link>. The tx is
-        only needed to create the vote, <span className='font-medium'>casting votes is gasless.</span>
+        Creating a vote requires a tx on the {sequencerNetwork?.name} network.{' '}
+        {sequencerNetwork?.name === 'Sepolia' && (
+          <>
+            If you need ETH to run a vote, you can get some from{' '}
+            <Link href='https://cloud.google.com/application/web3/faucet/ethereum/sepolia'>this faucet</Link>.
+          </>
+        )}{' '}
+        The tx is only needed to create the vote, <span className='font-medium'>casting votes is gasless.</span>
       </div>
     </>
   )

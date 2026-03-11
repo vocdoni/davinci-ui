@@ -100,7 +100,9 @@ const ConnectWalletButtonMiniApp = (props: ButtonProps) => {
   const displayAddress = farcasterAddress || address
 
   // Show Farcaster user info if available and connected via Farcaster
-  const showFarcasterInfo = farcasterConnected && farcasterUser
+  const showFarcasterInfo = !!(farcasterConnected && farcasterUser)
+  const farcasterDisplayName = farcasterUser?.displayName
+  const farcasterUsername = farcasterUser?.username
 
   // Determine button text based on connection state
   const getButtonText = () => {
@@ -114,9 +116,9 @@ const ConnectWalletButtonMiniApp = (props: ButtonProps) => {
         return {
           icon,
           text: showFarcasterInfo
-            ? farcasterUser.displayName || `@${farcasterUser.username}` || truncateAddress(displayAddress)
+            ? farcasterDisplayName || (farcasterUsername ? `@${farcasterUsername}` : undefined) || truncateAddress(displayAddress)
             : truncateAddress(displayAddress),
-          shortText: farcasterUser.username ? `@${farcasterUser.username}` : truncateAddress(displayAddress, 4, 4),
+          shortText: farcasterUsername ? `@${farcasterUsername}` : truncateAddress(displayAddress, 4, 4),
           tooltip: `Connected with ${walletType} via Farcaster. Limited to signing operations only.`,
         }
       } else if (isConnected) {

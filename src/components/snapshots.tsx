@@ -27,9 +27,6 @@ export function Snapshots({ snapshots, isLoading, isError, selectedCensusRoot, o
   // Group snapshots by queryName to get unique census types
   const censusTypes = snapshots.reduce(
     (acc, snapshot) => {
-      if (!snapshot.displayName) {
-        return acc
-      }
       if (!acc[snapshot.queryName]) {
         acc[snapshot.queryName] = []
       }
@@ -83,11 +80,17 @@ export function Snapshots({ snapshots, isLoading, isError, selectedCensusRoot, o
                           (a, b) => new Date(b.snapshotDate).getTime() - new Date(a.snapshotDate).getTime()
                         )[0]
 
+                        // Fallback display name: queryName + snapshot date
+                        const displayText = latestSnapshot.displayName || 
+                          `${latestSnapshot.queryName} (${formatSnapshotDate(latestSnapshot.snapshotDate)})`
+
                         return (
                           <SelectItem key={queryName} value={latestSnapshot.censusRoot}>
                             <div className='flex flex-row items-center gap-2'>
-                              <img width='20px' src={latestSnapshot.displayAvatar} />{' '}
-                              <span>{latestSnapshot.displayName}</span>
+                              {latestSnapshot.displayAvatar && (
+                                <img width='20px' src={latestSnapshot.displayAvatar} alt='' />
+                              )}
+                              <span>{displayText}</span>
                             </div>
                           </SelectItem>
                         )

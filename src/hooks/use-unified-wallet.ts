@@ -101,7 +101,7 @@ export const useUnifiedWallet = (): UnifiedWalletState => {
 
   // Unified state - prioritize external wallet address when both are connected
   const isConnected = appKitConnected || farcasterConnected
-  const address = appKitAddress || farcasterAddress
+  const address = appKitAddress ?? farcasterAddress ?? undefined
 
   return {
     // Connection state

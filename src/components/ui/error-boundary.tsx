@@ -1,5 +1,5 @@
-import React, { Component, type ReactNode } from 'react'
 import { AlertCircle, RefreshCw } from 'lucide-react'
+import React, { Component, type ReactNode } from 'react'
 import { Alert, AlertDescription, AlertTitle } from './alert'
 import { Button } from './button'
 
@@ -40,19 +40,19 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <Alert variant="destructive" className="m-4">
-          <AlertCircle className="h-4 w-4" />
+        <Alert variant='destructive' className='m-4'>
+          <AlertCircle className='h-4 w-4' />
           <AlertTitle>Something went wrong</AlertTitle>
-          <AlertDescription className="mt-2">
-            <p className="mb-4">
+          <AlertDescription className='mt-2'>
+            <p className='mb-4'>
               An unexpected error occurred. Please try refreshing the page or contact support if the problem persists.
             </p>
-            <div className="flex gap-2">
-              <Button onClick={this.handleReset} variant="outline" size="sm">
-                <RefreshCw className="h-4 w-4 mr-2" />
+            <div className='flex gap-2'>
+              <Button onClick={this.handleReset} variant='outline' size='sm'>
+                <RefreshCw className='h-4 w-4 mr-2' />
                 Try again
               </Button>
-              <Button onClick={() => window.location.reload()} variant="outline" size="sm">
+              <Button onClick={() => window.location.reload()} variant='outline' size='sm'>
                 Refresh page
               </Button>
             </div>
@@ -71,11 +71,7 @@ export interface ErrorBoundaryWrapperProps {
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void
 }
 
-export const ErrorBoundaryWrapper: React.FC<ErrorBoundaryWrapperProps> = ({
-  children,
-  fallback,
-  onError,
-}) => {
+export const ErrorBoundaryWrapper: React.FC<ErrorBoundaryWrapperProps> = ({ children, fallback, onError }) => {
   return (
     <ErrorBoundary fallback={fallback} onError={onError}>
       {children}

@@ -8,8 +8,8 @@ export type Snapshot = {
   censusRoot: string
   participantCount: number
   minBalance: number
-  displayName: string
-  displayAvatar: string
+  displayName?: string
+  displayAvatar?: string
   queryName: string
   createdAt: string // ISO date string
   weightStrategy: string
@@ -28,7 +28,7 @@ export function useSnapshots() {
   return useQuery({
     queryKey: ['snapshots'],
     queryFn: async () => {
-      const response = await upfetch<SnapshotsResponse>(`${import.meta.env.BIGQUERY_URL}/snapshots`)
+      const response = await upfetch<SnapshotsResponse>(`${import.meta.env.CENSUS3_URL}/snapshots`)
       return response.snapshots || []
     },
   })

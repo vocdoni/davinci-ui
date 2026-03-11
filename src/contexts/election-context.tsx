@@ -2,50 +2,9 @@ import { useQuery, type QueryObserverResult } from '@tanstack/react-query'
 import type { CensusProof } from '@vocdoni/davinci-sdk'
 import { ProcessStatus } from '@vocdoni/davinci-sdk'
 import { createContext, useContext, useMemo, type FC, type ReactNode } from 'react'
-import { up } from 'up-fetch'
 import { getProcessQuery } from '~hooks/use-process-query'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
-import type { Process } from '~src/types'
 import { useVocdoniApi } from './vocdoni-api-context'
-
-const upfetch = up(fetch)
-
-interface ElectionContextValue {
-  election: Process | undefined
-  isLoading: boolean
-  error: Error | null
-  refetch: () => Promise<QueryObserverResult<Process, Error>>
-  // Status-related computed values
-  voteHasEnded: boolean
-  isAcceptingVotes: boolean
-  isPaused: boolean
-  wasCanceled: boolean
-  hasResults: boolean
-  status: ProcessStatus | null
-  // Time-related computed values
-  voteStartTime: Date | null
-  voteEndTime: Date | null
-  timeRemainingMs: number
-  isNearingEnd: boolean
-  // Vote count computed values
-  uniqueVoters: number
-  totalVotesCast: number
-  overwrittenVotes: number
-  // Census and voting status (only when fetchCensus=true)
-  censusProof: CensusProof | null
-  hasVoted: boolean | null
-  isHasVotedLoading: boolean
-  isHasVotedError: boolean
-  hasVotedError: Error | null
-  isAbleToVote: boolean
-  isCreator: boolean
-  isInCensus: boolean | null
-  isCensusProofLoading: boolean
-  isCensusProofError: boolean
-  censusProofError: Error | null
-}
-
-const ElectionContext = createContext<ElectionContextValue | undefined>(undefined)
 
 interface ElectionProviderProps {
   electionId: string
@@ -56,13 +15,10 @@ interface ElectionProviderProps {
 
 const ENDED_STATUSES = [ProcessStatus.ENDED, ProcessStatus.CANCELED, ProcessStatus.RESULTS] as const
 
-export const ElectionProvider: FC<ElectionProviderProps> = ({
-  electionId,
-  election: process,
-  fetchCensus = false,
-  children,
-}) => {
-  const api = useVocdoniApi()
+type ElectionContextArgs = Omit<ElectionProviderProps, 'children'>
+
+const useElectionProvider = ({ electionId, election: process, fetchCensus = false }: ElectionContextArgs) => {
+  const { api } = useVocdoniApi()
   const { address } = useUnifiedWallet()
 
   const {
@@ -106,29 +62,20 @@ export const ElectionProvider: FC<ElectionProviderProps> = ({
   const isNearingEnd = useMemo(() => timeRemainingMs > 0 && timeRemainingMs < 5 * 60 * 1000, [timeRemainingMs])
 
   // Vote count values
-  const totalVotesCast = election ? Number(election.process.voteCount) : 0
-  const overwrittenVotes = election ? Number(election.process.voteOverwrittenCount) : 0
-  const uniqueVoters = totalVotesCast - overwrittenVotes
+  const uniqueVoters = election ? Number(election.process.votersCount) : 0
+  const overwrittenVotes = election ? Number(election.process.overwrittenVotesCount) : 0
 
   // Census-related queries (only when fetchCensus=true)
-  const censusRoot = election?.process.census.censusRoot
+  const processId = election?.process.id
 
   const {
-    data: censusProof,
-    isLoading: isCensusProofLoading,
-    isError: isCensusProofError,
-    error: censusProofError,
+    data: isAddressAbleToVote,
+    isLoading: isEligibilityLoading,
+    isError: isEligibilityError,
   } = useQuery({
-    enabled: fetchCensus && !!address && !!censusRoot,
-    queryKey: ['census-proof', censusRoot, address],
-    queryFn: async () => {
-      if (election!.process.census.censusURI.startsWith('http')) {
-        return await upfetch<CensusProof>(`${election!.process.census.censusURI}/proof`, {
-          params: { key: address },
-        })
-      }
-      return await api.census.getCensusProof(censusRoot!, address!)
-    },
+    enabled: fetchCensus && !!address && !!processId,
+    queryKey: ['is-address-able-to-vote', processId, address],
+    queryFn: async () => await api.sequencer.isAddressAbleToVote(processId!, address!),
     retry: false,
     staleTime: 1000 * 60 * 5,
     throwOnError: false,
@@ -150,10 +97,20 @@ export const ElectionProvider: FC<ElectionProviderProps> = ({
     throwOnError: false,
   })
 
-  const isInCensus = fetchCensus && address ? (isCensusProofLoading ? null : !isCensusProofError) : null
-  const isCreator = election?.process.organizationId === address
+  const isCensusProofLoading = fetchCensus && !!address ? isEligibilityLoading : false
 
-  const value: ElectionContextValue = {
+  const isInCensus =
+    fetchCensus && address
+      ? isCensusProofLoading
+        ? null
+        : isEligibilityError
+          ? false
+          : Boolean(isAddressAbleToVote)
+      : null
+
+  const isCreator = election?.process.organizationId?.toLowerCase() === address?.toLowerCase()
+
+  return {
     election,
     isLoading,
     error,
@@ -172,10 +129,9 @@ export const ElectionProvider: FC<ElectionProviderProps> = ({
     isNearingEnd,
     // Vote count values
     uniqueVoters,
-    totalVotesCast,
     overwrittenVotes,
     // Census and voting status
-    censusProof: censusProof ?? null,
+    censusProof: null as CensusProof | null,
     hasVoted: fetchCensus && address ? (isHasVotedLoading ? null : Boolean(hasVoted)) : null,
     isHasVotedLoading,
     isHasVotedError,
@@ -184,9 +140,24 @@ export const ElectionProvider: FC<ElectionProviderProps> = ({
     isCreator,
     isInCensus,
     isCensusProofLoading,
-    isCensusProofError,
-    censusProofError,
+    isCensusProofError: false as boolean,
+    censusProofError: null as Error | null,
   }
+}
+
+export interface ElectionContextValue extends ReturnType<typeof useElectionProvider> {
+  refetch: () => Promise<QueryObserverResult<Process, Error>>
+}
+
+const ElectionContext = createContext<ElectionContextValue | undefined>(undefined)
+
+export const ElectionProvider: FC<ElectionProviderProps> = ({
+  electionId,
+  election: process,
+  fetchCensus = false,
+  children,
+}) => {
+  const value = useElectionProvider({ electionId, election: process, fetchCensus })
 
   return <ElectionContext.Provider value={value}>{children}</ElectionContext.Provider>
 }
