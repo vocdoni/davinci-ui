@@ -32,7 +32,7 @@ export function NetworkBadge() {
 
   return (
     <div
-      className={`hidden sm:flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getNetworkColor(caipNetwork.name)}`}
+      className={`hidden sm:flex items-center px-2 py-1 rounded-md text-xs font-medium border whitespace-nowrap break-normal ${getNetworkColor(caipNetwork.name)}`}
       title={`Connected to ${caipNetwork.name} (Chain ID: ${caipNetwork.id})`}
     >
       <div className='w-1.5 h-1.5 rounded-full bg-current mr-1.5' />

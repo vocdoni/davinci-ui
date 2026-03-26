@@ -78,15 +78,15 @@ export function FloatingHeader() {
     >
       <Card className='bg-davinci-paper-base/95 backdrop-blur-md border-b border-davinci-callout-border/50 lg:border lg:border-davinci-callout-border/50 shadow-lg rounded-b-lg rounded-t-none lg:rounded-lg'>
         <div className='flex items-center justify-between p-4'>
-          <div className='flex items-center space-x-3'>
+          <div className='flex items-center space-x-3 shrink-0'>
             <Link to='/' className='flex items-center'>
               <img src='/images/davinci-logo.png' alt='DAVINCI' className='h-8 w-auto' />
             </Link>
             <NetworkBadge />
           </div>
 
-          <div className='hidden lg:block'>
-            <nav className='flex items-center space-x-1'>
+          <div className='hidden lg:block flex-1 min-w-0'>
+            <nav className='flex items-center justify-center space-x-1 whitespace-nowrap'>
               {navigationItems.map((item) =>
                 item.external ? (
                   <a
@@ -94,7 +94,7 @@ export function FloatingHeader() {
                     href={item.href}
                     target='_blank'
                     rel='noopener noreferrer'
-                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 flex items-center gap-1 ${
+                    className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 flex items-center gap-1 shrink-0 whitespace-nowrap break-normal ${
                       isActiveLink(item.href)
                         ? 'bg-davinci-soft-neutral text-davinci-black-alt'
                         : 'text-davinci-black-alt hover:text-davinci-black-alt hover:bg-davinci-soft-neutral/50'
@@ -108,7 +108,7 @@ export function FloatingHeader() {
                   <Link
                     key={item.value}
                     to={item.href}
-                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 flex items-center gap-1 ${
+                    className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 flex items-center gap-1 shrink-0 whitespace-nowrap break-normal ${
                       isActiveLink(item.href)
                         ? 'bg-davinci-soft-neutral text-davinci-black-alt'
                         : 'text-davinci-black-alt hover:text-davinci-black-alt hover:bg-davinci-soft-neutral/50'
@@ -170,7 +170,7 @@ export function FloatingHeader() {
             </Sheet>
           </div>
 
-          <div className='w-40 flex justify-end'>
+          <div className='flex justify-end shrink-0'>
             <ConnectWalletButtonMiniApp />
           </div>
         </div>
