@@ -1,6 +1,7 @@
 import { CreateVoteForm } from '~components/create-vote-form'
 import { DavinciInfoCard } from '~components/davinci-info-card'
 import { NewsletterCard } from '~components/newsletter-card'
+import { QuestsAnnouncementBanner } from '~components/quests-announcement-banner'
 import { Link } from '~components/ui/link'
 
 export default function HomePage() {
@@ -17,6 +18,8 @@ export default function HomePage() {
             </Link>
           </p>
         </div>
+
+        <QuestsAnnouncementBanner className='mb-12' />
 
         {/* Two Column Layout */}
         <div className='grid grid-cols-1 lg:grid-cols-12 gap-8'>
