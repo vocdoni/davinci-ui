@@ -14,11 +14,6 @@ body {
   font-family: var(--font-work-sans), sans-serif;
 }
 
-a {
-  word-break: break-word;
-  overflow-wrap: anywhere;
-}
-
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -103,6 +98,10 @@ a {
   }
   body {
     @apply bg-background text-foreground;
+  }
+  a {
+    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 }
 
