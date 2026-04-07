@@ -78,8 +78,8 @@ importers:
         specifier: ^2.4.1
         version: 2.4.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@vocdoni/davinci-sdk':
-        specifier: ~0.2.1
-        version: 0.2.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        specifier: ~0.2.3
+        version: 0.2.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -2628,8 +2628,8 @@ packages:
   '@vocdoni/davinci-contracts@0.0.37':
     resolution: {integrity: sha512-ettHT/x4H436lcCQRobAwlCLw+UwP9XxehBjFDjWzXdDpFrXzorCCKczztoz8/4fLs7Rks5r/Q56yjPOJ4P3+A==}
 
-  '@vocdoni/davinci-sdk@0.2.1':
-    resolution: {integrity: sha512-KVFGBb7aTaw3EH8J5Hb/9iwupoQTXnlmRfopIEemFWV3JJB9WWanOlVbB68VLLXRwt3bCKd4gfhTUlu6xNO9wA==}
+  '@vocdoni/davinci-sdk@0.2.3':
+    resolution: {integrity: sha512-crry27t7MQupeWEoztJ2hGlTDoKfFqozGfY/rGAdPhDTtcwpu6ijorHYeAjhcCFqmNCPGR7QOs6nouxQBEAJMQ==}
 
   '@wallet-standard/base@1.1.0':
     resolution: {integrity: sha512-DJDQhjKmSNVLKWItoKThJS+CsJQjR9AOBOirBVT1F9YpRyC9oYHE+ZnSf8y8bxUphtKqdQMPVQ2mHohYdRvDVQ==}
@@ -8815,18 +8815,16 @@ snapshots:
 
   '@vocdoni/davinci-contracts@0.0.37': {}
 
-  '@vocdoni/davinci-sdk@0.2.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
+  '@vocdoni/davinci-sdk@0.2.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
       '@ethereumjs/common': 4.4.0
       '@vocdoni/davinci-contracts': 0.0.37
-      axios: 1.13.2
       buffer: 6.0.3
       circomlibjs: 0.1.7(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       ethers: 6.16.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       snarkjs: 0.7.5
     transitivePeerDependencies:
       - bufferutil
-      - debug
       - utf-8-validate
 
   '@wallet-standard/base@1.1.0': {}
@@ -9248,7 +9246,8 @@ snapshots:
 
   async@3.2.6: {}
 
-  asynckit@0.4.0: {}
+  asynckit@0.4.0:
+    optional: true
 
   at-least-node@1.0.0: {}
 
@@ -9281,6 +9280,7 @@ snapshots:
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
+    optional: true
 
   b4a@1.6.7: {}
 
@@ -9516,6 +9516,7 @@ snapshots:
   combined-stream@1.0.8:
     dependencies:
       delayed-stream: 1.0.0
+    optional: true
 
   comlink@4.4.2: {}
 
@@ -9636,7 +9637,8 @@ snapshots:
 
   delay@5.0.0: {}
 
-  delayed-stream@1.0.0: {}
+  delayed-stream@1.0.0:
+    optional: true
 
   dequal@2.0.3: {}
 
@@ -10055,7 +10057,8 @@ snapshots:
 
   flatted@3.3.3: {}
 
-  follow-redirects@1.15.11: {}
+  follow-redirects@1.15.11:
+    optional: true
 
   for-each@0.3.5:
     dependencies:
@@ -10073,6 +10076,7 @@ snapshots:
       es-set-tostringtag: 2.1.0
       hasown: 2.0.2
       mime-types: 2.1.35
+    optional: true
 
   fraction.js@4.3.7: {}
 
@@ -10674,11 +10678,13 @@ snapshots:
       braces: 3.0.3
       picomatch: 2.3.1
 
-  mime-db@1.52.0: {}
+  mime-db@1.52.0:
+    optional: true
 
   mime-types@2.1.35:
     dependencies:
       mime-db: 1.52.0
+    optional: true
 
   minimalistic-assert@1.0.1: {}
 
@@ -11014,7 +11020,8 @@ snapshots:
 
   proxy-compare@3.0.1: {}
 
-  proxy-from-env@1.1.0: {}
+  proxy-from-env@1.1.0:
+    optional: true
 
   punycode@2.3.1: {}
 
