@@ -323,7 +323,7 @@ export function CreateVoteForm() {
           if (!Number.isFinite(censusOriginValue) || !CensusOrigin[censusOriginValue]) {
             throw new Error('Please select a census origin')
           }
-          
+
           const censusUri = data.advancedCensusUri?.trim()
           if (!censusUri) {
             throw new Error('Please enter a census URI')
@@ -335,17 +335,17 @@ export function CreateVoteForm() {
             if (!contractAddress) {
               throw new Error('Please enter a contract address')
             }
-            
+
             // For Onchain census, maxVoters is required
             if (!maxVoters || maxVoters <= 0) {
               throw new Error('Max voters is required for onchain census')
             }
-            
+
             // Create OnchainCensus instance
             census = new OnchainCensus(contractAddress, censusUri)
             break
           }
-          
+
           // For other census types, use the manual config approach
           const censusRoot = data.advancedCensusRoot?.trim()
           if (!censusRoot) {
@@ -382,7 +382,7 @@ export function CreateVoteForm() {
           }
 
           census = new OffchainCensus()
-          
+
           if (data.useWeightedVoting) {
             const participants = validAddresses.map((address) => {
               // Find the original index to get the correct weight
@@ -525,23 +525,22 @@ export function CreateVoteForm() {
     const hasDuration = currentData.duration !== '' && Number.parseInt(currentData.duration) > 0
     const hasAddresses =
       currentData.censusType !== 'custom-addresses' || currentData.customAddresses.filter(Boolean).length > 0
-    
+
     const maxVotersValue = currentData.maxVoters?.trim()
     const maxVotersNumber = maxVotersValue ? Number.parseInt(maxVotersValue, 10) : null
     const hasValidMaxVoters = maxVotersNumber === null || (Number.isFinite(maxVotersNumber) && maxVotersNumber > 0)
-    
+
     // For Onchain census, maxVoters is required
-    const isOnchainCensus = currentData.censusType === 'advanced' && currentData.advancedCensusOrigin === String(CensusOrigin.Onchain)
+    const isOnchainCensus =
+      currentData.censusType === 'advanced' && currentData.advancedCensusOrigin === String(CensusOrigin.Onchain)
     const hasMaxVotersWhenRequired = !isOnchainCensus || (maxVotersNumber !== null && maxVotersNumber > 0)
-    
+
     const hasAdvancedCensus =
       currentData.censusType !== 'advanced' ||
       Boolean(
         currentData.advancedCensusOrigin &&
           currentData.advancedCensusUri?.trim() &&
-          (isOnchainCensus
-            ? currentData.advancedContractAddress?.trim()
-            : currentData.advancedCensusRoot?.trim())
+          (isOnchainCensus ? currentData.advancedContractAddress?.trim() : currentData.advancedCensusRoot?.trim())
       )
 
     return (
@@ -777,7 +776,7 @@ export function CreateVoteForm() {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       {/* Show contract address for Onchain census, census root for others */}
                       {formData.advancedCensusOrigin === String(CensusOrigin.Onchain) ? (
                         <div className='space-y-2'>
@@ -804,7 +803,7 @@ export function CreateVoteForm() {
                           />
                         </div>
                       )}
-                      
+
                       <div className='space-y-2'>
                         <Label htmlFor='advanced-census-uri' className='text-davinci-black-alt'>
                           Census URI
@@ -818,7 +817,10 @@ export function CreateVoteForm() {
                       </div>
                       <div className='space-y-2'>
                         <Label htmlFor='max-voters' className='text-davinci-black-alt'>
-                          Max voters {formData.advancedCensusOrigin === String(CensusOrigin.Onchain) ? '(required)' : '(leave empty for census size)'}
+                          Max voters{' '}
+                          {formData.advancedCensusOrigin === String(CensusOrigin.Onchain)
+                            ? '(required)'
+                            : '(leave empty for census size)'}
                         </Label>
                         <Input
                           id='max-voters'
@@ -1372,9 +1374,8 @@ const generateBallotMode = (election: ElectionMetadata, form: FormData): BallotM
         maxValue,
         minValue: '0',
         uniqueValues: false,
-        costFromWeight: form.useWeightedVoting,
         costExponent: 1,
-        maxValueSum: election.questions[0].choices.length.toString(),
+        maxValueSum: form.useWeightedVoting ? '0' : election.questions[0].choices.length.toString(),
         minValueSum: '0',
       }
     case ElectionResultsTypeNames.MULTIPLE_CHOICE:
@@ -1383,7 +1384,6 @@ const generateBallotMode = (election: ElectionMetadata, form: FormData): BallotM
         maxValue,
         minValue: '0',
         uniqueValues: false,
-        costFromWeight: false,
         costExponent: 1,
         maxValueSum: form.multipleChoiceMax,
         minValueSum: form.multipleChoiceMin,
@@ -1396,7 +1396,6 @@ const generateBallotMode = (election: ElectionMetadata, form: FormData): BallotM
           : (Math.floor(Math.sqrt(Number(form.quadraticCredits))) + 1).toString(),
         minValue: '0',
         uniqueValues: false,
-        costFromWeight: form.useWeightedVoting, // Use weight from census when weighted voting is enabled
         costExponent: 2,
         maxValueSum: form.useWeightedVoting
           ? '0' // When weighted, max cost is determined by voter's actual weight
@@ -1411,7 +1410,6 @@ const generateBallotMode = (election: ElectionMetadata, form: FormData): BallotM
           : form.budgetCredits,
         minValue: '0',
         uniqueValues: false,
-        costFromWeight: form.useWeightedVoting, // Use weight from census when weighted voting is enabled
         costExponent: 1, // Linear cost: 1 credit = 1 vote
         maxValueSum: form.useWeightedVoting
           ? '0' // When weighted, max cost is determined by voter's actual weight
