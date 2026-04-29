@@ -61,7 +61,15 @@ function createElection(overrides: Partial<Process> = {}): Process {
       votersCount: '0',
       overwrittenVotesCount: '0',
       census: { censusRoot: '0xroot', censusURI: 'ipfs://census' },
-      ballotMode: { costFromWeight: false },
+      ballotMode: {
+        numFields: 0,
+        maxValue: '0',
+        minValue: '0',
+        uniqueValues: false,
+        costExponent: 1,
+        maxValueSum: '0',
+        minValueSum: '0',
+      },
     },
     meta: { type: { name: 'MULTIPLE_CHOICE' }, questions: [{ choices: [] }] },
   }

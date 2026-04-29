@@ -32,6 +32,16 @@ interface VotingMethod {
   credits?: number
 }
 
+const isWeightBasedBallot = (process: GetProcessResponse) => process.ballotMode.maxValueSum === '0'
+
+const getCreditLimit = (process: GetProcessResponse, voterWeight?: string | null): number => {
+  if (isWeightBasedBallot(process) && voterWeight) {
+    return Number(voterWeight)
+  }
+
+  return Number(process.ballotMode.maxValueSum) || 100
+}
+
 function getVotingMethod(
   process: GetProcessResponse,
   meta: ElectionMetadata,
@@ -46,22 +56,14 @@ function getVotingMethod(
         max: Number(process.ballotMode.maxValueSum) || 2,
       }
     case ElectionResultsTypeNames.QUADRATIC: {
-      // For weighted quadratic voting, use the user's census proof weight as total credits
-      const credits =
-        process.ballotMode.costFromWeight && voterWeight
-          ? Number(voterWeight)
-          : Number(process.ballotMode.maxValueSum) || 100
+      const credits = getCreditLimit(process, voterWeight)
       return {
         type: type.name,
         credits,
       }
     }
     case ElectionResultsTypeNames.BUDGET: {
-      // For weighted budget voting, use the user's census proof weight as total credits
-      const credits =
-        process.ballotMode.costFromWeight && voterWeight
-          ? Number(voterWeight)
-          : Number(process.ballotMode.maxValueSum) || 100
+      const credits = getCreditLimit(process, voterWeight)
       return {
         type: type.name,
         credits,
@@ -111,7 +113,9 @@ export function VoteDisplay() {
   const { voteId, trackVote, resetVote } = usePersistedVote(election?.process.id ?? '', address)
 
   const processId = election?.process.id
-  const shouldFetchWeight = Boolean(processId && address && isInCensus && election?.process.ballotMode.costFromWeight)
+  const shouldFetchWeight = Boolean(
+    processId && address && isInCensus && election && isWeightBasedBallot(election.process)
+  )
 
   const { data: voterWeight } = useQuery({
     enabled: shouldFetchWeight,
@@ -193,7 +197,7 @@ export function VoteDisplay() {
     setError(null)
 
     try {
-      const weightValue = process.ballotMode.costFromWeight ? Number(voterWeight ?? 1) : 1
+      const weightValue = isWeightBasedBallot(process) ? Number(voterWeight ?? 1) : 1
 
       const choices =
         meta.type.name === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION
@@ -447,7 +451,7 @@ export function VoteDisplay() {
                             votingMethod.type === ElectionResultsTypeNames.QUADRATIC ||
                             votingMethod.type === ElectionResultsTypeNames.BUDGET ||
                             (votingMethod.type === ElectionResultsTypeNames.SINGLE_CHOICE_MULTIQUESTION &&
-                              process.ballotMode.costFromWeight)
+                              isWeightBasedBallot(process))
                               ? (Number(result) / results.reduce((acc, val) => acc + (Number(val) || 0), 0)) * 100
                               : (Number(result) / uniqueVoters) * 100 || 0
                           const votes = result || 0
