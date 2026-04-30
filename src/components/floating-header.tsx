@@ -58,9 +58,9 @@ export function FloatingHeader() {
       external: true,
     },
     {
-      value: 'whitepaper',
-      label: 'Whitepaper',
-      href: 'https://whitepaper.vocdoni.io',
+      value: 'spec',
+      label: 'Specification',
+      href: 'https://spec.davinci.vote/',
       external: true,
     },
   ]
