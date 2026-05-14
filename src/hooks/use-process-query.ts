@@ -57,12 +57,12 @@ export const useProcessQuery = (id: string) => {
  *
  * This hook will directly return `string[]`, not the wrapped object.
  */
-export const useProcessList = () => {
+export const useProcessList = (chainId?: number) => {
   const { api } = useVocdoniApi()
 
   return useQuery<string[]>({
-    queryKey: ['processList'],
-    queryFn: async () => await api.sequencer.listProcesses(),
+    queryKey: ['processList', chainId ?? 'all'],
+    queryFn: async () => await api.sequencer.listProcesses(chainId),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: true,
   })

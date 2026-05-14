@@ -44,6 +44,8 @@ import { useMiniApp } from '~contexts/MiniAppContext'
 import { useSequencerNetwork } from '~contexts/sequencer-network'
 import { useVocdoniApi } from '~contexts/vocdoni-api-context'
 import { useSnapshots, type Snapshot } from '~hooks/use-snapshots'
+import { ensureCorrectNetworkBeforeLaunch } from '~lib/launch-network'
+import { useNetworkValidation } from '~hooks/use-network-validation'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 import { CustomAddressesManager } from './census-addresses'
 import { Snapshots } from './snapshots'
@@ -204,8 +206,9 @@ export function CreateVoteForm() {
   })
 
   const formData = watch()
-  const { api, sdk } = useVocdoniApi()
+  const { api, ensureSdk } = useVocdoniApi()
   const { data: snapshots, isLoading: isLoadingSnapshot, isError: isSnapshotError } = useSnapshots()
+  const { isCorrectNetwork, switchToCorrectNetwork } = useNetworkValidation()
 
   // Reset weighted voting when switching to non-proportional snapshots
   useEffect(() => {
@@ -278,6 +281,8 @@ export function CreateVoteForm() {
     console.info('ℹ️ form data:', data)
 
     try {
+      await ensureCorrectNetworkBeforeLaunch(isCorrectNetwork, switchToCorrectNetwork)
+
       const maxVotersValue = data.maxVoters?.trim()
       let maxVoters: number | undefined
       if (maxVotersValue) {
@@ -406,10 +411,7 @@ export function CreateVoteForm() {
 
       console.info('Census created:', census)
 
-      // Check if SDK is available
-      if (!sdk) {
-        throw new Error('SDK not initialized. Please ensure your wallet is connected.')
-      }
+      const activeSdk = await ensureSdk()
 
       // Build metadata for ballot mode generation
       const metadata: ElectionMetadata = {
@@ -459,7 +461,7 @@ export function CreateVoteForm() {
       console.info('ℹ️ Metadata URI:', metadataUri)
 
       // Create process using SDK stream API
-      const stream = sdk.createProcessStream({
+      const stream = activeSdk.createProcessStream({
         metadataUri,
         census,
         ballot: ballotMode,
