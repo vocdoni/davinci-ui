@@ -1,13 +1,15 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { DavinciSDK, VocdoniApiService } from '@vocdoni/davinci-sdk'
+import { useAppKitNetwork } from '@reown/appkit/react'
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
-import { createContext, useContext, useEffect, useMemo, useState, type FC, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type FC, type ReactNode } from 'react'
 import { useUnifiedProvider } from '~hooks/use-unified-provider'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
 
 interface VocdoniApiContextValue {
   api: VocdoniApiService
   sdk: DavinciSDK | null
+  ensureSdk: () => Promise<DavinciSDK>
 }
 
 // Creamos el contexto
@@ -17,7 +19,9 @@ const VocdoniApiContext = createContext<VocdoniApiContextValue | undefined>(unde
 export const VocdoniApiProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const { address, isConnected } = useUnifiedWallet()
   const { getProvider } = useUnifiedProvider()
+  const { chainId } = useAppKitNetwork()
   const queryClient = useQueryClient()
+  const currentChainId = chainId ? Number(chainId) : undefined
 
   // Old API instance (backwards compatible)
   const apiInstance = useMemo(() => {
@@ -29,29 +33,51 @@ export const VocdoniApiProvider: FC<{ children: ReactNode }> = ({ children }) =>
 
   // New SDK instance with dynamic signer
   const [sdkInstance, setSdkInstance] = useState<DavinciSDK | null>(null)
+  const ensureSdk = useCallback(async (): Promise<DavinciSDK> => {
+    if (sdkInstance) {
+      const sdkProvider = sdkInstance.getConfig().signer.provider
+      if (!currentChainId || !sdkProvider) {
+        return sdkInstance
+      }
+
+      const sdkNetwork = await sdkProvider.getNetwork()
+      if (Number(sdkNetwork.chainId) === currentChainId) {
+        return sdkInstance
+      }
+
+      setSdkInstance(null)
+    }
+
+    if (!isConnected || !address) {
+      throw new Error('SDK not initialized. Please ensure your wallet is connected.')
+    }
+
+    const walletProvider = await getProvider()
+    if (!walletProvider) {
+      throw new Error('SDK not initialized. Please ensure your wallet is connected.')
+    }
+
+    const provider = new BrowserProvider(walletProvider as Eip1193Provider)
+    const signer = await provider.getSigner()
+
+    const sdk = new DavinciSDK({
+      signer,
+      sequencerUrl: import.meta.env.SEQUENCER_URL,
+      censusUrl: import.meta.env.CENSUS3_URL,
+    })
+
+    await sdk.init()
+    setSdkInstance(sdk)
+    return sdk
+  }, [sdkInstance, isConnected, address, getProvider, currentChainId])
 
   // Re-initialize SDK when wallet connection changes
   useEffect(() => {
     const initializeSdk = async () => {
       try {
         if (isConnected && address) {
-          // Get wallet provider and create signer
-          const walletProvider = await getProvider()
-          if (walletProvider) {
-            const provider = new BrowserProvider(walletProvider as Eip1193Provider)
-            const signer = await provider.getSigner()
-
-            // Initialize SDK with signer
-            const sdk = new DavinciSDK({
-              signer,
-              sequencerUrl: import.meta.env.SEQUENCER_URL,
-              censusUrl: import.meta.env.CENSUS3_URL,
-            })
-
-            await sdk.init()
-            setSdkInstance(sdk)
-            console.info('✅ DavinciSDK initialized with signer:', address)
-          }
+          await ensureSdk()
+          console.info('✅ DavinciSDK initialized with signer:', address)
         } else {
           // Cannot initialize the sdk without a signer
           setSdkInstance(null)
@@ -64,7 +90,7 @@ export const VocdoniApiProvider: FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     initializeSdk()
-  }, [address, isConnected, getProvider])
+  }, [address, isConnected, getProvider, ensureSdk, currentChainId])
 
   // Set up process event listeners to keep React Query cache in sync
   useEffect(() => {
@@ -112,7 +138,9 @@ export const VocdoniApiProvider: FC<{ children: ReactNode }> = ({ children }) =>
   }, [sdkInstance, queryClient])
 
   return (
-    <VocdoniApiContext.Provider value={{ api: apiInstance, sdk: sdkInstance }}>{children}</VocdoniApiContext.Provider>
+    <VocdoniApiContext.Provider value={{ api: apiInstance, sdk: sdkInstance, ensureSdk }}>
+      {children}
+    </VocdoniApiContext.Provider>
   )
 }
 

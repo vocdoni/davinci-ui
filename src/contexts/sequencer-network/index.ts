@@ -13,4 +13,10 @@ export {
 export { getNetworkExplorerUrl, getSequencerNetworkAsync, NETWORK_MAP, type SupportedNetwork } from './network-config'
 
 // Detection utilities
-export { clearSequencerNetworkCache, detectSequencerNetwork, getSequencerChainId } from './sequencer-network-detection'
+export {
+  clearSequencerNetworkCache,
+  detectSequencerNetwork,
+  getSequencerChainId,
+  getSequencerInfoNetworks,
+  type SequencerInfoNetworkEntry,
+} from './sequencer-network-detection'

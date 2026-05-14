@@ -1,11 +1,19 @@
 import type { AppKitNetwork } from '@reown/appkit/networks'
 import { arbitrum, base, celo, mainnet, optimism, polygon, sepolia } from '@reown/appkit/networks'
-import { detectSequencerNetwork } from './sequencer-network-detection'
+import { getSequencerInfoNetworks } from './sequencer-network-detection'
 
 /**
  * Supported network identifiers that can be configured via environment variables
  */
-export type SupportedNetwork = 'mainnet' | 'sepolia' | 'arbitrum' | 'polygon' | 'base' | 'optimism' | 'celo'
+export type SupportedNetwork =
+  | 'mainnet'
+  | 'sepolia'
+  | 'arbitrum'
+  | 'arbitrum-sepolia'
+  | 'polygon'
+  | 'base'
+  | 'optimism'
+  | 'celo'
 
 /**
  * Map of network identifiers to their AppKit network configurations
@@ -14,10 +22,47 @@ export const NETWORK_MAP: Record<SupportedNetwork, AppKitNetwork> = {
   mainnet,
   sepolia,
   arbitrum,
+  'arbitrum-sepolia': {
+    id: 421614,
+    name: 'Arbitrum Sepolia',
+    chainNamespace: 'eip155',
+    caipNetworkId: 'eip155:421614',
+    nativeCurrency: {
+      name: 'Ethereum',
+      symbol: 'ETH',
+      decimals: 18,
+    },
+    rpcUrls: {
+      default: {
+        http: ['https://sepolia-rollup.arbitrum.io/rpc'],
+      },
+    },
+    blockExplorers: {
+      default: {
+        name: 'Arbiscan',
+        url: 'https://sepolia.arbiscan.io',
+      },
+    },
+  } as AppKitNetwork,
   polygon,
   base,
   optimism,
   celo,
+}
+
+const CHAIN_ID_TO_NETWORK: Record<number, AppKitNetwork> = {
+  1: mainnet,
+  11155111: sepolia,
+  42161: arbitrum,
+  421614: NETWORK_MAP['arbitrum-sepolia'],
+  137: polygon,
+  8453: base,
+  10: optimism,
+  42220: celo,
+}
+
+export function getNetworkByChainId(chainId: number): AppKitNetwork | null {
+  return CHAIN_ID_TO_NETWORK[chainId] || null
 }
 
 /**
@@ -27,34 +72,31 @@ export const NETWORK_MAP: Record<SupportedNetwork, AppKitNetwork> = {
  */
 export async function getSequencerNetworkAsync(): Promise<AppKitNetwork> {
   const networkEnv = import.meta.env.ETHEREUM_NETWORK as SupportedNetwork | undefined
-
-  // Detect sequencer network
-  const sequencerNetwork = await detectSequencerNetwork()
+  const sequencerNetworks = await getSequencerInfoNetworks()
+  const supportedSequencerNetworks = sequencerNetworks
+    .map((entry) => getNetworkByChainId(entry.chainId))
+    .filter((network): network is AppKitNetwork => Boolean(network))
+  const fallbackSequencerNetwork = supportedSequencerNetworks[0] || sepolia
 
   // If no env var configured, use sequencer network (auto-detection)
   if (!networkEnv) {
-    console.info(`🔗 Auto-detected network from sequencer: ${sequencerNetwork}`)
-    return NETWORK_MAP[sequencerNetwork] || sepolia
+    return fallbackSequencerNetwork
   }
 
   // Env var is configured - validate it
   const network = NETWORK_MAP[networkEnv]
 
   if (!network) {
-    console.error(`Invalid ETHEREUM_NETWORK: ${networkEnv}, falling back to sequencer network: ${sequencerNetwork}`)
-    return NETWORK_MAP[sequencerNetwork] || sepolia
+    console.error(`Invalid ETHEREUM_NETWORK: ${networkEnv}, falling back to sequencer-supported network`)
+    return fallbackSequencerNetwork
   }
 
-  // Check for mismatch between configured and sequencer network
-  if (networkEnv !== sequencerNetwork) {
+  const isEnvNetworkSupported = supportedSequencerNetworks.some((candidate) => Number(candidate.id) === Number(network.id))
+  if (!isEnvNetworkSupported) {
     console.warn(
-      `⚠️ Network configuration mismatch!\n` +
-        `   Configured: ${networkEnv}\n` +
-        `   Sequencer:  ${sequencerNetwork}\n` +
-        `   The app will use "${networkEnv}" but votes may fail if sequencer expects "${sequencerNetwork}".`
+      `⚠️ Configured ETHEREUM_NETWORK (${networkEnv}) is not exposed by sequencer /info. ` +
+        `The app will still use it, but transaction flows may fail.`
     )
-  } else {
-    console.info(`✅ Network configuration matches sequencer: ${networkEnv}`)
   }
 
   return network
