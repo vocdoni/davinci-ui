@@ -43,10 +43,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~compo
 import { useMiniApp } from '~contexts/MiniAppContext'
 import { useSequencerNetwork } from '~contexts/sequencer-network'
 import { useVocdoniApi } from '~contexts/vocdoni-api-context'
-import { useSnapshots, type Snapshot } from '~hooks/use-snapshots'
-import { ensureCorrectNetworkBeforeLaunch } from '~lib/launch-network'
 import { useNetworkValidation } from '~hooks/use-network-validation'
+import { useSnapshots, type Snapshot } from '~hooks/use-snapshots'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
+import { ensureCorrectNetworkBeforeLaunch } from '~lib/launch-network'
 import { CustomAddressesManager } from './census-addresses'
 import { Snapshots } from './snapshots'
 import ConnectWalletButtonMiniApp from './ui/connect-wallet-button-miniapp'
@@ -207,6 +207,7 @@ export function CreateVoteForm() {
 
   const formData = watch()
   const { api, ensureSdk } = useVocdoniApi()
+  const { sequencerNetwork } = useSequencerNetwork()
   const { data: snapshots, isLoading: isLoadingSnapshot, isError: isSnapshotError } = useSnapshots()
   const { isCorrectNetwork, switchToCorrectNetwork } = useNetworkValidation()
 
@@ -411,7 +412,9 @@ export function CreateVoteForm() {
 
       console.info('Census created:', census)
 
-      const activeSdk = await ensureSdk()
+      const activeSdk = await ensureSdk({
+        targetChainId: sequencerNetwork ? Number(sequencerNetwork.id) : undefined,
+      })
 
       // Build metadata for ballot mode generation
       const metadata: ElectionMetadata = {

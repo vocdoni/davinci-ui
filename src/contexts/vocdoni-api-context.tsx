@@ -1,15 +1,20 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { DavinciSDK, VocdoniApiService } from '@vocdoni/davinci-sdk'
 import { useAppKitNetwork } from '@reown/appkit/react'
+import { DavinciSDK, VocdoniApiService } from '@vocdoni/davinci-sdk'
 import { BrowserProvider, type Eip1193Provider } from 'ethers'
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type FC, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type FC, type ReactNode } from 'react'
 import { useUnifiedProvider } from '~hooks/use-unified-provider'
 import { useUnifiedWallet } from '~hooks/use-unified-wallet'
+
+type EnsureSdkOptions = {
+  targetChainId?: number
+  forceRecreate?: boolean
+}
 
 interface VocdoniApiContextValue {
   api: VocdoniApiService
   sdk: DavinciSDK | null
-  ensureSdk: () => Promise<DavinciSDK>
+  ensureSdk: (options?: EnsureSdkOptions) => Promise<DavinciSDK>
 }
 
 // Creamos el contexto
@@ -33,21 +38,14 @@ export const VocdoniApiProvider: FC<{ children: ReactNode }> = ({ children }) =>
 
   // New SDK instance with dynamic signer
   const [sdkInstance, setSdkInstance] = useState<DavinciSDK | null>(null)
-  const ensureSdk = useCallback(async (): Promise<DavinciSDK> => {
-    if (sdkInstance) {
-      const sdkProvider = sdkInstance.getConfig().signer.provider
-      if (!currentChainId || !sdkProvider) {
-        return sdkInstance
-      }
+  const sdkInstanceRef = useRef<DavinciSDK | null>(null)
+  const inFlightEnsureRef = useRef<Promise<DavinciSDK> | null>(null)
 
-      const sdkNetwork = await sdkProvider.getNetwork()
-      if (Number(sdkNetwork.chainId) === currentChainId) {
-        return sdkInstance
-      }
+  useEffect(() => {
+    sdkInstanceRef.current = sdkInstance
+  }, [sdkInstance])
 
-      setSdkInstance(null)
-    }
-
+  const createSdk = useCallback(async (): Promise<DavinciSDK> => {
     if (!isConnected || !address) {
       throw new Error('SDK not initialized. Please ensure your wallet is connected.')
     }
@@ -69,28 +67,78 @@ export const VocdoniApiProvider: FC<{ children: ReactNode }> = ({ children }) =>
     await sdk.init()
     setSdkInstance(sdk)
     return sdk
-  }, [sdkInstance, isConnected, address, getProvider, currentChainId])
+  }, [isConnected, address, getProvider])
+
+  const ensureSdk = useCallback(
+    async (options?: EnsureSdkOptions): Promise<DavinciSDK> => {
+      if (inFlightEnsureRef.current) {
+        return await inFlightEnsureRef.current
+      }
+
+      const ensurePromise = (async () => {
+        const targetChainId = options?.targetChainId ?? currentChainId
+        const existingSdk = sdkInstanceRef.current
+
+        if (existingSdk && !options?.forceRecreate) {
+          const sdkProvider = existingSdk.getConfig().signer.provider
+          if (!targetChainId || !sdkProvider) {
+            return existingSdk
+          }
+
+          const sdkNetwork = await sdkProvider.getNetwork()
+          if (Number(sdkNetwork.chainId) === Number(targetChainId)) {
+            return existingSdk
+          }
+        }
+
+        return await createSdk()
+      })()
+
+      inFlightEnsureRef.current = ensurePromise
+
+      try {
+        return await ensurePromise
+      } finally {
+        if (inFlightEnsureRef.current === ensurePromise) {
+          inFlightEnsureRef.current = null
+        }
+      }
+    },
+    [createSdk, currentChainId]
+  )
 
   // Re-initialize SDK when wallet connection changes
   useEffect(() => {
+    let cancelled = false
+
     const initializeSdk = async () => {
       try {
         if (isConnected && address) {
-          await ensureSdk()
-          console.info('✅ DavinciSDK initialized with signer:', address)
+          const sdk = await ensureSdk({ targetChainId: currentChainId })
+          if (!cancelled && sdk) {
+            console.info('✅ DavinciSDK initialized with signer:', address)
+          }
         } else {
           // Cannot initialize the sdk without a signer
-          setSdkInstance(null)
+          if (!cancelled) {
+            setSdkInstance(null)
+          }
           console.info('ℹ️ No signer available to initialize DavinciSDK')
         }
       } catch (error) {
         console.error('Failed to initialize DavinciSDK:', error)
-        setSdkInstance(null)
+        if (!cancelled) {
+          setSdkInstance(null)
+        }
       }
     }
 
     initializeSdk()
-  }, [address, isConnected, getProvider, ensureSdk, currentChainId])
+
+    return () => {
+      cancelled = true
+    }
+  }, [address, isConnected, currentChainId, ensureSdk])
 
   // Set up process event listeners to keep React Query cache in sync
   useEffect(() => {

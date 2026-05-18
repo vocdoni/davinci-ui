@@ -78,8 +78,8 @@ importers:
         specifier: ^2.4.1
         version: 2.4.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@vocdoni/davinci-sdk':
-        specifier: file:./vocdoni-davinci-sdk-v0.3.1-rc1.tgz
-        version: file:vocdoni-davinci-sdk-v0.3.1-rc1.tgz(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        specifier: 0.4.0
+        version: 0.4.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -2628,9 +2628,8 @@ packages:
   '@vocdoni/davinci-contracts@0.0.45-rc1':
     resolution: {integrity: sha512-8Iv/cXqRrrkYmklcO0ttSC33cm/5BrSOhc6afzZY+k3yWVb7ym+SSuVX76DnBFDrIb5aIQXEZ2zu6YZNzupD4g==}
 
-  '@vocdoni/davinci-sdk@file:vocdoni-davinci-sdk-v0.3.1-rc1.tgz':
-    resolution: {integrity: sha512-ZibDcST4WHMJ3bPzc4z8y7MrB9vHcyyiKVNZJ5Sh5T+v8pTvsx3Z/Oa8gDbGuUupp3wO6JhPwGIlOYjGpqhOag==, tarball: file:vocdoni-davinci-sdk-v0.3.1-rc1.tgz}
-    version: 0.3.1-rc1
+  '@vocdoni/davinci-sdk@0.4.0':
+    resolution: {integrity: sha512-wYzW60nnCz6gnEbFM7U8D6mE5eyUbViB7CQkH3Resf55HZVDWOpuGLphT9r1FmqgQzcESU1OvN3fa43oT7Mi+g==}
 
   '@wallet-standard/base@1.1.0':
     resolution: {integrity: sha512-DJDQhjKmSNVLKWItoKThJS+CsJQjR9AOBOirBVT1F9YpRyC9oYHE+ZnSf8y8bxUphtKqdQMPVQ2mHohYdRvDVQ==}
@@ -8816,7 +8815,7 @@ snapshots:
 
   '@vocdoni/davinci-contracts@0.0.45-rc1': {}
 
-  '@vocdoni/davinci-sdk@file:vocdoni-davinci-sdk-v0.3.1-rc1.tgz(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
+  '@vocdoni/davinci-sdk@0.4.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
       '@ethereumjs/common': 4.4.0
       '@vocdoni/davinci-contracts': 0.0.45-rc1

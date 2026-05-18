@@ -29,25 +29,43 @@ function mapChainIdToNetwork(chainId: number): SupportedNetwork {
   return mapping[chainId] || 'sepolia' // Default to sepolia if unknown
 }
 
-function normalizeInfoNetworks(
+export function normalizeInfoNetworks(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   info: any
 ): SequencerInfoNetworkEntry[] {
   const candidates = info?.networks ?? info?.network ?? {}
-  const values = Object.values(candidates) as Array<{
-    chainID?: number | string
-    shortName?: string
-    processRegistryContract?: string
-    processIDVersion?: string
-  }>
+  const entries = Object.entries(candidates) as Array<
+    [
+      string,
+      | number
+      | string
+      | {
+          chainID?: number | string
+          shortName?: string
+          processRegistryContract?: string
+          processIDVersion?: string
+        },
+    ]
+  >
 
-  return values
-    .map((network) => ({
-      chainId: Number(network.chainID),
-      shortName: network.shortName || '',
-      processRegistryContract: network.processRegistryContract || '',
-      processIDVersion: network.processIDVersion || '',
-    }))
+  return entries
+    .map(([key, network]) => {
+      if (typeof network === 'number' || typeof network === 'string') {
+        return {
+          chainId: Number(network),
+          shortName: key,
+          processRegistryContract: '',
+          processIDVersion: '',
+        }
+      }
+
+      return {
+        chainId: Number(network.chainID),
+        shortName: network.shortName || key,
+        processRegistryContract: network.processRegistryContract || '',
+        processIDVersion: network.processIDVersion || '',
+      }
+    })
     .filter((network) => Number.isFinite(network.chainId) && network.chainId > 0)
 }
 

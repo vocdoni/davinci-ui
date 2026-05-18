@@ -36,6 +36,30 @@ export interface SequencerNetworkProviderProps {
   children: ReactNode
 }
 
+function readPersistedChainId(): number | null {
+  try {
+    const raw = window.localStorage.getItem(NETWORK_STORAGE_KEY)
+    if (!raw) return null
+    const parsed = Number.parseInt(raw, 10)
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      window.localStorage.removeItem(NETWORK_STORAGE_KEY)
+      return null
+    }
+    return parsed
+  } catch (error) {
+    console.warn('Unable to read selected sequencer chain ID from storage:', error)
+    return null
+  }
+}
+
+function persistChainId(chainId: number): void {
+  try {
+    window.localStorage.setItem(NETWORK_STORAGE_KEY, String(chainId))
+  } catch (error) {
+    console.warn('Unable to persist selected sequencer chain ID:', error)
+  }
+}
+
 /**
  * Provider that detects the sequencer network on mount and makes it available to the app
  */
@@ -71,7 +95,7 @@ export function SequencerNetworkProvider({ children }: SequencerNetworkProviderP
         setAvailableSequencerNetworks(availableNetworks)
         setAvailableSequencerNetworkOptions(allNetworkOptions)
 
-        const persistedChainId = Number(window.localStorage.getItem(NETWORK_STORAGE_KEY))
+        const persistedChainId = readPersistedChainId()
         const persistedNetwork = availableNetworks.find((network) => Number(network.id) === persistedChainId) || null
 
         setSelectedSequencerNetworkState(persistedNetwork || defaultNetwork)
@@ -94,7 +118,7 @@ export function SequencerNetworkProvider({ children }: SequencerNetworkProviderP
       return
     }
 
-    window.localStorage.setItem(NETWORK_STORAGE_KEY, String(chainId))
+    persistChainId(chainId)
     setSelectedSequencerNetworkState(selected)
   }
 
