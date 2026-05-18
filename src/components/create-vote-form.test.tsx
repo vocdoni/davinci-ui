@@ -32,6 +32,19 @@ vi.mock('~hooks/use-unified-wallet', () => ({
   }),
 }))
 
+vi.mock('~hooks/use-network-validation', () => ({
+  useNetworkValidation: () => ({
+    isCorrectNetwork: true,
+    isValidating: false,
+    isSwitching: false,
+    error: null,
+    requiredChainId: 11155111,
+    requiredNetworkName: 'Sepolia',
+    currentChainId: 11155111,
+    switchToCorrectNetwork: vi.fn(),
+  }),
+}))
+
 vi.mock('~contexts/MiniAppContext', () => ({
   useMiniApp: () => ({
     isMiniApp: false,

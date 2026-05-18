@@ -3,6 +3,7 @@ import { BarChart2 } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { NewsletterCard } from '~components/newsletter-card'
+import { useSequencerNetwork } from '~contexts/sequencer-network'
 import { useProcessList, useProcessQuery } from '~hooks/use-process-query'
 import { useSortedProcesses, type ProcessSortData } from '~hooks/use-sorted-processes'
 import { enumToReverseObject } from '~lib/utils'
@@ -105,7 +106,9 @@ function ProcessRow({ id, onDataLoaded }: { id: string; onDataLoaded?: (id: stri
 }
 
 export default function ExplorePage() {
-  const { data: processIds, isLoading } = useProcessList()
+  const { selectedSequencerNetwork } = useSequencerNetwork()
+  const selectedChainId = selectedSequencerNetwork ? Number(selectedSequencerNetwork.id) : undefined
+  const { data: processIds, isLoading } = useProcessList(selectedChainId)
   const { sortedIds, registerProcessData } = useSortedProcesses(processIds || [], 'createdAt')
 
   return (
